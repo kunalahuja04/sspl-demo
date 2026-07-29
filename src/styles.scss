@@ -1,1 +1,16 @@
 /* You can add global styles to this file, and also import other style files */
+sspl-navbar, sspl-landing-page, sspl-hero-section, main {
+  display: block;
+}
+
+sspl-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+/* Remove any overflow that breaks sticky */
+html, body {
+  overflow-x: visible;
+  overflow-y: visible;
+}

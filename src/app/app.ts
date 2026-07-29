@@ -1,12 +1,10 @@
-import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component } from '@angular/core';
+import { LandingPageComponent } from './pages/landing/landing-page.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
-  templateUrl: './app.html',
-  styleUrl: './app.scss'
+  standalone: true,
+  imports: [LandingPageComponent],
+  template: `<sspl-landing-page></sspl-landing-page>`
 })
-export class App {
-  protected readonly title = signal('sspl-demo');
-}
+export class App {}
