@@ -1,0 +1,15 @@
+// The active nav link style — gold pill with bottom border treatment.
+// This was previously an inline style block in the component decorator.
+.bg-brand-selected {
+  padding: 8px 14px;
+  background: rgba(201, 162, 39, 0.2);
+  color: rgb(201, 162, 39);
+  font-size: 13px;
+  font-weight: 600;
+  border-width: medium medium 2px;
+  border-style: none none solid;
+  border-color: currentcolor currentcolor rgb(201, 162, 39);
+  border-image: initial;
+  cursor: pointer;
+  border-radius: 6px;
+}

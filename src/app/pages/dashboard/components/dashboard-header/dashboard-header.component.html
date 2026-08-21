@@ -1,0 +1,66 @@
+<header
+  class="bg-bg-surface border-b border-border-default px-6 py-3.5 flex items-center justify-between sticky top-0 z-30 shadow-xs shrink-0">
+
+  <!-- Breadcrumbs -->
+  <div class="flex items-center gap-2 text-label-md text-secondary">
+    <a routerLink="/" class="hover:text-primary transition-colors">Home</a>
+    <span class="text-muted">›</span>
+    <a routerLink="/dashboard" class="hover:text-primary transition-colors">Dashboard</a>
+    <span class="text-muted">›</span>
+    <span class="font-bold text-primary">My Accounts</span>
+  </div>
+
+  <!-- Right Header Actions -->
+  <div class="flex items-center gap-4">
+    <!-- Tenant Indicator Pill -->
+    <div
+      class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-bg-muted border border-border-default text-label-sm font-semibold text-secondary">
+      <span class="w-2 h-2 rounded-full bg-status-success inline-block animate-pulse"></span>
+      <span>{{ activeTenant() || 'SSPL001' }}</span>
+    </div>
+
+    <!-- Date & Timestamp -->
+    <div class="text-label-sm font-medium text-secondary">
+      {{ currentFormattedTime }}
+    </div>
+
+    <!-- Notification Bell with indicator dot -->
+    <div class="relative">
+      <button
+        type="button"
+        (click)="toggleNotifications()"
+        class="w-8 h-8 rounded-full bg-bg-muted hover:bg-border-default text-secondary hover:text-primary flex items-center justify-center transition-colors cursor-pointer"
+        title="Notifications">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+          <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+        </svg>
+        <span class="absolute top-1 right-1 w-2 h-2 bg-status-error rounded-full ring-2 ring-white"></span>
+      </button>
+
+      <!-- Notification Dropdown Modal/Card -->
+      @if (showNotifications()) {
+      <div
+        class="absolute right-0 mt-2 w-80 bg-bg-surface rounded-xl shadow-xl border border-border-default p-4 z-dropdown animate-in fade-in zoom-in-95 duration-150">
+        <div class="flex items-center justify-between border-b border-border-default pb-2 mb-2">
+          <span class="font-bold text-body-sm text-primary">Notifications</span>
+          <span class="text-label-sm text-brand-accent cursor-pointer hover:underline">Mark all read</span>
+        </div>
+        <div class="space-y-2 text-label-sm">
+          <div class="p-2 rounded bg-status-info-bg/40 border border-status-info/20">
+            <p class="font-semibold text-status-info-text">Salary credited to A/C 4521</p>
+            <p class="text-secondary text-label-sm mt-0.5">₹92,000.00 credited via NEFT.</p>
+          </div>
+          <div class="p-2 rounded bg-status-warning-bg/40 border border-status-warning/20">
+            <p class="font-semibold text-status-warning-text">Scheduled Maintenance</p>
+            <p class="text-secondary text-label-sm mt-0.5">RTGS/NEFT window will be offline 02:00-04:00 AM on Sunday.</p>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+
+  </div>
+
+</header>

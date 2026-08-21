@@ -1,0 +1,24 @@
+<button
+  [type]="type"
+  [disabled]="disabled"
+  [routerLink]="routerLink"
+  (click)="clicked.emit($event)"
+  class="inline-flex items-center justify-center gap-2 font-body font-semibold transition-all duration-normal ease-default disabled:opacity-50 whitespace-nowrap cursor-pointer"
+  [class]="computedClasses"
+>
+  <span><ng-content></ng-content></span>
+  @if (arrow) {
+    <svg
+      class="w-4 h-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="M5 12h14" />
+      <path d="m12 5 7 7-7 7" />
+    </svg>
+  }
+</button>

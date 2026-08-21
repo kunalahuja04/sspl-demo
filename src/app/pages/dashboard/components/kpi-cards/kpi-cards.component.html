@@ -1,0 +1,100 @@
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+
+  <!-- Card 1: Total Balance (INR) -->
+  <div
+    class="bg-bg-surface rounded-xl p-5 shadow-xs border border-border-default flex flex-col justify-between hover:shadow-md transition-shadow">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-secondary text-label-md font-semibold">Total Balance (INR)</span>
+      <div
+        class="w-9 h-9 rounded-lg bg-bg-muted border border-border-default flex items-center justify-center text-primary">
+        <svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <rect width="20" height="14" x="2" y="5" rx="2" />
+          <line x1="2" x2="22" y1="10" y2="10" />
+        </svg>
+      </div>
+    </div>
+    <div>
+      <div class="font-body font-extrabold text-heading-xl sm:text-display-md text-primary tracking-tight">
+        {{ summary()?.totalBalanceFormatted || '₹10.32L' }}
+      </div>
+      <p class="text-muted text-label-sm mt-1">
+        {{ summary()?.totalBalanceSubtitle || 'Across all accounts' }}
+      </p>
+    </div>
+  </div>
+
+  <!-- Card 2: Today's Credits -->
+  <div
+    class="bg-bg-surface rounded-xl p-5 shadow-xs border border-border-default flex flex-col justify-between hover:shadow-md transition-shadow">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-secondary text-label-md font-semibold">Today's Credits</span>
+      <div
+        class="w-9 h-9 rounded-lg bg-status-success-bg border border-status-success/30 flex items-center justify-center text-status-success-text">
+        <svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="17" y1="7" x2="7" y2="17" />
+          <polyline points="17 17 7 17 7 7" />
+        </svg>
+      </div>
+    </div>
+    <div>
+      <div class="font-body font-extrabold text-heading-xl sm:text-display-md text-status-success tracking-tight">
+        {{ summary()?.todaysCredits || '+₹1,37,000' }}
+      </div>
+      <p class="text-muted text-label-sm mt-1">
+        {{ summary()?.todaysCreditsCount || '3 transactions' }}
+      </p>
+    </div>
+  </div>
+
+  <!-- Card 3: Today's Debits -->
+  <div
+    class="bg-bg-surface rounded-xl p-5 shadow-xs border border-border-default flex flex-col justify-between hover:shadow-md transition-shadow">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-secondary text-label-md font-semibold">Today's Debits</span>
+      <div
+        class="w-9 h-9 rounded-lg bg-status-error-bg border border-status-error/30 flex items-center justify-center text-status-error-text">
+        <svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="7" y1="17" x2="17" y2="7" />
+          <polyline points="7 7 17 7 17 17" />
+        </svg>
+      </div>
+    </div>
+    <div>
+      <div class="font-body font-extrabold text-heading-xl sm:text-display-md text-status-error tracking-tight">
+        {{ summary()?.todaysDebits || '-₹16,390' }}
+      </div>
+      <p class="text-muted text-label-sm mt-1">
+        {{ summary()?.todaysDebitsCount || '5 transactions' }}
+      </p>
+    </div>
+  </div>
+
+  <!-- Card 4: Active Accounts -->
+  <div
+    class="bg-bg-surface rounded-xl p-5 shadow-xs border border-border-default flex flex-col justify-between hover:shadow-md transition-shadow">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-secondary text-label-md font-semibold">Active Accounts</span>
+      <div
+        class="w-9 h-9 rounded-lg bg-status-info-bg border border-status-info/30 flex items-center justify-center text-status-info-text">
+        <svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="16 12 12 8 8 12" />
+          <line x1="12" y1="16" x2="12" y2="8" />
+        </svg>
+      </div>
+    </div>
+    <div>
+      <div class="font-body font-extrabold text-heading-xl sm:text-display-md text-primary tracking-tight">
+        {{ summary()?.activeAccountsCount || '3' }}
+      </div>
+      <p class="text-muted text-label-sm mt-1">
+        {{ summary()?.activeAccountsSubtitle || 'All accounts in good standing' }}
+      </p>
+    </div>
+  </div>
+
+</div>

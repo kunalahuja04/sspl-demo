@@ -1,0 +1,69 @@
+<div class="bg-bg-surface rounded-xl shadow-xs border border-border-default p-6">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between pb-4 border-b border-border-default">
+    <h2 class="text-heading-md font-bold text-primary">
+      Recent Transactions
+    </h2>
+    <a
+      routerLink="/dashboard"
+      (click)="onViewStatement()"
+      class="text-brand-accent hover:text-brand-primary text-label-md font-bold flex items-center gap-1 transition-colors cursor-pointer">
+      <span>View Statement</span>
+      <span>&rarr;</span>
+    </a>
+  </div>
+
+  <!-- Transactions List -->
+  <div class="divide-y divide-border-default mt-2">
+    @for (txn of transactions(); track txn.id) {
+    <div class="py-3.5 flex items-center justify-between hover:bg-bg-muted/40 px-2 rounded-lg transition-colors">
+
+      <!-- Left: Direction Icon + Title & Details -->
+      <div class="flex items-center gap-3.5">
+        <!-- Circular Icon Badge -->
+        <div
+          class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 shadow-xs"
+          [class.bg-status-success-bg]="txn.type === 'credit'"
+          [class.text-status-success-text]="txn.type === 'credit'"
+          [class.bg-status-error-bg]="txn.type === 'debit'"
+          [class.text-status-error-text]="txn.type === 'debit'">
+          @if (txn.type === 'credit') {
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="17" y1="7" x2="7" y2="17" />
+            <polyline points="17 17 7 17 7 7" />
+          </svg>
+          } @else {
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="7" y1="17" x2="17" y2="7" />
+            <polyline points="7 7 17 7 17 17" />
+          </svg>
+          }
+        </div>
+
+        <!-- Transaction Name & Account Details -->
+        <div class="flex flex-col">
+          <span class="font-bold text-primary text-body-sm">
+            {{ txn.title }}
+          </span>
+          <span class="text-muted text-label-sm mt-0.5">
+            {{ txn.date }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Right: Amount -->
+      <div
+        class="font-mono font-extrabold text-body-md text-right"
+        [class.text-status-success]="txn.type === 'credit'"
+        [class.text-status-error]="txn.type === 'debit'">
+        {{ txn.amount }}
+      </div>
+
+    </div>
+    }
+  </div>
+
+</div>

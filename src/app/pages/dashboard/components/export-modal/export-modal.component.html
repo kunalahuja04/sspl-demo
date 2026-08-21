@@ -1,0 +1,67 @@
+<div class="fixed inset-0 z-modal bg-bg-overlay flex items-center justify-center p-4 backdrop-blur-xs">
+  <div
+    class="bg-bg-surface rounded-2xl shadow-2xl border border-border-default w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+
+    <div class="bg-brand-primary p-4 text-white flex items-center justify-between">
+      <h3 class="font-bold text-heading-md text-white">Export Statement</h3>
+      <button
+        type="button"
+        (click)="onClose()"
+        class="text-white/60 hover:text-white font-bold text-heading-md cursor-pointer">
+        ✕
+      </button>
+    </div>
+
+    <div class="p-6 space-y-4">
+      <p class="text-body-sm text-secondary">
+        Select preferred format to download consolidated statement for all your active accounts.
+      </p>
+
+      <div class="space-y-2.5">
+        <button
+          type="button"
+          (click)="onDownload('pdf')"
+          class="w-full p-3.5 rounded-xl border border-border-default hover:border-brand-accent hover:bg-brand-accent/5 flex items-center justify-between text-left transition-all cursor-pointer group">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-8 h-8 rounded-lg bg-status-error-bg text-status-error-text flex items-center justify-center font-bold text-label-sm">
+              PDF
+            </div>
+            <div>
+              <h4 class="font-bold text-body-sm text-primary group-hover:text-brand-primary">Adobe PDF Document</h4>
+              <p class="text-label-sm text-muted">Formatted with digital signature &amp; bank seal</p>
+            </div>
+          </div>
+          <span class="text-brand-accent font-bold">&rarr;</span>
+        </button>
+
+        <button
+          type="button"
+          (click)="onDownload('excel')"
+          class="w-full p-3.5 rounded-xl border border-border-default hover:border-brand-accent hover:bg-brand-accent/5 flex items-center justify-between text-left transition-all cursor-pointer group">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-8 h-8 rounded-lg bg-status-success-bg text-status-success-text flex items-center justify-center font-bold text-label-sm">
+              XLS
+            </div>
+            <div>
+              <h4 class="font-bold text-body-sm text-primary group-hover:text-brand-primary">Excel Spreadsheet</h4>
+              <p class="text-label-sm text-muted">Raw transaction rows for accounting &amp; tax filing</p>
+            </div>
+          </div>
+          <span class="text-brand-accent font-bold">&rarr;</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="bg-bg-muted px-6 py-3 border-t border-border-default flex justify-end">
+      <button
+        type="button"
+        (click)="onClose()"
+        class="px-4 py-1.5 rounded-md text-secondary hover:text-primary text-body-sm font-semibold cursor-pointer">
+        Cancel
+      </button>
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,72 @@
+<div class="h-screen w-full bg-bg-canvas flex font-body antialiased text-primary overflow-hidden">
+
+  <!-- 1. Reusable Left Sidebar Navigation Component -->
+  <sspl-side-nav [activeNavId]="activeNavId()" (navChange)="onNavChange($event)">
+  </sspl-side-nav>
+
+  <!-- 2. Main Content Container (Independently scrollable) -->
+  <div class="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto bg-bg-canvas">
+
+    <!-- Top Header Bar Component -->
+    <sspl-dashboard-header></sspl-dashboard-header>
+
+    <!-- Main Page Content Section -->
+    <main class="flex-1 p-6 space-y-6">
+
+      <!-- Toast Feedback Notification Banner -->
+      @if (toastMessage()) {
+      <div
+        class="p-3 rounded-lg flex items-center justify-between text-body-sm font-medium border shadow-sm transition-all animate-in fade-in"
+        [class.bg-status-success-bg]="toastMessage()?.type === 'success'"
+        [class.border-status-success]="toastMessage()?.type === 'success'"
+        [class.text-status-success-text]="toastMessage()?.type === 'success'"
+        [class.bg-status-info-bg]="toastMessage()?.type === 'info'"
+        [class.border-status-info]="toastMessage()?.type === 'info'"
+        [class.text-status-info-text]="toastMessage()?.type === 'info'"
+        [class.bg-status-error-bg]="toastMessage()?.type === 'error'"
+        [class.border-status-error]="toastMessage()?.type === 'error'"
+        [class.text-status-error-text]="toastMessage()?.type === 'error'">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+            <polyline points="22 4 12 14.01 9 11.01" />
+          </svg>
+          <span>{{ toastMessage()?.text }}</span>
+        </div>
+        <button type="button" (click)="toastMessage.set(null)"
+          class="text-current opacity-70 hover:opacity-100 cursor-pointer font-bold ml-4">
+          ✕
+        </button>
+      </div>
+      }
+
+      <!-- 3. Metric KPI Stat Cards Component -->
+      <sspl-kpi-cards></sspl-kpi-cards>
+
+      <!-- 4. Account List Table Component -->
+      <sspl-account-list (balanceEnquiry)="openBalanceEnquiry($event)" (exportClick)="openExport()">
+      </sspl-account-list>
+
+      <!-- 5. Recent Transactions Component -->
+      <sspl-recent-transactions (viewStatementClick)="onViewStatement()">
+      </sspl-recent-transactions>
+
+    </main>
+
+  </div>
+
+  <!-- 6. Balance Enquiry Details Modal Component -->
+  @if (isEnquiryModalOpen() && selectedAccount()) {
+  <sspl-balance-enquiry-modal [account]="selectedAccount()" (close)="closeBalanceEnquiry()"
+    (downloadStatement)="downloadStatement($event)">
+  </sspl-balance-enquiry-modal>
+  }
+
+  <!-- 7. Export Statement Modal Component -->
+  @if (isExportModalOpen()) {
+  <sspl-export-modal (close)="closeExport()" (download)="downloadStatement($event)">
+  </sspl-export-modal>
+  }
+
+</div>

@@ -7,35 +7,8 @@ import { FeatureCardComponent } from '../../../components/feature-card/feature-c
   standalone: true,
   imports: [CommonModule, FeatureCardComponent],
   host: { class: 'block' },
-  template: `
-    <section class="bg-bg-surface py-14 md:py-16">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        <!-- Section Header -->
-        <div class="text-center mb-10">
-          <p class="font-body font-semibold text-[11px] text-brand-accent tracking-[0.15em] uppercase mb-3">
-            Why Choose SSPL Net Banking
-          </p>
-          <h2 class="font-body text-[2rem] md:text-display-lg font-extrabold text-text-primary leading-tight">
-            Built for Modern Banking
-          </h2>
-        </div>
-
-        <!-- Features Grid: 4 cols top, 2 cols bottom left-aligned -->
-        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          @for (feature of features; track feature.title) {
-            <sspl-feature-card
-              [title]="feature.title"
-              [description]="feature.description"
-              [iconBgClass]="feature.iconBg"
-            >
-              <div icon [innerHTML]="feature.iconSvg"></div>
-            </sspl-feature-card>
-          }
-        </div>
-      </div>
-    </section>
-  `
+  templateUrl: './features-section.component.html',
+  styleUrl: './features-section.component.scss',
 })
 export class FeaturesSectionComponent {
   @HostBinding('style.display') display = 'block';

@@ -10,20 +10,8 @@ interface Channel {
   selector: 'sspl-channel-bar',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div class="bg-brand-accent w-full">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-center gap-8 md:gap-12 py-4 overflow-x-auto">
-          @for(channel of channels; track $index) {
-            <div class="flex items-center gap-2.5 text-brand-primary whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity">
-              <span class="text-xl">{{ channel.icon }}</span>
-              <span class="font-body font-semibold text-body-md">{{ channel.label }}</span>
-            </div>
-          }
-        </div>
-      </div>
-    </div>
-  `
+  templateUrl: './channel-bar.component.html',
+  styleUrl: './channel-bar.component.scss',
 })
 export class ChannelBarComponent {
   channels: Channel[] = [

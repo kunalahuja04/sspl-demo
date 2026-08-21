@@ -1,0 +1,92 @@
+<div class="fixed inset-0 z-modal bg-bg-overlay flex items-center justify-center p-4 backdrop-blur-xs">
+  <div
+    class="bg-bg-surface rounded-2xl shadow-2xl border border-border-default w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+
+    <!-- Modal Header -->
+    <div class="bg-brand-primary p-5 text-white flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-brand-accent text-brand-primary flex items-center justify-center font-bold">
+          ₹
+        </div>
+        <div>
+          <h3 class="font-bold text-heading-md text-white">Balance Enquiry</h3>
+          <p class="text-label-sm text-white/70">{{ account()?.type }} · {{ account()?.accountNumber }}</p>
+        </div>
+      </div>
+      <button
+        type="button"
+        (click)="onClose()"
+        class="text-white/60 hover:text-white font-bold text-heading-md cursor-pointer">
+        ✕
+      </button>
+    </div>
+
+    <!-- Modal Content -->
+    <div class="p-6 space-y-4">
+
+      <!-- Key Balance Highlight Card -->
+      <div class="p-4 rounded-xl bg-bg-muted border border-border-default flex items-center justify-between">
+        <div>
+          <span class="text-label-sm uppercase tracking-wider font-semibold text-secondary">Available Balance</span>
+          <div class="font-mono text-display-md font-extrabold text-primary mt-0.5">
+            {{ account()?.availableBalance }}
+          </div>
+        </div>
+        <span class="px-3 py-1 rounded-full bg-status-success-bg text-status-success-text font-bold text-label-sm">
+          ● Live Status
+        </span>
+      </div>
+
+      <!-- Account Specs Breakdown Grid -->
+      <div class="grid grid-cols-2 gap-3 text-body-sm">
+        <div class="p-3 rounded-lg border border-border-default bg-bg-surface">
+          <span class="text-label-sm text-muted">Ledger Balance</span>
+          <p class="font-mono font-bold text-primary mt-0.5">{{ account()?.ledgerBalance }}</p>
+        </div>
+        <div class="p-3 rounded-lg border border-border-default bg-bg-surface">
+          <span class="text-label-sm text-muted">Uncleared Cheques</span>
+          <p class="font-mono font-semibold text-secondary mt-0.5">{{ account()?.unclearedFunds || '₹0.00' }}</p>
+        </div>
+        <div class="p-3 rounded-lg border border-border-default bg-bg-surface">
+          <span class="text-label-sm text-muted">Interest Rate</span>
+          <p class="font-semibold text-secondary mt-0.5">{{ account()?.interestRate || '3.50% p.a.' }}</p>
+        </div>
+        <div class="p-3 rounded-lg border border-border-default bg-bg-surface">
+          <span class="text-label-sm text-muted">Lien / Hold Amount</span>
+          <p class="font-mono font-semibold text-secondary mt-0.5">{{ account()?.lienAmount || '₹0.00' }}</p>
+        </div>
+      </div>
+
+      <!-- Branch & Regulatory Information -->
+      <div class="text-label-sm text-secondary bg-bg-muted/60 p-3 rounded-lg border border-border-default space-y-1">
+        <p><strong class="text-primary font-semibold">Home Branch:</strong> {{ account()?.branch }}</p>
+        <p><strong class="text-primary font-semibold">IFSC Code:</strong> {{ account()?.ifsc }}</p>
+        <p><strong class="text-primary font-semibold">Nominee:</strong> Registered</p>
+      </div>
+
+    </div>
+
+    <!-- Modal Actions -->
+    <div class="bg-bg-muted px-6 py-4 border-t border-border-default flex items-center justify-between">
+      <button
+        type="button"
+        (click)="onDownload('pdf')"
+        class="px-4 py-2 rounded-lg bg-bg-surface border border-border-default hover:bg-bg-muted text-primary text-label-md font-semibold transition-colors cursor-pointer flex items-center gap-1.5">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        <span>Mini Statement</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="onClose()"
+        class="px-5 py-2 rounded-lg bg-brand-primary hover:bg-brand-primary-hover text-white text-label-md font-bold transition-colors cursor-pointer shadow-xs">
+        Done
+      </button>
+    </div>
+
+  </div>
+</div>

@@ -5,19 +5,8 @@ import { CommonModule } from '@angular/common';
   selector: 'sspl-service-card',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div class="group bg-bg-surface rounded-xl p-5 border border-border-default transition-all duration-normal ease-default hover:shadow-md hover:border-border-strong cursor-pointer">
-      <div class="text-xl mb-3 transition-transform duration-normal ease-spring group-hover:scale-110 inline-block">
-        <ng-content select="[icon]"></ng-content>
-      </div>
-      <h4 class="font-body font-bold text-heading-md text-text-primary mb-1">
-        {{ title }}
-      </h4>
-      <p class="font-body text-body-sm text-text-secondary leading-relaxed">
-        {{ description }}
-      </p>
-    </div>
-  `
+  templateUrl: './service-card.component.html',
+  styleUrl: './service-card.component.scss',
 })
 export class ServiceCardComponent {
   @Input() title = '';

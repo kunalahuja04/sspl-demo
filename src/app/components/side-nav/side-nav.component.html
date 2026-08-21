@@ -1,0 +1,203 @@
+<aside
+  class="w-64 bg-brand-primary text-white flex flex-col shrink-0 h-screen border-r border-white/10 select-none z-40">
+
+  <!-- 1. Top Logo Header -->
+  <div class="p-5 border-b border-white/10 shrink-0">
+    <a routerLink="/dashboard" class="flex items-center gap-3">
+      <div class="w-8 h-8 bg-brand-accent rounded-lg flex items-center justify-center shadow-xs shrink-0">
+        <svg width="18" height="18" viewBox="0 0 24 24">
+          <path d="M12 2L2 22h20L12 2z" class="fill-brand-primary" />
+          <path d="M12 8l-5 10h10l-5-10z" class="fill-brand-accent" />
+        </svg>
+      </div>
+      <div class="flex flex-col leading-none">
+        <span class="font-body font-bold text-white text-heading-md tracking-tight">SSPL</span>
+        <span class="font-body font-bold text-brand-accent text-label-sm tracking-widest uppercase mt-0.5">
+          NET BANKING
+        </span>
+      </div>
+    </a>
+  </div>
+
+  <!-- 2. User Profile Card -->
+  <div class="px-5 py-4 border-b border-white/10 flex items-center gap-3 shrink-0">
+    <!-- Initials Avatar -->
+    <div
+      class="w-10 h-10 rounded-full bg-brand-accent flex items-center justify-center text-brand-primary font-bold text-body-md shrink-0 shadow-xs">
+      {{ currentUser()?.avatarInitials || 'RK' }}
+    </div>
+    <!-- User Details -->
+    <div class="flex flex-col min-w-0">
+      <span class="font-bold text-white text-body-sm truncate">
+        {{ currentUser()?.name || 'Rajesh K. Sharma' }}
+      </span>
+      <span class="text-white/50 text-label-sm truncate">
+        Last login: {{ currentUser()?.lastLogin || '08 Jun, 09:41' }}
+      </span>
+    </div>
+  </div>
+
+  <!-- 3. Main Navigation Menu (Scrollable middle section) -->
+  <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto min-h-0">
+    @for (item of navItems; track item.id) {
+    <button
+      type="button"
+      (click)="onSelectNav(item)"
+      class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-body-sm font-medium transition-all cursor-pointer text-left"
+      [class.bg-brand-accent/15]="activeNavId() === item.id"
+      [class.text-brand-accent]="activeNavId() === item.id"
+      [class.border-l-3]="activeNavId() === item.id"
+      [class.border-brand-accent]="activeNavId() === item.id"
+      [class.text-white/70]="activeNavId() !== item.id"
+      [class.hover:text-white]="activeNavId() !== item.id"
+      [class.hover:bg-white/5]="activeNavId() !== item.id">
+
+      <!-- Dynamic SVG Icons -->
+      @if (item.icon === 'dashboard') {
+      <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <rect width="7" height="9" x="3" y="3" rx="1" />
+        <rect width="7" height="5" x="14" y="3" rx="1" />
+        <rect width="7" height="9" x="14" y="12" rx="1" />
+        <rect width="7" height="5" x="3" y="16" rx="1" />
+      </svg>
+      } @else if (item.icon === 'wallet') {
+      <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path
+          d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
+        <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
+      </svg>
+      } @else if (item.icon === 'transfer') {
+      <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="m17 2 4 4-4 4" />
+        <path d="M3 6h18" />
+        <path d="m7 22-4-4 4-4" />
+        <path d="M21 18H3" />
+      </svg>
+      } @else if (item.icon === 'document') {
+      <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+        <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+        <path d="M10 9H8" />
+        <path d="M16 13H8" />
+        <path d="M16 17H8" />
+      </svg>
+      } @else if (item.icon === 'deposits') {
+      <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path
+          d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-1.8.3-.7.4-1.4.4-2.2 0-3.3-2.5-4.5-4-5" />
+        <circle cx="8" cy="11" r="1" />
+        <path d="M15 13a4 4 0 0 0-4-4" />
+      </svg>
+      } @else if (item.icon === 'investments') {
+      <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+        <polyline points="16 7 22 7 22 13" />
+      </svg>
+      } @else if (item.icon === 'cards') {
+      <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <rect width="20" height="14" x="2" y="5" rx="2" />
+        <line x1="2" x2="22" y1="10" y2="10" />
+      </svg>
+      } @else if (item.icon === 'loans') {
+      <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      </svg>
+      }
+      <span>{{ item.label }}</span>
+    </button>
+    }
+  </nav>
+
+  <!-- 4. Fixed Bottom Section (Settings, Help & Support, Logout) -->
+  <div class="p-3 border-t border-white/10 space-y-1 shrink-0 bg-brand-primary mt-auto">
+    <!-- Settings -->
+    <button
+      type="button"
+      (click)="onSelectNav({ id: 'settings', label: 'Settings', icon: 'dashboard' })"
+      class="w-full flex items-center gap-3 px-3.5 py-2 rounded-lg text-body-sm font-medium text-white/70 hover:text-white hover:bg-white/5 transition-all cursor-pointer text-left">
+      <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path
+          d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+        <circle cx="12" cy="12" r="3" />
+      </svg>
+      <span>Settings</span>
+    </button>
+
+    <!-- Help & Support -->
+    <button
+      type="button"
+      (click)="onSelectNav({ id: 'help', label: 'Help & Support', icon: 'dashboard' })"
+      class="w-full flex items-center gap-3 px-3.5 py-2 rounded-lg text-body-sm font-medium text-white/70 hover:text-white hover:bg-white/5 transition-all cursor-pointer text-left">
+      <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+        <line x1="12" x2="12.01" y1="17" y2="17" />
+      </svg>
+      <span>Help &amp; Support</span>
+    </button>
+
+    <!-- Logout Button -->
+    <button
+      type="button"
+      (click)="confirmLogout()"
+      class="w-full flex items-center gap-3 px-3.5 py-2 rounded-lg text-body-sm font-medium text-status-error hover:bg-status-error-bg/15 transition-all cursor-pointer text-left">
+      <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+        <polyline points="16 17 21 12 16 7" />
+        <line x1="21" x2="9" y1="12" y2="12" />
+      </svg>
+      <span>Logout</span>
+    </button>
+  </div>
+
+</aside>
+
+<!-- Logout Confirmation Modal -->
+@if (isLogoutModalOpen()) {
+<div class="fixed inset-0 z-modal bg-bg-overlay flex items-center justify-center p-4 backdrop-blur-xs">
+  <div
+    class="bg-bg-surface rounded-2xl shadow-2xl border border-border-default w-full max-w-sm overflow-hidden p-6 text-center animate-in fade-in zoom-in-95 duration-200">
+
+    <div
+      class="w-12 h-12 rounded-full bg-status-error-bg text-status-error-text flex items-center justify-center mx-auto mb-4">
+      <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+        <polyline points="16 17 21 12 16 7" />
+        <line x1="21" x2="9" y1="12" y2="12" />
+      </svg>
+    </div>
+
+    <h3 class="font-bold text-heading-md text-primary mb-1.5">Confirm Logout</h3>
+    <p class="text-body-sm text-secondary mb-6">
+      Are you sure you want to end your secure Net Banking session?
+    </p>
+
+    <div class="flex items-center gap-3">
+      <button
+        type="button"
+        (click)="cancelLogout()"
+        class="flex-1 py-2 rounded-lg border border-border-default hover:bg-bg-muted text-primary text-body-sm font-semibold transition-colors cursor-pointer">
+        Stay Logged In
+      </button>
+      <button
+        type="button"
+        (click)="executeLogout()"
+        class="flex-1 py-2 rounded-lg bg-status-error hover:bg-status-error/90 text-white text-body-sm font-bold transition-colors cursor-pointer shadow-xs">
+        Logout Now
+      </button>
+    </div>
+
+  </div>
+</div>
+}

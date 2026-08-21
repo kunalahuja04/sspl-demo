@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
-import { LandingPageComponent } from './pages/landing/landing-page.component';
+import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [LandingPageComponent],
-  template: `<sspl-landing-page></sspl-landing-page>`
+  imports: [RouterOutlet],
+  templateUrl: './app.html',
+  styleUrl: './app.scss'
 })
 export class App {}

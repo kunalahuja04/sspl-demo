@@ -1,0 +1,24 @@
+<!-- Top Announcement Bar — scrolls away -->
+<div class="bg-bg-surface border-b border-border-default static">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-7">
+      <span class="font-body text-label-sm text-secondary hidden sm:block tracking-wide">
+        SSPL Bank — Omnichannel Digital Banking Platform
+      </span>
+      <div class="flex items-center gap-5 ml-auto">
+        @for (link of topLinks; track link.label) {
+        <a [href]="link.href" class="font-body text-label-sm text-secondary hover:text-brand-primary transition-colors">
+          {{ link.label }}
+        </a>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+<sspl-navbar></sspl-navbar>
+<main class="block">
+  <sspl-hero-section></sspl-hero-section>
+  <sspl-features-section></sspl-features-section>
+  <sspl-cta-section></sspl-cta-section>
+</main>
+<sspl-footer></sspl-footer>

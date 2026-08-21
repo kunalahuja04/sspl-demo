@@ -32,7 +32,8 @@
             "styles": [
               "src/tailwind.css",
               "src/styles.scss"
-            ]
+            ],
+            "baseHref": "/sspl-demo/"
           },
           "configurations": {
             "production": {
@@ -93,6 +94,9 @@
               "src/styles.scss"
             ]
           }
+        },
+        "deploy": {
+          "builder": "angular-cli-ghpages:deploy"
         }
       }
     }

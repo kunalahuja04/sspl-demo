@@ -1,0 +1,757 @@
+<div class="min-h-screen flex flex-col font-body antialiased text-white" [class.text-body-sm]="fontSizeMode === 'sm'"
+  [class.text-body-lg]="fontSizeMode === 'lg'">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       1. Top Utility Bar (Z-index 50)
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="bg-bg-surface border-b border-white/10 text-white/70 text-label-sm py-1.5 px-4 sm:px-6 relative z-50">
+    <div class="w-full mx-auto flex items-center justify-between">
+      <span class="tracking-wide text-secondary/80">
+        SSPL Bank Net Banking — Trusted by 2.4 Million Customers
+      </span>
+      <div class="flex items-center gap-4 sm:gap-5">
+        <!-- Language -->
+        <div class="flex items-center gap-1.5 text-secondary/60 hover:text-secondary cursor-pointer transition-colors">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="2" x2="22" y1="12" y2="12" />
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+          </svg>
+          <span>English</span>
+        </div>
+
+        <!-- WhatsApp Banking -->
+        <div
+          class="flex items-center gap-1.5 text-secondary/60 hover:text-secondary cursor-pointer transition-colors sm:flex">
+          <svg class="w-3.5 h-3.5 text-status-success" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path
+              d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+          </svg>
+          <span>WhatsApp Banking</span>
+        </div>
+
+        <!-- Get Help -->
+        <div class="flex items-center gap-1.5 text-secondary/60 hover:text-secondary cursor-pointer transition-colors">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+            <line x1="12" x2="12.01" y1="17" y2="17" />
+          </svg>
+          <span>Get Help</span>
+        </div>
+
+        <!-- Font size resizer: A A A -->
+        <div class="flex items-center gap-1 pl-2 border-l border-white/10">
+          <button type="button" (click)="setFontSize('sm')" [class.bg-white]="fontSizeMode === 'sm'"
+            [class.text-brand-primary]="fontSizeMode === 'sm'" [class.text-white]="fontSizeMode !== 'sm'"
+            class="w-5 h-5 flex items-center justify-center rounded-sm border border-white/20 text-label-sm font-bold hover:bg-white/20 transition-colors cursor-pointer">
+            A
+          </button>
+          <button type="button" (click)="setFontSize('md')" [class.bg-white]="fontSizeMode === 'md'"
+            [class.text-brand-primary]="fontSizeMode === 'md'" [class.text-white]="fontSizeMode !== 'md'"
+            class="w-5 h-5 flex items-center justify-center rounded-sm border border-white/20 text-label-sm font-bold hover:bg-white/20 transition-colors cursor-pointer">
+            A
+          </button>
+          <button type="button" (click)="setFontSize('lg')" [class.bg-white]="fontSizeMode === 'lg'"
+            [class.text-brand-primary]="fontSizeMode === 'lg'" [class.text-white]="fontSizeMode !== 'lg'"
+            class="w-5 h-5 flex items-center justify-center rounded-sm border border-white/20 text-label-md font-bold hover:bg-white/20 transition-colors cursor-pointer">
+            A
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       2. Main Navigation Header (Z-index 50, Sticky)
+  ═══════════════════════════════════════════════════════════ -->
+  <header class="bg-brand-primary border-b border-white/10 sticky top-0 z-50 shadow-md">
+    <div class="w-full mx-auto px-5 sm:px-6">
+      <div class="flex items-center justify-between h-14">
+
+        <!-- Left: Brand Logo & Segment Tabs -->
+        <div class="flex items-center gap-6 sm:gap-8">
+          <!-- Logo linking to home -->
+          <a routerLink="/" class="flex items-center gap-2 cursor-pointer select-none">
+            <div class="w-8 h-8 bg-brand-accent rounded-lg flex items-center justify-center shadow-xs">
+              <svg width="18" height="18" viewBox="0 0 24 24">
+                <path d="M12 2L2 22h20L12 2z" class="fill-brand-primary" />
+                <path d="M12 8l-5 10h10l-5-10z" class="fill-brand-accent" />
+              </svg>
+            </div>
+            <div class="flex flex-col leading-none">
+              <span class="font-body font-bold text-white text-heading-md tracking-tight">SSPL</span>
+              <span class="font-body font-bold text-brand-accent text-label-sm tracking-widest uppercase">
+                NET BANKING
+              </span>
+            </div>
+          </a>
+
+          <!-- Banking Segments Navigation -->
+          <nav class="hidden md:flex items-center gap-6 h-14">
+            <button type="button" (click)="activeNavTab = 'personal'"
+              class="h-full flex items-center text-body-sm font-semibold transition-colors relative cursor-pointer"
+              [class.text-white]="activeNavTab === 'personal'" [class.text-white/60]="activeNavTab !== 'personal'"
+              [class.hover:text-white]="activeNavTab !== 'personal'">
+              Personal Banking
+              @if (activeNavTab === 'personal') {
+              <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-accent rounded-t"></span>
+              }
+            </button>
+
+            <button type="button" (click)="activeNavTab = 'corporate'"
+              class="h-full flex items-center text-body-sm font-semibold transition-colors relative cursor-pointer"
+              [class.text-white]="activeNavTab === 'corporate'" [class.text-white/60]="activeNavTab !== 'corporate'"
+              [class.hover:text-white]="activeNavTab !== 'corporate'">
+              Corporate Banking
+              @if (activeNavTab === 'corporate') {
+              <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-accent rounded-t"></span>
+              }
+            </button>
+
+            <button type="button" (click)="activeNavTab = 'nri'"
+              class="h-full flex items-center text-body-sm font-semibold transition-colors relative cursor-pointer"
+              [class.text-white]="activeNavTab === 'nri'" [class.text-white/60]="activeNavTab !== 'nri'"
+              [class.hover:text-white]="activeNavTab !== 'nri'">
+              NRI Banking
+              @if (activeNavTab === 'nri') {
+              <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-accent rounded-t"></span>
+              }
+            </button>
+          </nav>
+        </div>
+
+        <!-- Right: Alerts, Security Tips & Corporate Website CTA -->
+        <div class="flex items-center gap-3 sm:gap-5">
+          <button type="button"
+            class="flex items-center gap-1.5 text-white/80 hover:text-white text-label-md transition-colors cursor-pointer">
+            <svg class="w-3.5 h-3.5 text-brand-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+              <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+            </svg>
+            <span class="hidden sm:inline">Alerts</span>
+          </button>
+
+          <button type="button"
+            class="flex items-center gap-1.5 text-white/80 hover:text-white text-label-md transition-colors cursor-pointer">
+            <svg class="w-3.5 h-3.5 text-status-success" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            <span class="hidden sm:inline">Security Tips</span>
+          </button>
+
+          <!-- Return to landing page button -->
+          <a routerLink="/"
+            class="bg-brand-accent hover:bg-brand-accent-hover text-brand-primary font-body font-bold text-label-md px-3.5 py-1.5 rounded-md flex items-center gap-1.5 transition-all shadow-xs">
+            <span>Corporate Website</span>
+            <span>&rarr;</span>
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       3. Main Body: 2-Column Side-by-Side Layout
+  ═══════════════════════════════════════════════════════════ -->
+  <main class="flex-1 w-full">
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-2 items-start">
+
+      <!-- ───────────────────────────────────────────────────────────
+           LEFT COLUMN: Hero Greeting + Quick Actions + Information Tabs
+      ─────────────────────────────────────────────────────────── -->
+      <div class="md:col-span-7 lg:col-span-9 flex flex-col overflow-hidden">
+
+        <!-- Top Deep Navy Hero Area -->
+        <div
+          class="relative p-6 sm:p-8 md:p-9 bg-linear-to-b from-brand-primary to-bg-inverse text-white overflow-hidden">
+          <!-- Background Glows -->
+          <div
+            class="absolute -top-16 -right-16 w-72 h-72 bg-brand-accent/5 rounded-full blur-3xl pointer-events-none z-base">
+          </div>
+          <div class="absolute bottom-0 left-1/3 w-60 h-60 bg-white/5 rounded-full blur-2xl pointer-events-none z-base">
+          </div>
+
+          <!-- Greeting Header -->
+          <div class="relative z-raised mb-5">
+            <!-- ─── Decorative background layer ─────────────────────────── -->
+            <div class="absolute inset-0 pointer-events-none select-none">
+              <!-- Top-right gold glow -->
+              <div class="absolute -top-32 -left-40 w-90 h-90 rounded-full bg-brand-accent/5"></div>
+
+
+              <div class="absolute bottom-[4%] left-[28%] w-50 h-50 rounded-full bg-white/2 blur-xl"></div>
+
+              <!-- Bottom-left glow -->
+              <div class="absolute bottom-[10%] -left-10 w-70 h-70 rounded-full bg-brand-accent/4 blur-3xl">
+              </div>
+            </div>
+            <h1
+              class="font-body text-heading-md lg:text-display-xl font-extrabold text-white tracking-tight flex items-center gap-2.5 mb-1.5">
+              <span>Hello!</span>
+              <span class="inline-block animate-wave origin-bottom-right">👋</span>
+            </h1>
+            <p class="font-body lg:text-heading-md sm:text-body-md font-bold text-white mb-1">
+              Welcome to SSPL Net Banking
+            </p>
+            <p class="text-white/60 text-body-sm mb-8">
+              Secure · Instant · Everywhere
+            </p>
+          </div>
+
+          <!-- User Onboarding Action Row -->
+          <div class="relative z-raised flex flex-wrap items-center gap-3 mb-6">
+            <span class="text-white/80 text-body-sm sm:text-body-md font-medium">
+              Are you a new user?
+            </span>
+            <button type="button" (click)="useDemoCredentials()"
+              class="bg-brand-accent hover:bg-brand-accent-hover text-brand-primary font-bold text-body-sm px-3.5 py-1.5 rounded-md transition-colors shadow-xs cursor-pointer">
+              Register Now
+            </button>
+            <button type="button" (click)="useDemoCredentials()"
+              class="bg-bg-inverse hover:bg-brand-primary border border-white/20 text-white font-medium text-body-sm px-3.5 py-1.5 rounded-md transition-colors cursor-pointer">
+              Activate Username
+            </button>
+          </div>
+
+          <!-- Quick Actions Grid (8 Circular Items) -->
+          <div class="relative z-raised pt-3">
+            <p class="text-label-sm uppercase tracking-wider font-semibold text-white/50 mb-3">
+              QUICK ACTIONS
+            </p>
+            <div class="grid grid-cols-4 sm:grid-cols-8 gap-2 sm:gap-1.5">
+              @for (action of quickActions; track action.id) {
+              <div class="flex flex-col items-center text-center group cursor-pointer">
+                <div
+                  class="w-10 h-10 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-white group-hover:bg-brand-accent group-hover:text-brand-primary group-hover:border-brand-accent group-hover:scale-105 transition-all duration-normal shadow-xs mb-1.5">
+                  <div [innerHTML]="action.iconSvg"></div>
+                </div>
+                <span
+                  class="text-label-sm font-medium text-white/70 group-hover:text-white leading-tight transition-colors">
+                  {{ action.label }}
+                </span>
+              </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- ───────────────────────────────────────────────────────────
+             Bottom Light Card Area with Tabs:
+             1. Important Notices
+             2. Security Best Practices (Do's & Don'ts)
+        ─────────────────────────────────────────────────────────── -->
+        <div class="bg-bg-surface text-primary p-5 sm:p-7 flex-1">
+
+          <!-- Tab Navigation Bar -->
+          <div class="flex items-center justify-between border-b border-border-default pb-2.5 mb-5">
+            <div class="flex items-center gap-6">
+              <button type="button" (click)="activeInfoTab = 'notices'"
+                class="text-body-md font-bold pb-2.5 -mb-2.5 transition-colors relative cursor-pointer"
+                [class.text-brand-primary]="activeInfoTab === 'notices'"
+                [class.text-muted]="activeInfoTab !== 'notices'"
+                [class.hover:text-secondary]="activeInfoTab !== 'notices'">
+                Important Notices
+                @if (activeInfoTab === 'notices') {
+                <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-accent rounded-t"></span>
+                }
+              </button>
+
+              <button type="button" (click)="activeInfoTab = 'security'"
+                class="text-body-md font-bold pb-2.5 -mb-2.5 transition-colors relative cursor-pointer"
+                [class.text-brand-primary]="activeInfoTab === 'security'"
+                [class.text-muted]="activeInfoTab !== 'security'"
+                [class.hover:text-secondary]="activeInfoTab !== 'security'">
+                Security Best Practices
+                @if (activeInfoTab === 'security') {
+                <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-accent rounded-t"></span>
+                }
+              </button>
+            </div>
+
+            <a href="#"
+              class="text-label-md font-semibold text-brand-accent hover:text-brand-primary flex items-center gap-1 transition-colors">
+              <span>View All</span>
+              <span>&rarr;</span>
+            </a>
+          </div>
+
+          <!-- TAB 1: Important Notices Content -->
+          @if (activeInfoTab === 'notices') {
+          <div class="space-y-3">
+            @for (notice of notices; track notice.id) {
+            <div
+              class="flex items-start gap-3 p-3 rounded-xl bg-bg-muted hover:bg-bg-canvas border border-border-default transition-colors">
+              <div
+                class="w-7 h-7 rounded-full bg-bg-surface border border-border-strong flex items-center justify-center text-secondary shrink-0 mt-0.5 shadow-xs">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                  <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                </svg>
+              </div>
+              <div class="flex-1">
+                <p class="text-body-sm text-primary leading-relaxed">
+                  {{ notice.content }}
+                </p>
+                <p class="text-label-sm text-muted mt-0.5 font-medium">
+                  {{ notice.date }}
+                </p>
+              </div>
+            </div>
+            }
+          </div>
+          }
+
+          <!-- TAB 2: Security Best Practices -->
+          @if (activeInfoTab === 'security') {
+          <div class="space-y-5">
+
+            <!-- 3 Top Security Warning Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <!-- Card 1: Be Vigilant -->
+              <div class="p-3.5 rounded-xl border border-status-warning/30 bg-status-warning-bg/40">
+                <div class="flex items-center gap-2 mb-1.5">
+                  <div
+                    class="w-5 h-5 rounded-full bg-status-warning-bg flex items-center justify-center text-status-warning-text shrink-0">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                  </div>
+                  <h3 class="font-bold text-body-sm text-status-warning-text">Be Vigilant, Be Safe</h3>
+                </div>
+                <p class="text-body-sm text-status-warning-text/80 leading-relaxed">
+                  While the bank takes care of your account, you take care of your credentials.
+                </p>
+              </div>
+
+              <!-- Card 2: Confidentiality -->
+              <div class="p-3.5 rounded-xl border border-status-warning/30 bg-status-warning-bg/40">
+                <div class="flex items-center gap-2 mb-1.5">
+                  <div
+                    class="w-5 h-5 rounded-full bg-status-warning-bg flex items-center justify-center text-status-warning-text shrink-0">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                  </div>
+                  <h3 class="font-bold text-body-sm text-status-warning-text">Confidentiality</h3>
+                </div>
+                <p class="text-body-sm text-status-warning-text/80 leading-relaxed">
+                  Never expose your passwords or PINs to anyone, including bank staff.
+                </p>
+              </div>
+
+              <!-- Card 3: Phishing -->
+              <div class="p-3.5 rounded-xl border border-status-warning/30 bg-status-warning-bg/40">
+                <div class="flex items-center gap-2 mb-1.5">
+                  <div
+                    class="w-5 h-5 rounded-full bg-status-warning-bg flex items-center justify-center text-status-warning-text shrink-0">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" x2="12" y1="8" y2="12" />
+                      <line x1="12" x2="12.01" y1="16" y2="16" />
+                    </svg>
+                  </div>
+                  <h3 class="font-bold text-body-sm text-status-warning-text">Beware of Phishing</h3>
+                </div>
+                <p class="text-body-sm text-status-warning-text/80 leading-relaxed">
+                  Phishing is a fraudulent attempt to steal your details via fake websites or emails.
+                </p>
+              </div>
+            </div>
+
+            <!-- Do's & Don'ts Section -->
+            <div>
+              <h4 class="font-bold text-body-sm text-primary mb-2.5">
+                Do's &amp; Don'ts
+              </h4>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                <!-- Do 1 -->
+                <div
+                  class="p-3 rounded-xl bg-status-success-bg border border-status-success/30 flex flex-col justify-between">
+                  <div class="inline-flex items-center gap-1 text-status-success-text font-bold text-label-md mb-1">
+                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span>Always</span>
+                  </div>
+                  <p class="text-body-sm text-status-success-text leading-snug">
+                    Always keep your computer free of malware
+                  </p>
+                </div>
+
+                <!-- Do 2 -->
+                <div
+                  class="p-3 rounded-xl bg-status-success-bg border border-status-success/30 flex flex-col justify-between">
+                  <div class="inline-flex items-center gap-1 text-status-success-text font-bold text-label-md mb-1">
+                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span>Always</span>
+                  </div>
+                  <p class="text-body-sm text-status-success-text leading-snug">
+                    Always change your passwords periodically
+                  </p>
+                </div>
+
+                <!-- Don't 1 -->
+                <div
+                  class="p-3 rounded-xl bg-status-error-bg border border-status-error/30 flex flex-col justify-between">
+                  <div class="inline-flex items-center gap-1 text-status-error-text font-bold text-label-md mb-1">
+                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="15" x2="9" y1="9" y2="15" />
+                      <line x1="9" x2="15" y1="9" y2="15" />
+                    </svg>
+                    <span>Never</span>
+                  </div>
+                  <p class="text-body-sm text-status-error-text leading-snug">
+                    Never respond to communication asking your personal details
+                  </p>
+                </div>
+
+                <!-- Don't 2 -->
+                <div
+                  class="p-3 rounded-xl bg-status-error-bg border border-status-error/30 flex flex-col justify-between">
+                  <div class="inline-flex items-center gap-1 text-status-error-text font-bold text-label-md mb-1">
+                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="15" x2="9" y1="9" y2="15" />
+                      <line x1="9" x2="15" y1="9" y2="15" />
+                    </svg>
+                    <span>Never</span>
+                  </div>
+                  <p class="text-body-sm text-status-error-text leading-snug">
+                    Never enter your passwords or card details on suspicious sites
+                  </p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          }
+
+        </div>
+      </div>
+
+
+      <!-- ───────────────────────────────────────────────────────────
+           RIGHT COLUMN: Sidebar with Compact Login Card & Security Badges
+      ─────────────────────────────────────────────────────────── -->
+      <div class="md:col-span-5 lg:col-span-3 flex flex-col gap-6 p-4">
+
+        <!-- Top "Use Demo Credentials" Banner Button -->
+        <button type="button" (click)="useDemoCredentials()"
+          class="w-full bg-status-warning-bg hover:bg-status-warning-bg/80 border border-dashed border-status-warning text-status-warning-text font-semibold text-body-sm py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-xs mt-4">
+          <span class="font-bold text-label-md">+</span>
+          <span>Use Demo Credentials</span>
+        </button>
+
+        <!-- Main Login Card -->
+        <div class="rounded-xl overflow-hidden shadow-xl border border-white/10">
+          <!-- Dark Card Header -->
+          <div class="bg-brand-primary px-5 py-4 border border-b-3 border-accent">
+            <h2 class="text-heading-md font-bold font-body leading-snug tracking-tight">
+              Login to Net Banking
+            </h2>
+            <p class="text-label-sm text-muted font-semibold mt-1">
+              Secure · 256-bit Encrypted Session
+            </p>
+          </div>
+          <!-- Light Form Body -->
+          <div class="bg-bg-surface px-5 py-4">
+
+            <!-- Notification Banner -->
+            @if (alertMessage) {
+            <div class="mb-3 p-2.5 rounded-md text-body-sm leading-relaxed flex items-start gap-1.5 border"
+              [class.bg-status-success-bg]="alertMessage.type === 'success'"
+              [class.border-status-success]="alertMessage.type === 'success'"
+              [class.text-status-success-text]="alertMessage.type === 'success'"
+              [class.bg-status-error-bg]="alertMessage.type === 'error'"
+              [class.border-status-error]="alertMessage.type === 'error'"
+              [class.text-status-error-text]="alertMessage.type === 'error'"
+              [class.bg-status-warning-bg]="alertMessage.type === 'info'"
+              [class.border-status-warning]="alertMessage.type === 'info'"
+              [class.text-status-warning-text]="alertMessage.type === 'info'">
+              <span>{{ alertMessage.text }}</span>
+            </div>
+            }
+
+            <!-- Login Form -->
+            <form (ngSubmit)="onLoginSubmit()" class="space-y-3">
+
+              <!-- TENANT ID -->
+              <div>
+                <label class="block text-label-sm font-bold tracking-wider text-secondary uppercase mb-1">
+                  TENANT ID
+                </label>
+                <div class="relative">
+                  <select [(ngModel)]="selectedTenant" name="tenant"
+                    class="w-full bg-bg-surface text-primary rounded-md px-3 py-1.5 text-body-sm font-medium border border-border-default focus:outline-none focus:ring-1 focus:ring-brand-accent transition-all appearance-none cursor-pointer h-9">
+                    @for (tenant of tenants; track tenant) {
+                    <option [value]="tenant">{{ tenant }}</option>
+                    }
+                  </select>
+                  <div class="absolute inset-y-0 right-0 flex items-center px-2.5 pointer-events-none text-muted">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd"
+                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                        clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CUSTOMER ID / USERNAME -->
+              <div>
+                <label class="block text-label-sm font-bold tracking-wider text-secondary uppercase mb-1">
+                  CUSTOMER ID / USERNAME
+                </label>
+                <input type="text" [(ngModel)]="customerId" name="customerId" placeholder="Enter your Customer ID"
+                  class="w-full bg-bg-surface text-primary rounded-md px-3 py-1.5 text-body-sm border focus:outline-none focus:ring-1 focus:ring-brand-accent transition-all h-9"
+                  [class.border-status-error]="submitted && !customerId.trim()"
+                  [class.border-border-default]="!submitted || !!customerId.trim()" />
+                @if (submitted && !customerId.trim()) {
+                <p class="text-label-sm text-status-error-text mt-0.5">Customer ID is required</p>
+                }
+                <div class="mt-0.5 text-right">
+                  <a href="#" class="text-label-sm font-semibold text-brand-accent hover:underline">
+                    Forgot Customer ID?
+                  </a>
+                </div>
+              </div>
+
+              <!-- PASSWORD -->
+              <div>
+                <label class="block text-label-sm font-bold tracking-wider text-secondary uppercase mb-1">
+                  PASSWORD
+                </label>
+                <div class="relative">
+                  <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="password" name="password"
+                    placeholder="Enter your password"
+                    class="w-full bg-bg-surface text-primary rounded-md px-3 py-1.5 pr-8 text-body-sm border focus:outline-none focus:ring-1 focus:ring-brand-accent transition-all h-9"
+                    [class.border-status-error]="submitted && !password"
+                    [class.border-border-default]="!submitted || !!password" />
+                  <button type="button" (click)="togglePasswordVisibility()"
+                    class="absolute inset-y-0 right-0 px-2.5 flex items-center text-muted hover:text-primary transition-colors cursor-pointer">
+                    @if (showPassword) {
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path
+                        d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                      <line x1="1" x2="23" y1="1" y2="23" />
+                    </svg>
+                    } @else {
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    }
+                  </button>
+                </div>
+                @if (submitted && !password) {
+                <p class="text-label-sm text-status-error-text mt-0.5">Password is required</p>
+                }
+                <div class="mt-0.5 text-right">
+                  <a href="#" class="text-label-sm font-semibold text-brand-accent hover:underline">
+                    Forgot Password?
+                  </a>
+                </div>
+              </div>
+
+              <!-- ENTER CAPTCHA -->
+              <div>
+                <label class="block text-label-sm font-bold tracking-wider text-secondary uppercase mb-1">
+                  ENTER CAPTCHA
+                </label>
+
+                <!-- Captcha Graphic & Refresh Button -->
+                <div class="flex items-center gap-2 mb-1.5">
+                  @if (captchaLoading) {
+                  <!-- Loading state -->
+                  <div
+                    class="flex-1 h-9 bg-bg-muted rounded-md flex items-center justify-center text-label-sm text-muted animate-pulse">
+                    <svg class="animate-spin -ml-1 mr-1.5 h-3.5 w-3.5 text-brand-accent" fill="none"
+                      viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                      </path>
+                    </svg>
+                    Generating Session...
+                  </div>
+                  } @else if (sessionTokenData) {
+                  <!-- Secure Captcha Box rendered on sessionToken success -->
+                  <div
+                    class="flex-1 h-9 bg-bg-muted rounded-md border border-border-default relative overflow-hidden flex items-center justify-center select-none shadow-inner">
+                    <!-- Noise SVG background lines -->
+                    <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-40">
+                      @for (line of sessionTokenData.noiseLines; track $index) {
+                      <line [attr.x1]="line.x1" [attr.y1]="line.y1" [attr.x2]="line.x2" [attr.y2]="line.y2"
+                        [attr.stroke]="line.color" stroke-width="1.5" />
+                      }
+                    </svg>
+                    <!-- Distorted Captcha Text matching mockup style -->
+                    <span
+                      class="font-mono text-heading-md font-bold tracking-widest text-brand-primary transform -rotate-1 relative z-raised italic">
+                      {{ sessionTokenData.captchaCode }}
+                    </span>
+                  </div>
+                  } @else {
+                  <!-- Failed state -->
+                  <div
+                    class="flex-1 h-9 bg-status-error-bg border border-status-error/40 rounded-md flex items-center justify-center text-label-sm text-status-error-text">
+                    Session handshake failed
+                  </div>
+                  }
+
+                  <!-- Refresh Button -->
+                  <button type="button" (click)="generateSessionAndCaptcha()" [disabled]="captchaLoading"
+                    class="w-9 h-9 bg-brand-primary hover:bg-brand-primary-hover border border-border-default text-white rounded-md flex items-center justify-center transition-all cursor-pointer disabled:opacity-50 shrink-0"
+                    title="Generate new session captcha">
+                    <svg class="w-3.5 h-3.5" [class.animate-spin]="captchaLoading" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                      <path d="M3 3v5h5" />
+                      <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                      <path d="M16 21h5v-5" />
+                    </svg>
+                  </button>
+                </div>
+
+                <!-- Captcha input field -->
+                <input type="text" [(ngModel)]="captchaInput" name="captchaInput" placeholder="Enter the code above"
+                  class="w-full bg-bg-surface text-primary font-mono tracking-widest rounded-md px-3 py-1.5 text-body-sm border focus:outline-none focus:ring-1 focus:ring-brand-accent transition-all text-center uppercase h-9"
+                  [class.border-status-error]="(submitted && !captchaInput.trim()) || !!captchaValidationError"
+                  [class.border-border-default]="!((submitted && !captchaInput.trim()) || captchaValidationError)" />
+                @if (submitted && !captchaInput.trim()) {
+                <p class="text-label-sm text-status-error-text mt-0.5">Captcha is required</p>
+                } @else if (captchaValidationError) {
+                <p class="text-label-sm text-status-error-text mt-0.5">{{ captchaValidationError }}</p>
+                }
+              </div>
+
+              <!-- Login Action Button -->
+              <button type="submit" [disabled]="isSubmitting"
+                class="w-full bg-brand-primary hover:bg-brand-primary-hover text-white font-bold py-2.5 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md hover:shadow-lg mt-1 text-label-md">
+                @if (isSubmitting) {
+                <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                  </path>
+                </svg>
+                <span>Authenticating...</span>
+                } @else {
+                <span>Login</span>
+                <span>&rarr;</span>
+                }
+              </button>
+
+              <!-- Locked out? Link -->
+              <div class="text-center pt-0.5">
+                <span class="text-label-sm text-secondary">Locked out? </span>
+                <a href="#" class="text-label-sm font-semibold text-brand-accent hover:underline">
+                  Unlock Account
+                </a>
+              </div>
+
+            </form>
+          </div>
+
+        </div>
+
+        <!-- ───────────────────────────────────────────────────────────
+             Security Badges Below Login Card (Screenshot 2)
+        ─────────────────────────────────────────────────────────── -->
+        <!-- Green Security Connection Card -->
+        <div
+          class="p-2.5 rounded-lg bg-status-success-bg border border-status-success/30 flex items-start gap-2.5 shadow-xs">
+          <div
+            class="w-5 h-5 rounded-full bg-status-success-bg flex items-center justify-center text-status-success-text shrink-0 mt-0.5">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          </div>
+          <div>
+            <h4 class="font-bold text-label-md text-status-success-text leading-tight">Secure Connection</h4>
+            <p class="text-label-sm text-status-success-text/90 leading-tight mt-0.5">
+              TLS 1.3 · 256-bit AES Encrypted · RBI Compliant
+            </p>
+          </div>
+        </div>
+
+        <!-- Red Security Advisory Box -->
+        <div
+          class="p-2.5 rounded-lg bg-status-error-bg border border-status-error/30 flex items-start gap-2.5 shadow-xs">
+          <div
+            class="w-5 h-5 rounded-full bg-status-error-bg flex items-center justify-center text-status-error-text shrink-0 mt-0.5">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" x2="12" y1="8" y2="12" />
+              <line x1="12" x2="12.01" y1="16" y2="16" />
+            </svg>
+          </div>
+          <p class="text-label-sm text-status-error-text leading-snug">
+            <strong class="font-bold">SSPL Bank never asks</strong> for your Password, CVV, OTP, or PIN via phone, email
+            or SMS. Never share these with anyone.
+          </p>
+        </div>
+
+        <!-- Compliance & Regulatory Footer Links -->
+        <div class="text-center pt-1 pb-2 space-y-0.5">
+          <p class="text-label-sm text-white/50">
+            SSPL Bank Limited · Regulated by RBI
+          </p>
+          <p class="text-label-sm text-white/40">
+            <a href="#" class="hover:text-white/70">Privacy Policy</a> ·
+            <a href="#" class="hover:text-white/70">Terms of Service</a> ·
+            <a href="#" class="hover:text-white/70">Security</a>
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       4. Global Footer Bar
+  ═══════════════════════════════════════════════════════════ -->
+  <footer class="bg-bg-inverse border-t border-white/10 py-3.5 px-4 sm:px-6 mt-auto relative z-20">
+    <div class="w-full flex flex-col md:flex-row items-center justify-between gap-2 text-label-sm text-white/40">
+      <div>
+        &copy; 2026 SSPL Bank Limited. All rights reserved. Best viewed at 1024x768 resolution in modern browsers.
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        <a href="#" class="hover:text-white/70 transition-colors">SSPL Limited Liability Policy</a>
+        <span>|</span>
+        <a href="#" class="hover:text-white/70 transition-colors">Privacy Statement</a>
+        <span>|</span>
+        <a href="#" class="hover:text-white/70 transition-colors">Terms of Service</a>
+        <span>|</span>
+        <a href="#" class="hover:text-white/70 transition-colors">Disclosure</a>
+        <span>|</span>
+        <a href="#" class="hover:text-white/70 transition-colors">Sitemap</a>
+      </div>
+    </div>
+  </footer>
+
+</div>
