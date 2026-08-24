@@ -16,10 +16,32 @@ export const routes: Routes = [
     title: 'Login to Net Banking — SSPL Bank',
   },
   {
+    path: 'register',
+    loadComponent: () =>
+      import('./pages/register/register-page.component').then((m) => m.RegisterPageComponent),
+    title: 'Register for Net Banking — SSPL Bank',
+  },
+  {
     path: 'dashboard',
     component: DashboardPageComponent,
     canActivate: [authGuard],
     title: 'Dashboard — SSPL Net Banking',
+  },
+  {
+    path: 'profile',
+    loadComponent: () =>
+      import('./pages/profile/profile-page.component').then((m) => m.ProfilePageComponent),
+    canActivate: [authGuard],
+    title: 'User Profile & Banking Details — SSPL Bank',
+  },
+  {
+    path: 'balance-enquiry',
+    loadComponent: () =>
+      import('./pages/balance-enquiry/balance-enquiry-page.component').then(
+        (m) => m.BalanceEnquiryPageComponent,
+      ),
+    canActivate: [authGuard],
+    title: 'Balance Enquiry — SSPL Net Banking',
   },
   {
     path: 'my-accounts',

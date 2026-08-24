@@ -2,11 +2,12 @@ import { Component, input, output, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { BankService } from '../../services/bank.service';
 
 export interface NavItem {
   id: string;
   label: string;
-  icon: 'dashboard' | 'wallet' | 'transfer' | 'document' | 'deposits' | 'investments' | 'cards' | 'loans';
+  icon: 'dashboard' | 'wallet' | 'balance' | 'profile' | 'transfer' | 'document' | 'deposits' | 'investments' | 'cards' | 'loans';
   route?: string;
 }
 
@@ -19,6 +20,7 @@ export interface NavItem {
 })
 export class SideNavComponent {
   private authService = inject(AuthService);
+  private bankService = inject(BankService);
   private router = inject(Router);
 
   // Input signals for active nav identifier
@@ -27,8 +29,9 @@ export class SideNavComponent {
   // Output event for navigation change
   navChange = output<string>();
 
-  // Auth signals from AuthService
+  // Auth signals from AuthService & BankService
   readonly currentUser = this.authService.currentUser;
+  readonly selectedBank = this.bankService.selectedBank;
 
   // Local state for logout confirmation modal
   readonly isLogoutModalOpen = signal<boolean>(false);
@@ -46,6 +49,18 @@ export class SideNavComponent {
       label: 'My Accounts',
       icon: 'wallet',
       route: '/dashboard',
+    },
+    {
+      id: 'balance-enquiry',
+      label: 'Balance Enquiry',
+      icon: 'balance',
+      route: '/balance-enquiry',
+    },
+    {
+      id: 'profile',
+      label: 'User Profile',
+      icon: 'profile',
+      route: '/profile',
     },
     {
       id: 'funds-transfer',

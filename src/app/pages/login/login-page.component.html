@@ -210,15 +210,20 @@
             <span class="text-white/80 text-body-sm sm:text-body-md font-medium">
               Are you a new user?
             </span>
-            <button type="button" (click)="useDemoCredentials()"
-              class="bg-brand-accent hover:bg-brand-accent-hover text-brand-primary font-bold text-body-sm px-3.5 py-1.5 rounded-md transition-colors shadow-xs cursor-pointer">
+            <a routerLink="/register"
+              class="bg-brand-accent hover:bg-brand-accent-hover text-brand-primary font-bold text-body-sm px-3.5 py-1.5 rounded-md transition-colors shadow-xs cursor-pointer inline-flex items-center gap-1.5">
               Register Now
-            </button>
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="m9 18 6-6-6-6" />
+              </svg>
+            </a>
             <button type="button" (click)="useDemoCredentials()"
               class="bg-bg-inverse hover:bg-brand-primary border border-white/20 text-white font-medium text-body-sm px-3.5 py-1.5 rounded-md transition-colors cursor-pointer">
               Activate Username
             </button>
           </div>
+
 
           <!-- Quick Actions Grid (8 Circular Items) -->
           <div class="relative z-raised pt-3">
@@ -494,16 +499,29 @@
             <!-- Login Form -->
             <form (ngSubmit)="onLoginSubmit()" class="space-y-3">
 
-              <!-- TENANT ID -->
+              <!-- SELECT BANK -->
               <div>
                 <label class="block text-label-sm font-bold tracking-wider text-secondary uppercase mb-1">
-                  TENANT ID
+                  SELECT BANK
                 </label>
                 <div class="relative">
-                  <select [(ngModel)]="selectedTenant" name="tenant"
+                  @if (banksLoading()) {
+                  <div
+                    class="w-full h-9 bg-bg-muted rounded-md border border-border-default flex items-center px-3 gap-2 text-secondary text-body-sm animate-pulse">
+                    <svg class="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2.5">
+                      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                    </svg>
+                    Loading banks...
+                  </div>
+                  } @else {
+                  <select [value]="selectedBank?.tenantId || ''" (change)="onBankChange($event)" name="bank"
                     class="w-full bg-bg-surface text-primary rounded-md px-3 py-1.5 text-body-sm font-medium border border-border-default focus:outline-none focus:ring-1 focus:ring-brand-accent transition-all appearance-none cursor-pointer h-9">
-                    @for (tenant of tenants; track tenant) {
-                    <option [value]="tenant">{{ tenant }}</option>
+                    @if (!selectedBank) {
+                    <option value="" disabled>Select a bank...</option>
+                    }
+                    @for (bank of banks(); track bank.tenantId) {
+                    <option [value]="bank.tenantId">{{ bank.bankName }}</option>
                     }
                   </select>
                   <div class="absolute inset-y-0 right-0 flex items-center px-2.5 pointer-events-none text-muted">
@@ -513,8 +531,10 @@
                         clip-rule="evenodd" />
                     </svg>
                   </div>
+                  }
                 </div>
               </div>
+
 
               <!-- CUSTOMER ID / USERNAME -->
               <div>

@@ -56,14 +56,7 @@
 
   </div>
 
-  <!-- 6. Balance Enquiry Details Modal Component -->
-  @if (isEnquiryModalOpen() && selectedAccount()) {
-  <sspl-balance-enquiry-modal [account]="selectedAccount()" (close)="closeBalanceEnquiry()"
-    (downloadStatement)="downloadStatement($event)">
-  </sspl-balance-enquiry-modal>
-  }
-
-  <!-- 7. Export Statement Modal Component -->
+  <!-- 6. Export Statement Modal Component -->
   @if (isExportModalOpen()) {
   <sspl-export-modal (close)="closeExport()" (download)="downloadStatement($event)">
   </sspl-export-modal>

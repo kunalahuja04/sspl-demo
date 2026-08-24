@@ -1,0 +1,624 @@
+<div class="min-h-screen flex flex-col font-body antialiased bg-brand-primary">
+
+  <!-- ═══════════════ TOP NAV BAR ═══════════════ -->
+  <header class="bg-brand-primary border-b border-white/10 shadow-md sticky top-0 z-50">
+    <div class="w-full mx-auto px-5 sm:px-8">
+      <div class="flex items-center justify-between h-14">
+
+        <!-- Logo -->
+        <a routerLink="/login" class="flex items-center gap-2.5 cursor-pointer select-none">
+          <div class="w-8 h-8 bg-brand-accent rounded-lg flex items-center justify-center shadow-sm">
+            <svg width="18" height="18" viewBox="0 0 24 24">
+              <path d="M12 2L2 22h20L12 2z" class="fill-brand-primary" />
+              <path d="M12 8l-5 10h10l-5-10z" class="fill-brand-accent" />
+            </svg>
+          </div>
+          <div class="flex flex-col leading-none">
+            <span class="font-body font-extrabold text-white text-heading-md tracking-tight">SSPL</span>
+            <span class="font-body font-bold text-brand-accent text-label-sm tracking-widest uppercase">NET
+              BANKING</span>
+          </div>
+        </a>
+
+        <!-- Back to login -->
+        <a routerLink="/login"
+          class="font-body flex items-center gap-1.5 text-white/70 hover:text-white text-body-sm font-medium transition-colors cursor-pointer">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="m15 18-6-6 6-6" />
+          </svg>
+          Back to Login
+        </a>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════ MAIN CONTENT ═══════════════ -->
+  <main class="flex-1 flex items-start justify-center px-4 sm:px-6 py-8 sm:py-12">
+
+    <!-- Subtle ambient glow -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden">
+      <div class="absolute -top-32 -right-32 w-150 h-150 rounded-full opacity-[0.07] blur-3xl bg-brand-accent"></div>
+      <div class="absolute -bottom-32 -left-32 w-150 h-150 rounded-full opacity-[0.07] blur-3xl bg-white"></div>
+    </div>
+
+    <div class="relative w-full max-w-3xl">
+
+      <!-- ── Step Indicator ──────────────────────────────────── -->
+      @if (currentStep() !== 3) {
+      <div class="flex items-center justify-center gap-3 mb-8">
+        @for (step of [1, 2]; track step) {
+        <div class="flex items-center gap-2.5">
+          <div
+            class="flex items-center justify-center w-8 h-8 rounded-full font-body font-bold text-body-sm transition-all duration-300 shadow-sm"
+            [class.bg-brand-accent]="currentStep() === step" [class.text-brand-primary]="currentStep() === step"
+            [class.bg-white]="currentStep() > step" [class.text-brand-primary]="currentStep() > step"
+            [class.bg-white/15]="currentStep() < step" [class.text-white/40]="currentStep() < step">
+            @if (currentStep() > step) {
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+            } @else {
+            {{ step }}
+            }
+          </div>
+          <span class="font-body text-body-sm font-semibold hidden sm:inline"
+            [class.text-white]="currentStep() === step" [class.text-white/40]="currentStep() !== step">
+            {{ step === 1 ? 'Select Bank & Type' : 'Your Details' }}
+          </span>
+          @if (step < 2) { <div class="w-12 h-px mx-1 rounded-full transition-colors duration-500"
+            [class.bg-brand-accent]="currentStep() > step" [class.bg-white/15]="currentStep() <= step">
+        </div>
+        }
+      </div>
+      }
+    </div>
+    }
+
+    <!-- ══════════════════════════════════════════════════════
+           STEP 1 — Select Bank & Line of Business
+      ══════════════════════════════════════════════════════ -->
+    @if (currentStep() === 1) {
+    <div class="bg-bg-surface rounded-2xl shadow-2xl border border-border-default overflow-hidden">
+
+      <!-- Card Header -->
+      <div class="px-6 sm:px-8 pt-7 pb-5 border-b border-border-default">
+        <h1 class="font-display text-heading-2xl text-primary font-bold">Create Your Net Banking Account</h1>
+        <p class="font-body text-body-md text-secondary mt-1.5">Select your bank and banking type to get started. Your
+          Customer ID will be generated automatically.</p>
+      </div>
+
+      <div class="px-6 sm:px-8 py-6 space-y-6">
+
+        <!-- Alert -->
+        @if (alertMessage()) {
+        <div class="flex items-start gap-2.5 p-3.5 rounded-xl text-body-sm border font-body"
+          [class.bg-status-error-bg]="alertMessage()?.type === 'error'"
+          [class.border-status-error]="alertMessage()?.type === 'error'"
+          [class.text-status-error-text]="alertMessage()?.type === 'error'">
+          <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" x2="12" y1="8" y2="12" />
+            <line x1="12" x2="12.01" y1="16" y2="16" />
+          </svg>
+          <span>{{ alertMessage()?.text }}</span>
+        </div>
+        }
+
+        <!-- Bank + LOB side by side on desktop -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          <!-- Left: Bank Selection -->
+          <div class="flex flex-col gap-4">
+            <div>
+              <label class="block font-body text-label-sm font-bold tracking-wider text-secondary uppercase mb-2">
+                Select Your Bank
+              </label>
+              @if (banksLoading()) {
+              <div
+                class="h-11 bg-bg-muted animate-pulse rounded-xl border border-border-default flex items-center px-3.5 gap-2 text-secondary">
+                <svg class="w-3.5 h-3.5 animate-spin text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2.5">
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                </svg>
+                <span class="font-body text-body-sm text-muted">Loading banks...</span>
+              </div>
+              } @else {
+              <div class="relative">
+                <select [value]="selectedBank?.tenantId || ''" (change)="onBankChange($event)"
+                  class="w-full font-body bg-bg-surface text-primary rounded-xl px-4 py-2.5 text-body-sm font-medium border border-border-default focus:outline-none focus:ring-2 focus:ring-brand-accent/50 focus:border-brand-accent transition-all appearance-none cursor-pointer h-11">
+                  @if (!selectedBank) {
+                  <option value="" disabled>Choose a bank...</option>
+                  }
+                  @for (bank of banks(); track bank.tenantId) {
+                  <option [value]="bank.tenantId">{{ bank.bankName }}</option>
+                  }
+                </select>
+                <div class="absolute inset-y-0 right-0 flex items-center px-3.5 pointer-events-none text-muted">
+                  <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd"
+                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                      clip-rule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+              }
+            </div>
+
+            <!-- Auto-generated Customer ID preview -->
+            @if (customerId) {
+            <div class="p-4 rounded-xl border border-border-default bg-bg-muted">
+              <p class="font-body text-label-sm font-bold tracking-wider text-muted uppercase mb-1.5">
+                Auto-Generated Customer ID
+              </p>
+              <p class="font-mono text-heading-md text-primary font-bold tracking-wide">{{ customerId }}</p>
+              <p class="font-body text-label-sm text-muted mt-1">This ID will be used for your account. You can use it
+                to log in.</p>
+            </div>
+            }
+          </div>
+
+          <!-- Right: LOB Selection -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label class="block font-body text-label-sm font-bold tracking-wider text-secondary uppercase">
+                Banking Type
+              </label>
+              @if (selectedBank && !lobsLoading() && lobOptions().length > 0) {
+              <span class="font-body text-label-sm text-muted">{{ lobOptions().length }} types available</span>
+              }
+            </div>
+
+            <!-- Loading skeletons -->
+            @if (lobsLoading()) {
+            <div class="space-y-2">
+              @for (i of [1, 2, 3]; track i) {
+              <div class="h-14.5 bg-bg-muted rounded-xl border border-border-default animate-pulse"></div>
+              }
+            </div>
+            }
+
+            <!-- Error -->
+            @if (!lobsLoading() && lobsError()) {
+            <div
+              class="flex items-center justify-between p-3.5 rounded-xl border border-status-error/30 bg-status-error-bg/40 text-status-error-text">
+              <span class="font-body text-body-sm flex items-center gap-2">
+                <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" x2="12" y1="8" y2="12" />
+                  <line x1="12" x2="12.01" y1="16" y2="16" />
+                </svg>
+                {{ lobsError() }}
+              </span>
+              <button type="button" (click)="retryLoadLobs()"
+                class="font-body text-label-sm font-bold underline cursor-pointer ml-3 hover:no-underline shrink-0">
+                Retry
+              </button>
+            </div>
+            }
+
+            <!-- No bank hint -->
+            @if (!lobsLoading() && !lobsError() && !selectedBank) {
+            <div class="p-4 rounded-xl border border-border-default bg-bg-muted text-center">
+              <p class="font-body text-body-sm text-muted">Select a bank to see available banking types.</p>
+            </div>
+            }
+
+            <!-- LOB Cards -->
+            @if (!lobsLoading() && !lobsError() && lobOptions().length > 0) {
+            <div class="space-y-2">
+              @for (lob of lobOptions(); track lob.lobCode) {
+              <button type="button" (click)="selectLob(lob.lobCode)"
+                class="w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all duration-150 cursor-pointer"
+                [class.border-brand-accent]="selectedLobCode === lob.lobCode"
+                [class.bg-brand-accent/5]="selectedLobCode === lob.lobCode"
+                [class.ring-1]="selectedLobCode === lob.lobCode"
+                [class.ring-brand-accent]="selectedLobCode === lob.lobCode"
+                [class.border-border-default]="selectedLobCode !== lob.lobCode"
+                [class.hover:border-brand-accent/50]="selectedLobCode !== lob.lobCode"
+                [class.hover:bg-bg-muted]="selectedLobCode !== lob.lobCode">
+                <!-- Icon pill -->
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors"
+                  [class.bg-brand-primary]="selectedLobCode === lob.lobCode"
+                  [class.text-brand-accent]="selectedLobCode === lob.lobCode"
+                  [class.bg-bg-muted]="selectedLobCode !== lob.lobCode"
+                  [class.text-secondary]="selectedLobCode !== lob.lobCode">
+                  <div [innerHTML]="getIconForLob(lob.lobCode)"></div>
+                </div>
+                <!-- Labels -->
+                <div class="flex-1 min-w-0">
+                  <p class="font-body text-body-sm font-semibold leading-tight"
+                    [class.text-primary]="selectedLobCode === lob.lobCode"
+                    [class.text-secondary]="selectedLobCode !== lob.lobCode">
+                    {{ lob.lobName }}
+                  </p>
+                  <p class="font-mono text-label-sm text-muted mt-0.5">{{ lob.lobCode }}</p>
+                </div>
+                <!-- Selection indicator -->
+                @if (selectedLobCode === lob.lobCode) {
+                <div class="w-5 h-5 rounded-full bg-brand-accent flex items-center justify-center shrink-0">
+                  <svg class="w-3 h-3 text-brand-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                </div>
+                }
+              </button>
+              }
+            </div>
+            }
+          </div>
+
+        </div><!-- end grid -->
+      </div>
+
+      <!-- Card Footer -->
+      <div class="px-6 sm:px-8 pb-7 pt-2 flex flex-col sm:flex-row-reverse gap-3">
+        <button type="button" (click)="goToStep2()"
+          class="flex-1 h-11 bg-brand-primary hover:bg-brand-primary-hover text-white font-body font-bold text-body-sm rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer">
+          Continue
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="m9 18 6-6-6-6" />
+          </svg>
+        </button>
+        <p class="text-center font-body text-body-sm text-muted sm:flex sm:items-center">
+          Already registered?
+          <a routerLink="/login" class="ml-1 text-brand-accent font-semibold hover:underline cursor-pointer">Sign in</a>
+        </p>
+      </div>
+
+    </div>
+    }
+
+    <!-- ══════════════════════════════════════════════════════
+           STEP 2 — User Details Form
+      ══════════════════════════════════════════════════════ -->
+    @if (currentStep() === 2) {
+    <div class="bg-bg-surface rounded-2xl shadow-2xl border border-border-default overflow-hidden">
+
+      <!-- Card Header -->
+      <div class="px-6 sm:px-8 pt-7 pb-5 border-b border-border-default">
+        <h2 class="font-display text-heading-2xl text-primary font-bold">Enter Your Details</h2>
+        <p class="font-body text-body-md text-secondary mt-1.5">Fill in all fields accurately. Your Customer ID has been
+          pre-filled.</p>
+      </div>
+
+      <form (ngSubmit)="onSubmit()" class="px-6 sm:px-8 py-6 space-y-5">
+
+        <!-- Alert -->
+        @if (alertMessage()) {
+        <div class="flex items-start gap-2.5 p-3.5 rounded-xl font-body text-body-sm border"
+          [class.bg-status-error-bg]="alertMessage()?.type === 'error'"
+          [class.border-status-error]="alertMessage()?.type === 'error'"
+          [class.text-status-error-text]="alertMessage()?.type === 'error'">
+          <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" x2="12" y1="8" y2="12" />
+            <line x1="12" x2="12.01" y1="16" y2="16" />
+          </svg>
+          <span>{{ alertMessage()?.text }}</span>
+        </div>
+        }
+
+        <!-- Summary pill: Bank + LOB -->
+        @if (selectedBank) {
+        <div class="flex flex-wrap items-center gap-2 p-3.5 rounded-xl bg-bg-muted border border-border-default">
+          <div class="flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="20" height="14" x="2" y="5" rx="2" />
+              <line x1="2" x2="22" y1="10" y2="10" />
+            </svg>
+            <span class="font-body text-body-sm font-semibold text-primary">{{ selectedBank.bankName }}</span>
+          </div>
+          @if (selectedLobCode) {
+          <span class="text-muted">·</span>
+          <span class="font-body text-body-sm text-secondary font-medium">{{ getLobLabel(selectedLobCode) }}</span>
+          <span
+            class="font-mono text-label-sm text-muted bg-bg-surface px-2 py-0.5 rounded-md border border-border-default">{{
+            selectedLobCode }}</span>
+          }
+        </div>
+        }
+
+        <!-- 2-column grid for form fields on desktop -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+          <!-- Customer ID (read-only, auto-generated) -->
+          <div class="sm:col-span-2">
+            <label class="block font-body text-label-sm font-bold tracking-wider text-secondary uppercase mb-1.5">
+              Customer ID
+              <span
+                class="ml-1.5 text-label-sm font-normal normal-case tracking-normal text-muted">(auto-generated)</span>
+            </label>
+            <div class="relative">
+              <input type="text" [(ngModel)]="customerId" name="customerId"
+                class="w-full font-mono bg-bg-muted text-primary rounded-xl px-4 py-2.5 text-body-sm font-semibold border border-border-default h-11 focus:outline-none focus:ring-2 focus:ring-brand-accent/40 focus:border-brand-accent transition-all tracking-wide"
+                [class.border-status-error]="submitted && !customerIdValid"
+                [class.border-border-default]="!submitted || customerIdValid" />
+              <div class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-muted">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              </div>
+            </div>
+            @if (submitted && !customerIdValid) {
+            <p class="font-body text-label-sm text-status-error-text mt-1">Customer ID is required</p>
+            }
+          </div>
+
+          <!-- Username -->
+          <div>
+            <label class="block font-body text-label-sm font-bold tracking-wider text-secondary uppercase mb-1.5">
+              Username
+            </label>
+            <input type="text" [(ngModel)]="username" name="username" placeholder="4–20 chars · letters, numbers, . _"
+              class="w-full font-body bg-bg-surface text-primary rounded-xl px-4 py-2.5 text-body-sm border h-11 focus:outline-none focus:ring-2 focus:ring-brand-accent/40 focus:border-brand-accent transition-all"
+              [class.border-status-error]="submitted && !usernameValid"
+              [class.border-border-default]="!submitted || usernameValid" />
+            @if (submitted && !usernameValid) {
+            <p class="font-body text-label-sm text-status-error-text mt-1">4–20 chars (letters, numbers, . or _)</p>
+            }
+          </div>
+
+          <!-- Mobile Number -->
+          <div>
+            <label class="block font-body text-label-sm font-bold tracking-wider text-secondary uppercase mb-1.5">
+              Mobile Number
+            </label>
+            <div class="flex gap-2">
+              <div
+                class="flex items-center px-3.5 bg-bg-muted border border-border-default rounded-xl font-body text-body-sm text-secondary font-semibold h-11 shrink-0">
+                +91
+              </div>
+              <input type="tel" [(ngModel)]="mobileNumber" name="mobileNumber" placeholder="10-digit number"
+                maxlength="10"
+                class="flex-1 font-body bg-bg-surface text-primary rounded-xl px-4 py-2.5 text-body-sm border h-11 focus:outline-none focus:ring-2 focus:ring-brand-accent/40 focus:border-brand-accent transition-all"
+                [class.border-status-error]="submitted && !mobileValid"
+                [class.border-border-default]="!submitted || mobileValid" />
+            </div>
+            @if (submitted && !mobileValid) {
+            <p class="font-body text-label-sm text-status-error-text mt-1">Enter a valid 10-digit Indian mobile number
+            </p>
+            }
+          </div>
+
+          <!-- Password -->
+          <div>
+            <label class="block font-body text-label-sm font-bold tracking-wider text-secondary uppercase mb-1.5">
+              Password
+            </label>
+            <div class="relative">
+              <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="password" name="password"
+                placeholder="Min 8 chars · A-z · 0-9 · symbol"
+                class="w-full font-body bg-bg-surface text-primary rounded-xl px-4 py-2.5 pr-11 text-body-sm border h-11 focus:outline-none focus:ring-2 focus:ring-brand-accent/40 focus:border-brand-accent transition-all"
+                [class.border-status-error]="submitted && passwordStrength === 'weak'"
+                [class.border-border-default]="!submitted || passwordStrength !== 'weak'" />
+              <button type="button" (click)="togglePasswordVisibility()"
+                class="absolute inset-y-0 right-0 px-3.5 flex items-center text-muted hover:text-primary transition-colors cursor-pointer">
+                @if (showPassword) {
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path
+                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                  <line x1="1" x2="23" y1="1" y2="23" />
+                </svg>
+                } @else {
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                }
+              </button>
+            </div>
+            <!-- Strength meter -->
+            @if (password) {
+            <div class="mt-2 flex items-center gap-2">
+              <div class="flex gap-1 flex-1">
+                @for (i of [1, 2, 3]; track i) {
+                <div class="h-1 flex-1 rounded-full transition-colors duration-300"
+                  [class.bg-status-error]="i === 1 && passwordStrength === 'weak'"
+                  [class.bg-status-warning]="i <= 2 && passwordStrength === 'fair'"
+                  [class.bg-status-success]="passwordStrength === 'strong'"
+                  [class.bg-border-default]="(i > 1 && passwordStrength === 'weak') || (i === 3 && passwordStrength === 'fair')">
+                </div>
+                }
+              </div>
+              <span class="font-body text-label-sm font-bold"
+                [class.text-status-error-text]="passwordStrength === 'weak'"
+                [class.text-status-warning-text]="passwordStrength === 'fair'"
+                [class.text-status-success-text]="passwordStrength === 'strong'">
+                {{ passwordStrength | titlecase }}
+              </span>
+            </div>
+            }
+          </div>
+
+          <!-- Confirm Password -->
+          <div>
+            <label class="block font-body text-label-sm font-bold tracking-wider text-secondary uppercase mb-1.5">
+              Confirm Password
+            </label>
+            <div class="relative">
+              <input [type]="showConfirmPassword ? 'text' : 'password'" [(ngModel)]="confirmPassword"
+                name="confirmPassword" placeholder="Re-enter your password"
+                class="w-full font-body bg-bg-surface text-primary rounded-xl px-4 py-2.5 pr-11 text-body-sm border h-11 focus:outline-none focus:ring-2 focus:ring-brand-accent/40 focus:border-brand-accent transition-all"
+                [class.border-status-error]="submitted && confirmPassword && !passwordsMatch"
+                [class.border-status-success]="confirmPassword && passwordsMatch"
+                [class.border-border-default]="!confirmPassword" />
+              <button type="button" (click)="toggleConfirmPasswordVisibility()"
+                class="absolute inset-y-0 right-0 px-3.5 flex items-center text-muted hover:text-primary transition-colors cursor-pointer">
+                @if (showConfirmPassword) {
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path
+                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                  <line x1="1" x2="23" y1="1" y2="23" />
+                </svg>
+                } @else {
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                }
+              </button>
+            </div>
+            @if (submitted && confirmPassword && !passwordsMatch) {
+            <p class="font-body text-label-sm text-status-error-text mt-1">Passwords do not match</p>
+            }
+            @if (confirmPassword && passwordsMatch) {
+            <p class="font-body text-label-sm text-status-success-text mt-1 flex items-center gap-1">
+              <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+              Passwords match
+            </p>
+            }
+          </div>
+
+        </div><!-- end form grid -->
+
+        <!-- Security Notice -->
+        <div class="flex items-start gap-2.5 p-3.5 rounded-xl bg-bg-muted border border-border-default">
+          <svg class="w-4 h-4 mt-0.5 text-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+          <p class="font-body text-body-sm text-secondary leading-relaxed">
+            Your data is <strong class="text-primary font-semibold">encrypted end-to-end</strong>. SSPL Bank will never
+            ask for your password by phone or email.
+          </p>
+        </div>
+
+      </form>
+
+      <!-- Footer Actions -->
+      <div class="px-6 sm:px-8 pb-7 pt-1 flex flex-col sm:flex-row-reverse gap-3">
+        <button type="button" (click)="onSubmit()" [disabled]="isSubmitting()"
+          class="flex-1 h-11 bg-brand-primary hover:bg-brand-primary-hover text-white font-body font-bold text-body-sm rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+          @if (isSubmitting()) {
+          <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+          </svg>
+          Registering...
+          } @else {
+          Create Account
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <line x1="19" x2="19" y1="8" y2="14" />
+            <line x1="22" x2="16" y1="11" y2="11" />
+          </svg>
+          }
+        </button>
+        <button type="button" (click)="goBack()"
+          class="sm:w-32 h-11 border border-border-default text-secondary hover:text-primary hover:border-primary font-body font-medium text-body-sm rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="m15 18-6-6 6-6" />
+          </svg>
+          Back
+        </button>
+      </div>
+
+    </div>
+    }
+
+    <!-- ══════════════════════════════════════════════════════
+           STEP 3 — Success Screen
+      ══════════════════════════════════════════════════════ -->
+    @if (currentStep() === 3 && registeredUser()) {
+    <div class="bg-bg-surface rounded-2xl shadow-2xl border border-border-default overflow-hidden">
+
+      <!-- Success Banner -->
+      <div
+        class="px-6 sm:px-8 py-10 flex flex-col items-center text-center border-b border-border-default bg-status-success-bg/20">
+        <div
+          class="w-18 h-18 rounded-full bg-status-success/10 border-2 border-status-success flex items-center justify-center mb-5"
+          style="width:4.5rem;height:4.5rem">
+          <svg class="w-9 h-9 text-status-success-text" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 6 9 17l-5-5" />
+          </svg>
+        </div>
+        <h2 class="font-display text-heading-2xl text-primary font-bold mb-2">Registration Successful!</h2>
+        <p class="font-body text-body-md text-secondary max-w-sm">
+          Your net banking account is ready. Please save the details below before proceeding to login.
+        </p>
+      </div>
+
+      <!-- Details grid -->
+      @let user = registeredUser()!;
+      <div class="px-6 sm:px-8 py-6">
+        <p class="font-body text-label-sm font-bold tracking-wider text-muted uppercase mb-3">Account Details</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
+          @for (detail of [
+          { label: 'Bank Code', value: user.bankCode },
+          { label: 'Customer ID', value: user.customerId },
+          { label: 'Tenant ID', value: user.tenantId },
+          { label: 'Username', value: user.username },
+          { label: 'User Reference', value: user.userReference },
+          { label: 'User ID', value: user.userId.toString() },
+          { label: 'Channel ID', value: user.channelId.toString() },
+          { label: 'Line of Business', value: getLobLabel(user.lobCode) }
+          ]; track detail.label) {
+          <div class="flex items-center justify-between py-2.5 border-b border-border-default last:border-0">
+            <span class="font-body text-label-sm text-muted font-medium">{{ detail.label }}</span>
+            <span class="font-mono text-body-sm text-primary font-semibold">{{ detail.value }}</span>
+          </div>
+          }
+        </div>
+
+        <!-- Save hint -->
+        <div
+          class="flex items-start gap-2.5 mt-5 p-3.5 rounded-xl bg-status-warning-bg/40 border border-status-warning/30">
+          <svg class="w-4 h-4 mt-0.5 text-status-warning-text shrink-0" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+            <line x1="12" x2="12" y1="9" y2="13" />
+            <line x1="12" x2="12.01" y1="17" y2="17" />
+          </svg>
+          <p class="font-body text-body-sm text-status-warning-text">
+            Note your <strong>Username</strong> and <strong>Customer ID</strong> — you'll need them to log in.
+          </p>
+        </div>
+      </div>
+
+      <!-- Go to Login -->
+      <div class="px-6 sm:px-8 pb-7">
+        <button type="button" (click)="navigateToLogin()"
+          class="w-full h-11 bg-brand-primary hover:bg-brand-primary-hover text-white font-body font-bold text-body-sm rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+            <polyline points="10 17 15 12 10 7" />
+            <line x1="15" x2="3" y1="12" y2="12" />
+          </svg>
+          Proceed to Login
+        </button>
+      </div>
+
+    </div>
+    }
+
+</div><!-- end max-w-3xl -->
+</main>
+
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<footer class="bg-brand-primary border-t border-white/10 py-4 px-6 text-center">
+  <p class="font-body text-label-sm text-white/40">© 2026 SSPL Bank Limited. All rights reserved. Regulated by RBI.</p>
+</footer>
+
+</div>

@@ -1,34 +1,26 @@
 <header
   class="bg-bg-surface border-b border-border-default px-6 py-3.5 flex items-center justify-between sticky top-0 z-30 shadow-xs shrink-0">
 
-  <!-- Breadcrumbs -->
+  <!-- Breadcrumbs / Section Title -->
   <div class="flex items-center gap-2 text-label-md text-secondary">
     <a routerLink="/" class="hover:text-primary transition-colors">Home</a>
     <span class="text-muted">›</span>
     <a routerLink="/dashboard" class="hover:text-primary transition-colors">Dashboard</a>
     <span class="text-muted">›</span>
-    <span class="font-bold text-primary">My Accounts</span>
+    <span class="font-bold text-primary">Net Banking</span>
   </div>
 
-  <!-- Right Header Actions -->
-  <div class="flex items-center gap-4">
-    <!-- Tenant Indicator Pill -->
-    <div
-      class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-bg-muted border border-border-default text-label-sm font-semibold text-secondary">
-      <span class="w-2 h-2 rounded-full bg-status-success inline-block animate-pulse"></span>
-      <span>{{ activeTenant() || 'SSPL001' }}</span>
-    </div>
+  <!-- Right Header Actions (Right Side Top Corner) -->
+  <div class="flex items-center gap-3 sm:gap-4">
 
     <!-- Date & Timestamp -->
-    <div class="text-label-sm font-medium text-secondary">
+    <div class="text-label-sm font-medium text-secondary hidden md:block">
       {{ currentFormattedTime }}
     </div>
 
     <!-- Notification Bell with indicator dot -->
     <div class="relative">
-      <button
-        type="button"
-        (click)="toggleNotifications()"
+      <button type="button" (click)="toggleNotifications()"
         class="w-8 h-8 rounded-full bg-bg-muted hover:bg-border-default text-secondary hover:text-primary flex items-center justify-center transition-colors cursor-pointer"
         title="Notifications">
         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -54,12 +46,40 @@
           </div>
           <div class="p-2 rounded bg-status-warning-bg/40 border border-status-warning/20">
             <p class="font-semibold text-status-warning-text">Scheduled Maintenance</p>
-            <p class="text-secondary text-label-sm mt-0.5">RTGS/NEFT window will be offline 02:00-04:00 AM on Sunday.</p>
+            <p class="text-secondary text-label-sm mt-0.5">RTGS/NEFT window will be offline 02:00-04:00 AM on Sunday.
+            </p>
           </div>
         </div>
       </div>
       }
     </div>
+
+    <!-- User Profile Avatar Link -->
+    <a routerLink="/profile"
+      class="flex items-center gap-2 pl-2 border-l border-border-default hover:opacity-80 transition-opacity cursor-pointer group"
+      title="View Customer Profile & Banking Details">
+      <div class="w-8 h-8 rounded-full bg-brand-accent text-brand-primary font-bold text-label-sm flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform">
+        {{ currentUser()?.avatarInitials || 'RK' }}
+      </div>
+    </a>
+
+    <!-- SSPL Net Banking Brand (Shifted to Right Side Top Corner) -->
+    <a routerLink="/dashboard"
+      class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-bg-muted/80 border border-border-default hover:bg-bg-muted hover:border-brand-primary/30 transition-all cursor-pointer group shadow-2xs"
+      title="SSPL Omnichannel Net Banking Platform">
+      <div class="w-7 h-7 bg-brand-accent rounded-lg flex items-center justify-center shadow-2xs shrink-0 group-hover:scale-105 transition-transform">
+        <svg width="15" height="15" viewBox="0 0 24 24">
+          <path d="M12 2L2 22h20L12 2z" class="fill-brand-primary" />
+          <path d="M12 8l-5 10h10l-5-10z" class="fill-brand-accent" />
+        </svg>
+      </div>
+      <div class="flex flex-col leading-none">
+        <span class="font-body font-extrabold text-primary text-label-sm tracking-tight">SSPL</span>
+        <span class="font-body font-bold text-brand-accent text-[9px] tracking-widest uppercase mt-0.5">
+          NET BANKING
+        </span>
+      </div>
+    </a>
 
   </div>
 

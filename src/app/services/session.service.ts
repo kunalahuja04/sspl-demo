@@ -1,47 +1,71 @@
-import { Injectable } from '@angular/core';
-import { Observable, of, delay } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, map, tap } from 'rxjs';
+import { API_ENDPOINTS } from '../core/config/api-endpoints';
+import { ApiRequestBuilderService } from '../core/services/api-request-builder.service';
+import {
+  GenerateSessionTokenRequest,
+  GenerateSessionTokenResponse,
+  GenerateSessionTokenResponseBody,
+  CaptchaNoiseLine
+} from '../models';
 
 export interface SessionTokenResponse {
   sessionToken: string;
   expiresAt: number;
   captchaCode: string;
-  noiseLines: { x1: number; y1: number; x2: number; y2: number; color: string }[];
+  noiseLines: CaptchaNoiseLine[];
+  txnId?: string;
+  requestNo?: string;
 }
 
 @Injectable({
   providedIn: 'root',
 })
 export class SessionService {
+  private http = inject(HttpClient);
+  private requestBuilder = inject(ApiRequestBuilderService);
+
   private currentSession: SessionTokenResponse | null = null;
 
   /**
-   * Generates a new secure banking session token.
-   * On success of this method, the captcha data is provided to the login interface.
+   * Generates a new secure banking session token through HttpClient.
+   * Sends the standard ApiRequest envelope with device info & requestNo.
+   * On success, captures the sessionToken, captcha, noise lines, and txnId.
    */
   generateSessionToken(): Observable<SessionTokenResponse> {
-    const sampleCodes = ['TCWYXg', 'K8M4Np', 'R9X2Va', 'Q5B7Zw', 'H3D9Le', 'W2Y6Fs'];
-    const chosenCode = sampleCodes[Math.floor(Math.random() * sampleCodes.length)];
+    const requestPayload: GenerateSessionTokenRequest = this.requestBuilder.buildRequest({});
 
-    const token =
-      'SSPL-SES-' + Math.random().toString(36).substring(2, 8).toUpperCase() + '-' + Date.now();
+    return this.http
+      .post<GenerateSessionTokenResponse>(API_ENDPOINTS.AUTH.GENERATE_SESSION_TOKEN, requestPayload)
+      .pipe(
+        map((response: GenerateSessionTokenResponse) => {
+          const body: GenerateSessionTokenResponseBody = response.body || {};
+          const header = response.header;
 
-    // Noise lines for captcha security simulation
-    const noiseLines = [
-      { x1: 5, y1: 15, x2: 135, y2: 25, color: 'rgba(13, 34, 64, 0.25)' },
-      { x1: 10, y1: 30, x2: 130, y2: 10, color: 'rgba(201, 162, 39, 0.35)' },
-      { x1: 20, y1: 8, x2: 120, y2: 32, color: 'rgba(13, 34, 64, 0.20)' },
-    ];
+          const sessionData: SessionTokenResponse = {
+            sessionToken: body.sessionToken || 'SSPL-SES-DEFAULT',
+            expiresAt: body.expiresAt || (Date.now() + 15 * 60 * 1000),
+            captchaCode: body.captchaCode || 'TCWYXg',
+            noiseLines: body.noiseLines || [],
+            txnId: header?.txnId,
+            requestNo: header?.requestNo
+          };
 
-    const response: SessionTokenResponse = {
-      sessionToken: token,
-      expiresAt: Date.now() + 15 * 60 * 1000,
-      captchaCode: chosenCode,
-      noiseLines: noiseLines,
-    };
-
-    this.currentSession = response;
-
-    return of(response).pipe(delay(350));
+          return sessionData;
+        }),
+        tap((sessionData: SessionTokenResponse) => {
+          this.currentSession = sessionData;
+          try {
+            sessionStorage.setItem('sspl_session_token', sessionData.sessionToken);
+            if (sessionData.txnId) {
+              sessionStorage.setItem('sspl_last_txn_id', sessionData.txnId);
+            }
+          } catch {
+            // Storage access fallback
+          }
+        })
+      );
   }
 
   getCurrentSession(): SessionTokenResponse | null {

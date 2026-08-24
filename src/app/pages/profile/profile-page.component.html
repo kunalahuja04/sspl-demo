@@ -1,0 +1,536 @@
+<div class="h-screen w-full bg-bg-canvas flex font-body antialiased text-primary overflow-hidden">
+
+  <!-- 1. Left Sidebar Navigation Component -->
+  <sspl-side-nav [activeNavId]="activeNavId()" (navChange)="onNavChange($event)">
+  </sspl-side-nav>
+
+  <!-- 2. Main Content Scrollable Container -->
+  <div class="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto bg-bg-canvas">
+
+    <!-- Top Header Bar Component -->
+    <sspl-dashboard-header></sspl-dashboard-header>
+
+    <!-- Main Page Content Section -->
+    <main class="flex-1 p-6 space-y-6 max-w-7xl mx-auto w-full">
+
+      <!-- Toast Feedback Banner -->
+      @if (toastMessage()) {
+      <div
+        class="p-3.5 rounded-xl flex items-center justify-between font-body text-body-sm font-medium border shadow-xs transition-all animate-in fade-in"
+        [class.bg-status-success-bg]="toastMessage()?.type === 'success'"
+        [class.border-status-success]="toastMessage()?.type === 'success'"
+        [class.text-status-success-text]="toastMessage()?.type === 'success'"
+        [class.bg-status-info-bg]="toastMessage()?.type === 'info'"
+        [class.border-status-info]="toastMessage()?.type === 'info'"
+        [class.text-status-info-text]="toastMessage()?.type === 'info'"
+        [class.bg-status-error-bg]="toastMessage()?.type === 'error'"
+        [class.border-status-error]="toastMessage()?.type === 'error'"
+        [class.text-status-error-text]="toastMessage()?.type === 'error'">
+        <div class="flex items-center gap-2.5">
+          <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+            <polyline points="22 4 12 14.01 9 11.01" />
+          </svg>
+          <span>{{ toastMessage()?.text }}</span>
+        </div>
+        <button type="button" (click)="toastMessage.set(null)"
+          class="text-current opacity-70 hover:opacity-100 cursor-pointer font-bold ml-4 p-1">
+          ✕
+        </button>
+      </div>
+      }
+
+      <!-- Top Title & Navigation Bar -->
+      <div
+        class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-border-default">
+        <div>
+          <div class="flex items-center gap-2 text-label-md text-secondary mb-1">
+            <a routerLink="/dashboard" class="hover:text-primary transition-colors">Dashboard</a>
+            <span class="text-muted">›</span>
+            <span class="font-bold text-primary">User Profile</span>
+          </div>
+          <h1 class="font-display text-heading-2xl text-primary font-bold tracking-tight">Customer Profile &amp; Banking
+            Details</h1>
+          <p class="font-body text-body-sm text-secondary mt-0.5">Comprehensive view of your personal credentials,
+            partner bank, and linked accounts.</p>
+        </div>
+
+        <div class="flex items-center gap-2.5">
+          <!-- Refresh Button -->
+          <button type="button" (click)="refreshProfile()" [disabled]="isRefreshing() || isLoading()"
+            class="px-3.5 py-2 rounded-xl bg-bg-surface hover:bg-bg-muted border border-border-default font-body text-body-sm font-semibold text-secondary hover:text-primary flex items-center gap-2 transition-all cursor-pointer shadow-xs disabled:opacity-50">
+            <svg class="w-4 h-4" [class.animate-spin]="isRefreshing() || isLoading()" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.19" />
+            </svg>
+            <span>Refresh</span>
+          </button>
+
+          <!-- Download Verification Slip -->
+          <button type="button" (click)="downloadProfileSlip()"
+            class="px-4 py-2 rounded-xl bg-brand-primary hover:bg-brand-primary-hover text-white font-body text-body-sm font-bold flex items-center gap-2 transition-all shadow-brand cursor-pointer">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" x2="12" y1="15" y2="3" />
+            </svg>
+            <span>Download Slip</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════
+           1. HERO PROFILE SUMMARY CARD
+      ══════════════════════════════════════════════════════ -->
+      <div class="relative overflow-hidden rounded-2xl bg-bg-surface border border-border-default shadow-md">
+
+        <!-- Top accent banner -->
+        <div class="h-28 sm:h-32 bg-brand-primary relative overflow-hidden">
+          <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] bg-size-[16px_16px]">
+          </div>
+          <div class="absolute -right-10 -bottom-10 w-48 h-48 rounded-full bg-brand-accent/20 blur-2xl"></div>
+          <div class="absolute right-6 top-4 flex items-center gap-2">
+            <span
+              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-xs text-white text-label-sm font-semibold border border-white/20">
+              <span class="w-2 h-2 rounded-full bg-status-success animate-pulse"></span>
+              Net Banking Active
+            </span>
+          </div>
+        </div>
+
+        <div class="px-6 sm:px-8 pb-7 pt-0 relative">
+
+          <!-- Avatar + Top Row -->
+          <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-12 sm:-mt-14 mb-6">
+
+            <div class="flex items-end gap-4 sm:gap-5">
+              <!-- Avatar -->
+              <div class="relative">
+                <div
+                  class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-brand-accent border-4 border-bg-surface shadow-xl flex items-center justify-center text-brand-primary font-bold text-heading-2xl font-display">
+                  {{ (profile()?.username || 'U').substring(0, 2).toUpperCase() }}
+                </div>
+                <div
+                  class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-status-success border-2 border-bg-surface flex items-center justify-center"
+                  title="KYC Verified">
+                  <svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Main Titles -->
+              <div class="mb-1">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h2 class="font-display text-heading-xl sm:text-heading-2xl text-primary font-bold">{{
+                    profile()?.username || 'User Profile' }}</h2>
+                  <span
+                    class="px-2.5 py-0.5 rounded-full bg-status-success-bg text-status-success-text border border-status-success/30 text-label-sm font-bold">
+                    KYC Verified
+                  </span>
+                </div>
+                <p class="font-body text-body-sm text-secondary mt-0.5">Primary Net Banking Account</p>
+              </div>
+            </div>
+
+            <!-- Bank Badge -->
+            <div class="flex items-center gap-3 p-3 rounded-xl bg-bg-muted border border-border-default">
+              <div
+                class="w-10 h-10 rounded-lg bg-brand-primary flex items-center justify-center text-brand-accent font-bold text-body-sm">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="20" height="14" x="2" y="5" rx="2" />
+                  <line x1="2" x2="22" y1="10" y2="10" />
+                </svg>
+              </div>
+              <div>
+                <p class="font-body text-label-sm text-muted uppercase font-bold tracking-wider">Partner Bank</p>
+                <p class="font-body text-body-sm font-bold text-primary">{{ bankName() }}</p>
+                <p class="font-mono text-label-sm text-secondary">{{ profile()?.bankCode || 'BHARAT' }}</p>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Key Credentials Quick Grid -->
+          <div
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 rounded-xl bg-bg-muted border border-border-default">
+
+            <!-- Customer ID -->
+            <div class="flex flex-col">
+              <span class="font-body text-label-sm font-bold text-muted uppercase tracking-wider">Customer ID</span>
+              <div class="flex items-center gap-1.5 mt-1">
+                <span class="font-mono text-body-md font-bold text-primary">{{ profile()?.customerId || '—' }}</span>
+                <button type="button"
+                  (click)="copyToClipboard(profile()?.customerId || '', 'Customer ID', 'customerId')"
+                  class="p-1 rounded-md text-muted hover:text-primary hover:bg-bg-surface transition-colors cursor-pointer"
+                  [title]="copiedKey() === 'customerId' ? 'Copied!' : 'Copy Customer ID'">
+                  @if (copiedKey() === 'customerId') {
+                  <svg class="w-3.5 h-3.5 text-status-success-text" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                  } @else {
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                  </svg>
+                  }
+                </button>
+              </div>
+            </div>
+
+            <!-- Username -->
+            <div class="flex flex-col">
+              <span class="font-body text-label-sm font-bold text-muted uppercase tracking-wider">Username</span>
+              <div class="flex items-center gap-1.5 mt-1">
+                <span class="font-body text-body-md font-bold text-primary">{{ profile()?.username || '—' }}</span>
+                <button type="button" (click)="copyToClipboard(profile()?.username || '', 'Username', 'username')"
+                  class="p-1 rounded-md text-muted hover:text-primary hover:bg-bg-surface transition-colors cursor-pointer"
+                  [title]="copiedKey() === 'username' ? 'Copied!' : 'Copy Username'">
+                  @if (copiedKey() === 'username') {
+                  <svg class="w-3.5 h-3.5 text-status-success-text" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                  } @else {
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                  </svg>
+                  }
+                </button>
+              </div>
+            </div>
+
+            <!-- Mobile Number -->
+            <div class="flex flex-col">
+              <span class="font-body text-label-sm font-bold text-muted uppercase tracking-wider">Registered
+                Mobile</span>
+              <div class="flex items-center gap-1.5 mt-1">
+                <span class="font-body text-body-md font-bold text-primary">{{ formattedMobileNumber() }}</span>
+                <button type="button"
+                  (click)="copyToClipboard(profile()?.mobileNumber || '', 'Mobile Number', 'mobileNumber')"
+                  class="p-1 rounded-md text-muted hover:text-primary hover:bg-bg-surface transition-colors cursor-pointer"
+                  [title]="copiedKey() === 'mobileNumber' ? 'Copied!' : 'Copy Mobile Number'">
+                  @if (copiedKey() === 'mobileNumber') {
+                  <svg class="w-3.5 h-3.5 text-status-success-text" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                  } @else {
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                  </svg>
+                  }
+                </button>
+              </div>
+            </div>
+
+            <!-- Line of Business (LOB) -->
+            <div class="flex flex-col">
+              <span class="font-body text-label-sm font-bold text-muted uppercase tracking-wider">Line of
+                Business</span>
+              <div class="flex items-center gap-2 mt-1">
+                <span
+                  class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-brand-primary text-white text-body-sm font-bold">
+                  {{ lobInfo().title }}
+                </span>
+                <span
+                  class="font-mono text-label-sm text-muted bg-bg-surface px-1.5 py-0.5 rounded border border-border-default">
+                  {{ profile()?.lobCode || 'RETAIL' }}
+                </span>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════
+           2. LINKED BANKING ACCOUNTS & IFSC SECTION
+      ══════════════════════════════════════════════════════ -->
+      <div class="space-y-4">
+
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="font-display text-heading-lg text-primary font-bold">Linked Accounts &amp; IFSC Details</h2>
+            <p class="font-body text-body-sm text-secondary">Active bank accounts linked to your Net Banking profile
+              with real-time routing numbers.</p>
+          </div>
+          <span
+            class="px-3 py-1 rounded-full bg-bg-muted border border-border-default font-body text-label-sm font-bold text-secondary">
+            {{ accounts().length }} Active Accounts
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          @for (acc of accounts(); track acc.id) {
+          <div
+            class="bg-bg-surface rounded-2xl border border-border-default p-5 sm:p-6 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between group">
+
+            <div>
+              <!-- Account Header Row -->
+              <div class="flex items-start justify-between gap-3 pb-4 border-b border-border-default">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-10 h-10 rounded-xl bg-brand-primary/10 text-brand-primary flex items-center justify-center font-bold">
+                    @if (acc.category === 'savings') {
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path
+                        d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
+                      <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
+                    </svg>
+                    } @else if (acc.category === 'current') {
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <rect width="20" height="14" x="2" y="5" rx="2" />
+                      <line x1="2" x2="22" y1="10" y2="10" />
+                    </svg>
+                    } @else {
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="2" x2="22" y1="12" y2="12" />
+                      <path
+                        d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                    </svg>
+                    }
+                  </div>
+                  <div>
+                    <h3 class="font-body text-body-md font-bold text-primary">{{ acc.type }}</h3>
+                    <p class="font-body text-label-sm text-secondary">{{ acc.branch }}</p>
+                  </div>
+                </div>
+
+                <span
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-status-success-bg text-status-success-text border border-status-success/30 font-body text-label-sm font-bold">
+                  <span class="w-1.5 h-1.5 rounded-full bg-status-success"></span>
+                  {{ acc.status }}
+                </span>
+              </div>
+
+              <!-- Account Number & IFSC Grid -->
+              <div class="py-4 space-y-3">
+
+                <!-- Account Number Row -->
+                <div class="flex items-center justify-between p-3 rounded-xl bg-bg-muted border border-border-default">
+                  <div class="flex flex-col">
+                    <span class="font-body text-label-sm font-bold text-muted uppercase tracking-wider">Account
+                      Number</span>
+                    <span class="font-mono text-body-md font-bold text-primary mt-0.5">{{ acc.fullAccountNumber
+                      }}</span>
+                  </div>
+                  <button type="button"
+                    (click)="copyToClipboard(acc.fullAccountNumber, 'Account Number', 'acc_' + acc.id)"
+                    class="px-2.5 py-1.5 rounded-lg bg-bg-surface hover:bg-white border border-border-default font-body text-label-sm font-semibold text-secondary hover:text-primary flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs">
+                    @if (copiedKey() === 'acc_' + acc.id) {
+                    <svg class="w-3.5 h-3.5 text-status-success-text" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg>
+                    <span class="text-status-success-text">Copied</span>
+                    } @else {
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                    </svg>
+                    <span>Copy</span>
+                    }
+                  </button>
+                </div>
+
+                <!-- IFSC Code Row -->
+                <div class="flex items-center justify-between p-3 rounded-xl bg-bg-muted border border-border-default">
+                  <div class="flex flex-col">
+                    <span class="font-body text-label-sm font-bold text-muted uppercase tracking-wider">IFSC Code</span>
+                    <span class="font-mono text-body-md font-bold text-primary mt-0.5">{{ acc.ifsc.replace('IFSC: ', '')
+                      }}</span>
+                  </div>
+                  <button type="button"
+                    (click)="copyToClipboard(acc.ifsc.replace('IFSC: ', ''), 'IFSC Code', 'ifsc_' + acc.id)"
+                    class="px-2.5 py-1.5 rounded-lg bg-bg-surface hover:bg-white border border-border-default font-body text-label-sm font-semibold text-secondary hover:text-primary flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs">
+                    @if (copiedKey() === 'ifsc_' + acc.id) {
+                    <svg class="w-3.5 h-3.5 text-status-success-text" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg>
+                    <span class="text-status-success-text">Copied</span>
+                    } @else {
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                    </svg>
+                    <span>Copy</span>
+                    }
+                  </button>
+                </div>
+
+              </div>
+
+              <!-- Balance & Features Summary -->
+              <div class="grid grid-cols-2 gap-3 pt-2">
+                <div class="p-3 rounded-xl bg-bg-surface border border-border-default">
+                  <span class="font-body text-label-sm text-muted">Available Balance</span>
+                  <p class="font-display text-body-lg font-bold text-primary mt-0.5">{{ acc.availableBalance }}</p>
+                </div>
+                <div class="p-3 rounded-xl bg-bg-surface border border-border-default">
+                  <span class="font-body text-label-sm text-muted">Currency</span>
+                  <p class="font-body text-body-lg font-bold text-primary mt-0.5">{{ acc.currency }}</p>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Footer Action -->
+            <div class="pt-4 mt-4 border-t border-border-default flex items-center justify-between text-label-sm">
+              <span class="font-body text-muted flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-status-success" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Nominee Registered
+              </span>
+              <a routerLink="/dashboard"
+                class="font-body font-semibold text-brand-primary hover:underline flex items-center gap-1">
+                View Transactions
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
+              </a>
+            </div>
+
+          </div>
+          }
+        </div>
+
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════
+           3. DETAILED SPECS & SERVICE CAPABILITIES GRID
+      ══════════════════════════════════════════════════════ -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Line of Business Capabilities Card -->
+        <div class="bg-bg-surface rounded-2xl border border-border-default p-6 shadow-sm">
+          <div class="flex items-center gap-3 pb-4 border-b border-border-default">
+            <div class="w-10 h-10 rounded-xl bg-brand-primary text-brand-accent flex items-center justify-center"
+              [innerHTML]="lobInfo().icon">
+            </div>
+            <div>
+              <h3 class="font-display text-heading-md text-primary font-bold">{{ lobInfo().title }}</h3>
+              <p class="font-body text-label-sm text-secondary">Banking Division &amp; Operational Scope</p>
+            </div>
+          </div>
+
+          <p class="font-body text-body-sm text-secondary py-4 leading-relaxed">
+            {{ lobInfo().desc }}
+          </p>
+
+          <div class="space-y-2.5">
+            <p class="font-body text-label-sm font-bold text-muted uppercase tracking-wider">Channel Authorizations</p>
+
+            <div class="grid grid-cols-2 gap-2 text-label-sm font-body">
+              <div class="flex items-center gap-2 p-2.5 rounded-lg bg-bg-muted border border-border-default">
+                <svg class="w-4 h-4 text-status-success" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span>Internet Banking 24x7</span>
+              </div>
+              <div class="flex items-center gap-2 p-2.5 rounded-lg bg-bg-muted border border-border-default">
+                <svg class="w-4 h-4 text-status-success" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span>IMPS / NEFT / RTGS</span>
+              </div>
+              <div class="flex items-center gap-2 p-2.5 rounded-lg bg-bg-muted border border-border-default">
+                <svg class="w-4 h-4 text-status-success" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span>Mobile OTP Alerts</span>
+              </div>
+              <div class="flex items-center gap-2 p-2.5 rounded-lg bg-bg-muted border border-border-default">
+                <svg class="w-4 h-4 text-status-success" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span>E-Statement Delivery</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Security & Privacy Card -->
+        <div class="bg-bg-surface rounded-2xl border border-border-default p-6 shadow-sm">
+          <div class="flex items-center gap-3 pb-4 border-b border-border-default">
+            <div class="w-10 h-10 rounded-xl bg-status-success/10 text-status-success flex items-center justify-center">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="font-display text-heading-md text-primary font-bold">Security &amp; Account Protection</h3>
+              <p class="font-body text-label-sm text-secondary">Enterprise Encryption &amp; RBI Compliance</p>
+            </div>
+          </div>
+
+          <div class="py-4 space-y-3">
+            <div class="flex items-center justify-between py-2 border-b border-border-default">
+              <span class="font-body text-body-sm text-secondary">Two-Factor Authentication</span>
+              <span class="font-body text-label-sm font-bold text-status-success-text flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-status-success"></span>
+                Active (SMS OTP)
+              </span>
+            </div>
+            <div class="flex items-center justify-between py-2 border-b border-border-default">
+              <span class="font-body text-body-sm text-secondary">Encryption Standard</span>
+              <span class="font-mono text-label-sm font-semibold text-primary">AES-256 Bit TLS 1.3</span>
+            </div>
+            <div class="flex items-center justify-between py-2 border-b border-border-default">
+              <span class="font-body text-body-sm text-secondary">Daily Transfer Limit</span>
+              <span class="font-mono text-body-sm font-bold text-primary">₹5,00,000.00</span>
+            </div>
+            <div class="flex items-center justify-between py-2">
+              <span class="font-body text-body-sm text-secondary">RBI Banking License</span>
+              <span class="font-body text-label-sm font-semibold text-primary">Regulated &amp; Insured by DICGC</span>
+            </div>
+          </div>
+
+          <div
+            class="p-3 rounded-xl bg-status-info-bg/40 border border-status-info/20 text-status-info-text text-label-sm font-body flex items-start gap-2">
+            <svg class="w-4 h-4 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" x2="12" y1="8" y2="12" />
+              <line x1="12" x2="12.01" y1="16" y2="16" />
+            </svg>
+            <span>SSPL Bank never asks for your PIN, OTP, or Password via call or SMS. Keep your credentials
+              private.</span>
+          </div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+
+</div>
