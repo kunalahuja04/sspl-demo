@@ -18,19 +18,28 @@ export class RegistrationService {
   private requestBuilder = inject(ApiRequestBuilderService);
 
   /**
-   * Submits a new customer registration request.
+   * Submits a new customer registration request (/TestBedGateway/API/banking/customer/register).
    */
   register(payload: RegisterRequestBody['registerRequest']): Observable<RegistrationResponseBody['registrationResponse']> {
-    const body: RegisterRequestBody = { registerRequest: payload };
+    const normalizedPayload = {
+      ...payload,
+      bankId: payload.bankId || payload.bankCode || '',
+    };
+    const body: RegisterRequestBody = { registerRequest: normalizedPayload };
     const request: RegisterRequest = this.requestBuilder.buildRequest(body);
 
-    return this.http.post<RegisterResponse>(API_ENDPOINTS.AUTH.REGISTER, request).pipe(
+    return this.http.post<RegisterResponse>(API_ENDPOINTS.BANKING.REGISTER, request).pipe(
       map((response) => {
         if (response.header.status !== 'success') {
-          throw new Error(response.header.status || 'Registration failed');
+          const errorMsg =
+            response.header.errorMessage ||
+            response.header.message ||
+            `Registration failed (${response.header.errorCode || 'Error'})`;
+          throw new Error(errorMsg);
         }
         return response.body!.registrationResponse;
       }),
     );
   }
 }
+

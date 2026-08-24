@@ -39,94 +39,147 @@
   <!-- 2. Main Navigation Menu (Scrollable middle section) -->
   <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto min-h-0">
     @for (item of navItems; track item.id) {
-    <button
-      type="button"
-      (click)="onSelectNav(item)"
-      class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-body-sm font-medium transition-all cursor-pointer text-left"
-      [class.bg-brand-accent/15]="activeNavId() === item.id"
-      [class.text-brand-accent]="activeNavId() === item.id"
-      [class.border-l-3]="activeNavId() === item.id"
-      [class.border-brand-accent]="activeNavId() === item.id"
-      [class.text-white/70]="activeNavId() !== item.id"
-      [class.hover:text-white]="activeNavId() !== item.id"
-      [class.hover:bg-white/5]="activeNavId() !== item.id">
+    <div>
+      <button
+        type="button"
+        (click)="onSelectNav(item)"
+        class="w-full flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-lg text-body-sm font-medium transition-all cursor-pointer text-left group"
+        [class.bg-brand-accent/15]="activeNavId() === item.id || (item.id === 'loans' && activeNavId().startsWith('loans'))"
+        [class.text-brand-accent]="activeNavId() === item.id || (item.id === 'loans' && activeNavId().startsWith('loans'))"
+        [class.border-l-3]="activeNavId() === item.id || (item.id === 'loans' && activeNavId().startsWith('loans'))"
+        [class.border-brand-accent]="activeNavId() === item.id || (item.id === 'loans' && activeNavId().startsWith('loans'))"
+        [class.text-white/70]="activeNavId() !== item.id && (!item.id.startsWith('loans') || !activeNavId().startsWith('loans'))"
+        [class.hover:text-white]="activeNavId() !== item.id"
+        [class.hover:bg-white/5]="activeNavId() !== item.id">
 
-      <!-- Dynamic SVG Icons -->
-      @if (item.icon === 'dashboard') {
-      <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-        stroke-linecap="round" stroke-linejoin="round">
-        <rect width="7" height="9" x="3" y="3" rx="1" />
-        <rect width="7" height="5" x="14" y="3" rx="1" />
-        <rect width="7" height="9" x="14" y="12" rx="1" />
-        <rect width="7" height="5" x="3" y="16" rx="1" />
-      </svg>
-      } @else if (item.icon === 'wallet') {
-      <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-        stroke-linecap="round" stroke-linejoin="round">
-        <path
-          d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
-        <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
-      </svg>
-      } @else if (item.icon === 'balance') {
-      <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-        stroke-linecap="round" stroke-linejoin="round">
-        <rect width="20" height="12" x="2" y="6" rx="2" />
-        <circle cx="12" cy="12" r="2" />
-        <path d="M6 12h.01M18 12h.01" />
-      </svg>
-      } @else if (item.icon === 'profile') {
-      <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-        stroke-linecap="round" stroke-linejoin="round">
-        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-        <circle cx="12" cy="7" r="4" />
-      </svg>
-      } @else if (item.icon === 'transfer') {
-      <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-        stroke-linecap="round" stroke-linejoin="round">
-        <path d="m17 2 4 4-4 4" />
-        <path d="M3 6h18" />
-        <path d="m7 22-4-4 4-4" />
-        <path d="M21 18H3" />
-      </svg>
-      } @else if (item.icon === 'document') {
-      <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-        stroke-linecap="round" stroke-linejoin="round">
-        <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
-        <path d="M14 2v4a2 2 0 0 0 2 2h4" />
-        <path d="M10 9H8" />
-        <path d="M16 13H8" />
-        <path d="M16 17H8" />
-      </svg>
-      } @else if (item.icon === 'deposits') {
-      <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-        stroke-linecap="round" stroke-linejoin="round">
-        <path
-          d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-1.8.3-.7.4-1.4.4-2.2 0-3.3-2.5-4.5-4-5" />
-        <circle cx="8" cy="11" r="1" />
-        <path d="M15 13a4 4 0 0 0-4-4" />
-      </svg>
-      } @else if (item.icon === 'investments') {
-      <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-        stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-        <polyline points="16 7 22 7 22 13" />
-      </svg>
-      } @else if (item.icon === 'cards') {
-      <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-        stroke-linecap="round" stroke-linejoin="round">
-        <rect width="20" height="14" x="2" y="5" rx="2" />
-        <line x1="2" x2="22" y1="10" y2="10" />
-      </svg>
-      } @else if (item.icon === 'loans') {
-      <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-        stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-      </svg>
+        <div class="flex items-center gap-3 min-w-0">
+          <!-- Dynamic SVG Icons -->
+          @if (item.icon === 'dashboard') {
+          <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect width="7" height="9" x="3" y="3" rx="1" />
+            <rect width="7" height="5" x="14" y="3" rx="1" />
+            <rect width="7" height="9" x="14" y="12" rx="1" />
+            <rect width="7" height="5" x="3" y="16" rx="1" />
+          </svg>
+          } @else if (item.icon === 'wallet') {
+          <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path
+              d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
+            <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
+          </svg>
+          } @else if (item.icon === 'balance') {
+          <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect width="20" height="12" x="2" y="6" rx="2" />
+            <circle cx="12" cy="12" r="2" />
+            <path d="M6 12h.01M18 12h.01" />
+          </svg>
+          } @else if (item.icon === 'profile') {
+          <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+          } @else if (item.icon === 'loans') {
+          <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+          </svg>
+          } @else if (item.icon === 'transfer') {
+          <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="m17 2 4 4-4 4" />
+            <path d="M3 6h18" />
+            <path d="m7 22-4-4 4-4" />
+            <path d="M21 18H3" />
+          </svg>
+          } @else if (item.icon === 'document') {
+          <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+            <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+            <path d="M10 9H8" />
+            <path d="M16 13H8" />
+            <path d="M16 17H8" />
+          </svg>
+          } @else if (item.icon === 'deposits') {
+          <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path
+              d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-1.8.3-.7.4-1.4.4-2.2 0-3.3-2.5-4.5-4-5" />
+            <circle cx="8" cy="11" r="1" />
+            <path d="M15 13a4 4 0 0 0-4-4" />
+          </svg>
+          } @else if (item.icon === 'investments') {
+          <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+            <polyline points="16 7 22 7 22 13" />
+          </svg>
+          } @else if (item.icon === 'cards') {
+          <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect width="20" height="14" x="2" y="5" rx="2" />
+            <line x1="2" x2="22" y1="10" y2="10" />
+          </svg>
+          }
+          <span class="truncate">{{ item.label }}</span>
+        </div>
+
+        <!-- Accordion Chevron Arrow (if accordion item) -->
+        @if (item.isAccordion) {
+        <svg
+          class="w-4 h-4 shrink-0 transition-transform duration-200 text-white/50 group-hover:text-white"
+          [class.rotate-180]="isLoansExpanded()"
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+        }
+      </button>
+
+      <!-- Accordion Children Submenu (Loans sub-options) -->
+      @if (item.isAccordion && item.children && isLoansExpanded()) {
+      <div
+        class="ml-5 pl-3 mt-1 space-y-1 border-l-2 border-white/15 animate-in fade-in slide-in-from-top-1 duration-150">
+        @for (subItem of item.children; track subItem.id) {
+        <button
+          type="button"
+          (click)="onSelectSubItem(subItem, $event)"
+          class="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md text-label-sm font-medium transition-all cursor-pointer text-left"
+          [class.bg-brand-accent/20]="activeNavId() === subItem.id || activeNavId() === subItem.loanType"
+          [class.text-brand-accent]="activeNavId() === subItem.id || activeNavId() === subItem.loanType"
+          [class.font-bold]="activeNavId() === subItem.id || activeNavId() === subItem.loanType"
+          [class.text-white/65]="activeNavId() !== subItem.id && activeNavId() !== subItem.loanType"
+          [class.hover:text-white]="activeNavId() !== subItem.id && activeNavId() !== subItem.loanType"
+          [class.hover:bg-white/5]="activeNavId() !== subItem.id && activeNavId() !== subItem.loanType">
+
+          <div class="flex items-center gap-2 min-w-0">
+            <!-- Bullet dot or sub-icon -->
+            <span
+              class="w-1.5 h-1.5 rounded-full shrink-0"
+              [class.bg-brand-accent]="activeNavId() === subItem.id || activeNavId() === subItem.loanType"
+              [class.bg-white/30]="activeNavId() !== subItem.id && activeNavId() !== subItem.loanType"></span>
+            <span class="truncate">{{ subItem.label }}</span>
+          </div>
+
+          <!-- Optional badge e.g. 'Pre-approved', '8.40%' -->
+          @if (subItem.badge) {
+          <span
+            class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-brand-accent/20 text-brand-accent border border-brand-accent/30 shrink-0">
+            {{ subItem.badge }}
+          </span>
+          }
+        </button>
+        }
+      </div>
       }
-      <span>{{ item.label }}</span>
-    </button>
+    </div>
     }
   </nav>
+
 
   <!-- 4. Fixed Bottom Section (Settings, Help & Support, Logout) -->
   <div class="p-3 border-t border-white/10 space-y-1 shrink-0 bg-brand-primary mt-auto">

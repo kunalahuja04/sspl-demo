@@ -28,7 +28,7 @@ export class BalanceEnquiryService {
   readonly lastFetchedAt = this.lastFetchedAtSignal.asReadonly();
 
   /**
-   * POST to /dashboard/balanceEnquiry and populate the signals.
+   * POST to /TestBedGateway/API/banking/balance/enquiry and populate signals.
    */
   fetchBalanceEnquiry(): Observable<boolean> {
     this.isLoadingSignal.set(true);
@@ -38,7 +38,7 @@ export class BalanceEnquiryService {
       header: {
         requestNo: 'REQ' + Date.now(),
         deviceInfo: {
-          browser: 'Browser',
+          browser: 'Google',
           browserVersion: navigator.userAgent,
         },
       },
@@ -46,7 +46,7 @@ export class BalanceEnquiryService {
     };
 
     return this.http
-      .post<BalanceEnquiryApiResponse>(API_ENDPOINTS.DASHBOARD.BALANCE_ENQUIRY, requestBody)
+      .post<BalanceEnquiryApiResponse>(API_ENDPOINTS.BANKING.BALANCE_ENQUIRY, requestBody)
       .pipe(
         tap((response) => {
           const data = response?.body?.balanceResponse;

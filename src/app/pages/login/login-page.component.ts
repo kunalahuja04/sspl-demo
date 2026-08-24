@@ -269,17 +269,23 @@ export class LoginPageComponent implements OnInit {
 
     this.isSubmitting = true;
 
-    // Call Login API — uses the selected bank's tenantId as the tenant
+    // Call Web Login API — uses the selected bank's bankId
     this.authService
-      .login(this.selectedBank.tenantId, this.customerId, this.sessionTokenData?.sessionToken)
+      .login(
+        this.selectedBank.bankId || this.selectedBank.tenantId,
+        this.customerId,
+        this.password,
+        this.sessionTokenData?.sessionToken,
+      )
       .subscribe({
-        next: (user) => {
+        next: (res) => {
           this.isSubmitting = false;
           this.submitted = false;
 
+          const displayName = res.user?.name || this.customerId;
           this.alertMessage = {
             type: 'success',
-            text: `Welcome back, ${user.user.name || this.customerId}! Redirecting to your dashboard...`,
+            text: `Welcome back, ${displayName}! Redirecting to your dashboard...`,
           };
 
           // Navigate to dashboard after brief confirmation
@@ -287,6 +293,7 @@ export class LoginPageComponent implements OnInit {
             this.router.navigate(['/dashboard']);
           }, 500);
         },
+
         error: (err) => {
           this.isSubmitting = false;
           this.alertMessage = {

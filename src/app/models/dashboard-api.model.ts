@@ -64,6 +64,7 @@ export interface BalanceEnquiryAccount {
 export interface BalanceEnquiryData {
   correlationId: string;
   accounts: BalanceEnquiryAccount[];
+  transactionId?: string;
 }
 
 export interface BalanceEnquiryResponseBody {
@@ -71,3 +72,4 @@ export interface BalanceEnquiryResponseBody {
 }
 
 export type BalanceEnquiryApiResponse = ApiResponse<BalanceEnquiryResponseBody>;
+

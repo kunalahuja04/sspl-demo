@@ -2,7 +2,6 @@ import { ApiRequest, ApiResponse } from './api-envelope.model';
 
 /**
  * 1. Generate Session Token (Pre-login initialization)
- * Request body is empty as device & request tracking is provided in header.
  */
 export interface GenerateSessionTokenRequestBody {
   [key: string]: unknown;
@@ -27,21 +26,27 @@ export type GenerateSessionTokenRequest = ApiRequest<GenerateSessionTokenRequest
 export type GenerateSessionTokenResponse = ApiResponse<GenerateSessionTokenResponseBody>;
 
 /**
- * 1b. Bank List API (Post session-token, pre-login)
- * Returns list of available banks with their display name, tenantId, and theme config.
+ * 1b. Bank List API (/TestBedGateway/API/banking/bank/list)
  */
 export interface BankTheme {
-  headerBgColor: string;
-  menuBgColor: string;
-  footerBgColor: string;
+  primaryColor: string;
+  secondaryColor: string;
+  footerText: string;
+  // Aliases for legacy component compatibility
+  headerBgColor?: string;
+  menuBgColor?: string;
+  footerBgColor?: string;
 }
 
 export interface BankInfo {
-  bankCode: string;
-  bankShortCode: string;
+  bankId: string;
   tenantId: string;
   bankName: string;
+  shortName: string;
   theme: BankTheme;
+  // Aliases for legacy component compatibility
+  bankCode?: string;
+  bankShortCode?: string;
 }
 
 export interface BankListResponseBody {
@@ -53,13 +58,43 @@ export interface BankListResponseBody {
 export type BankListRequest = ApiRequest<Record<string, unknown>>;
 export type BankListResponse = ApiResponse<BankListResponseBody>;
 
+/**
+ * 1c. Customer Bank List API (/TestBedGateway/API/banking/customer/bank/list)
+ */
+export interface CustomerBankInfo {
+  bankId: string;
+  tenantId: string;
+  bankName: string;
+  shortName: string;
+}
+
+export interface CustomerBankListRequestBody {
+  customerBankRequest: {
+    mobileNumber: string;
+  };
+}
+
+export interface CustomerBankListResponseBody {
+  customerBankListResponse: {
+    banks: CustomerBankInfo[];
+  };
+}
+
+export type CustomerBankListRequest = ApiRequest<CustomerBankListRequestBody>;
+export type CustomerBankListResponse = ApiResponse<CustomerBankListResponseBody>;
 
 /**
- * 2. Login API (Authenticates customer within session & returns Access/Refresh tokens)
+ * 2. Web Login API (/TestBedGateway/API/banking/web/login)
  */
-export interface LoginRequestBody {
-  tenantId: string;
-  customerId: string;
+export interface WebLoginRequestBody {
+  webLoginRequest?: {
+    bankId: string;
+    username: string;
+    password?: string;
+  };
+  // Fallbacks for legacy payload structure
+  tenantId?: string;
+  customerId?: string;
   password?: string;
   captchaCode?: string;
   sessionToken?: string;
@@ -75,20 +110,22 @@ export interface AuthUserInfo {
   avatarInitials: string;
 }
 
-export interface LoginResponseBody {
-  accessToken: string;
-  refreshToken: string;
-  sessionToken: string;
-  expiresIn: number; // in seconds, e.g. 900 (15 min)
-  tokenType: string;  // e.g. 'Bearer'
-  user: AuthUserInfo;
+export interface WebLoginResponseBody {
+  status: number;
+  accessToken?: string;
+  refreshToken?: string;
+  sessionToken?: string;
+  expiresIn?: number;
+  tokenType?: string;
+  user?: AuthUserInfo;
 }
 
-export type LoginRequest = ApiRequest<LoginRequestBody>;
-export type LoginResponse = ApiResponse<LoginResponseBody>;
+export type LoginRequest = ApiRequest<WebLoginRequestBody>;
+export type LoginResponse = ApiResponse<WebLoginResponseBody>;
+export type LoginResponseBody = WebLoginResponseBody;
 
 /**
- * 3. Refresh Token API (Generates new access token using valid refresh token)
+ * 3. Refresh Token API
  */
 export interface RefreshTokenRequestBody {
   refreshToken: string;
@@ -106,7 +143,7 @@ export type RefreshTokenRequest = ApiRequest<RefreshTokenRequestBody>;
 export type RefreshTokenResponse = ApiResponse<RefreshTokenResponseBody>;
 
 /**
- * 4. Logout API (Revokes active session & tokens)
+ * 4. Logout API
  */
 export interface LogoutRequestBody {
   sessionToken?: string;
@@ -120,11 +157,12 @@ export type LogoutRequest = ApiRequest<LogoutRequestBody>;
 export type LogoutResponse = ApiResponse<LogoutResponseBody>;
 
 /**
- * 5. LOB List API (Fetches available Lines of Business for a given bank)
+ * 5. LOB List API (/TestBedGateway/API/banking/lob/list)
  */
 export interface LobListRequestBody {
   lobRequest: {
-    bankCode: string;
+    bankId?: string;
+    bankCode?: string;
   };
 }
 
@@ -135,8 +173,9 @@ export interface LobItem {
 
 export interface LobListResponseBody {
   lobListResponse: {
-    bankCode: string;
+    bankId: string;
     lobs: LobItem[];
+    bankCode?: string;
   };
 }
 
@@ -144,31 +183,37 @@ export type LobListRequest = ApiRequest<LobListRequestBody>;
 export type LobListResponse = ApiResponse<LobListResponseBody>;
 
 /**
- * 6. Registration API (Onboards a new customer to a specific bank tenant)
+ * 6. Customer Register API (/TestBedGateway/API/banking/customer/register)
  */
-export type LobCode = string; // Resolved dynamically from /auth/getLobList per bank
+export type LobCode = string;
 
 export interface RegisterRequestBody {
   registerRequest: {
-    bankCode: string;
-    lobCode: LobCode;
+    customerId: string;
     username: string;
+    firstName?: string;
+    lastName?: string;
+    bankId: string;
+    lobCode: LobCode;
     mobileNumber: string;
     password: string;
-    customerId: string;
+    bankCode?: string;
   };
 }
 
 export interface RegistrationResponseBody {
   registrationResponse: {
-    bankCode: string;
+    bankId?: string;
+    bankCode?: string;
     customerId: string;
     tenantId: string;
     userReference: string;
     lobCode: string;
-    userId: number;
-    channelId: number;
+    userId?: number;
+    channelId?: number;
     username: string;
+    firstName?: string;
+    lastName?: string;
   };
 }
 
@@ -176,20 +221,25 @@ export type RegisterRequest = ApiRequest<RegisterRequestBody>;
 export type RegisterResponse = ApiResponse<RegistrationResponseBody>;
 
 /**
- * 7. Profile API (Retrieves user banking profile and personal details)
+ * 7. Customer Profile API (/TestBedGateway/API/banking/customer/profile)
  */
 export interface ProfileRequestBody {
   [key: string]: unknown;
 }
 
 export interface UserProfileData {
-  bankCode: string;
+  firstName?: string;
+  lastName?: string;
+  fullName?: string;
+  bankId: string;
+  bankName?: string;
   mobileNumber: string;
   customerId: string;
   tenantId: string;
   userReference: string;
   lobCode: string;
   username: string;
+  bankCode?: string;
 }
 
 export interface ProfileResponseBody {

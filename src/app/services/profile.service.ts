@@ -25,7 +25,7 @@ export class ProfileService {
   readonly error = this.errorSignal.asReadonly();
 
   /**
-   * Fetches user profile from the backend API.
+   * Fetches user profile from the backend API (/TestBedGateway/API/banking/customer/profile).
    */
   fetchProfile(): Observable<UserProfileData | null> {
     this.isLoadingSignal.set(true);
@@ -33,10 +33,14 @@ export class ProfileService {
 
     const request: ProfileRequest = this.requestBuilder.buildRequest({});
 
-    return this.http.post<ProfileResponse>(API_ENDPOINTS.AUTH.PROFILE, request).pipe(
+    return this.http.post<ProfileResponse>(API_ENDPOINTS.BANKING.PROFILE, request).pipe(
       map((response) => {
         if (response.header.status !== 'success') {
-          throw new Error(response.header.message || 'Failed to fetch user profile');
+          throw new Error(
+            response.header.errorMessage ||
+            response.header.message ||
+            'Failed to fetch user profile',
+          );
         }
         return response.body?.profileResponse ?? null;
       }),

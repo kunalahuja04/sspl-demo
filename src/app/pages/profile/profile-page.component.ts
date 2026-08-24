@@ -106,13 +106,16 @@ export class ProfilePageComponent implements OnInit {
   });
 
   readonly bankName = computed(() => {
-    const code = this.profile()?.bankCode;
-    if (this.selectedBank()?.bankCode === code) {
+    const prof = this.profile();
+    if (prof?.bankName) return prof.bankName;
+    const bankId = prof?.bankId || prof?.bankCode;
+    if (this.selectedBank()?.bankId === bankId || this.selectedBank()?.bankCode === bankId) {
       return this.selectedBank()!.bankName;
     }
-    const match = this.bankService.banks().find((b) => b.bankCode === code);
-    return match?.bankName || (code ? `${code} Bank` : 'SSPL Partner Bank');
+    const match = this.bankService.banks().find((b) => b.bankId === bankId || b.bankCode === bankId);
+    return match?.bankName || (bankId ? `${bankId} Bank` : 'SSPL Partner Bank');
   });
+
 
   ngOnInit(): void {
     // Fetch profile and accounts if not already loaded

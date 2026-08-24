@@ -19,14 +19,15 @@ export class LobService {
 
   /**
    * Fetches the list of Lines of Business supported by a given bank.
-   * Called when the user selects a bank on the registration form.
+   * (/TestBedGateway/API/banking/lob/list)
    */
-  fetchLobsForBank(bankCode: string): Observable<LobItem[]> {
-    const body: LobListRequestBody = { lobRequest: { bankCode } };
+  fetchLobsForBank(bankId: string): Observable<LobItem[]> {
+    const body: LobListRequestBody = { lobRequest: { bankId, bankCode: bankId } };
     const request: LobListRequest = this.requestBuilder.buildRequest(body);
 
-    return this.http.post<LobListResponse>(API_ENDPOINTS.AUTH.LOB_LIST, request).pipe(
+    return this.http.post<LobListResponse>(API_ENDPOINTS.BANKING.LOB_LIST, request).pipe(
       map((response) => response.body?.lobListResponse?.lobs ?? []),
     );
   }
 }
+

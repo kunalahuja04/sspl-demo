@@ -1,14 +1,36 @@
-import { Component, input, output, inject, signal } from '@angular/core';
+import { Component, input, output, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { BankService } from '../../services/bank.service';
+
+export interface NavSubItem {
+  id: string;
+  label: string;
+  route: string;
+  queryParams?: Record<string, string>;
+  loanType?: string;
+  badge?: string;
+}
 
 export interface NavItem {
   id: string;
   label: string;
-  icon: 'dashboard' | 'wallet' | 'balance' | 'profile' | 'transfer' | 'document' | 'deposits' | 'investments' | 'cards' | 'loans';
+  icon:
+    | 'dashboard'
+    | 'wallet'
+    | 'balance'
+    | 'profile'
+    | 'transfer'
+    | 'document'
+    | 'deposits'
+    | 'investments'
+    | 'cards'
+    | 'loans';
   route?: string;
+  isAccordion?: boolean;
+  children?: NavSubItem[];
 }
 
 @Component({
@@ -18,7 +40,7 @@ export interface NavItem {
   templateUrl: './side-nav.component.html',
   styleUrl: './side-nav.component.scss',
 })
-export class SideNavComponent {
+export class SideNavComponent implements OnInit {
   private authService = inject(AuthService);
   private bankService = inject(BankService);
   private router = inject(Router);
@@ -32,6 +54,9 @@ export class SideNavComponent {
   // Auth signals from AuthService & BankService
   readonly currentUser = this.authService.currentUser;
   readonly selectedBank = this.bankService.selectedBank;
+
+  // Local state for accordion expansion
+  readonly isLoansExpanded = signal<boolean>(false);
 
   // Local state for logout confirmation modal
   readonly isLogoutModalOpen = signal<boolean>(false);
@@ -63,6 +88,59 @@ export class SideNavComponent {
       route: '/profile',
     },
     {
+      id: 'loans',
+      label: 'Loans & Advances',
+      icon: 'loans',
+      route: '/loans',
+      isAccordion: true,
+      children: [
+        {
+          id: 'loans-home',
+          label: 'Home Loan',
+          route: '/loans',
+          queryParams: { type: 'home' },
+          loanType: 'home',
+          badge: '8.40%',
+        },
+        {
+          id: 'loans-personal',
+          label: 'Personal Loan',
+          route: '/loans',
+          queryParams: { type: 'personal' },
+          loanType: 'personal',
+          badge: 'Pre-approved',
+        },
+        {
+          id: 'loans-car',
+          label: 'Car / Auto Loan',
+          route: '/loans',
+          queryParams: { type: 'car' },
+          loanType: 'car',
+        },
+        {
+          id: 'loans-business',
+          label: 'Business Loan',
+          route: '/loans',
+          queryParams: { type: 'business' },
+          loanType: 'business',
+        },
+        {
+          id: 'loans-gold',
+          label: 'Gold Loan',
+          route: '/loans',
+          queryParams: { type: 'gold' },
+          loanType: 'gold',
+        },
+        {
+          id: 'loans-education',
+          label: 'Education Loan',
+          route: '/loans',
+          queryParams: { type: 'education' },
+          loanType: 'education',
+        },
+      ],
+    },
+    {
       id: 'funds-transfer',
       label: 'Funds Transfer',
       icon: 'transfer',
@@ -87,18 +165,44 @@ export class SideNavComponent {
       label: 'Cards',
       icon: 'cards',
     },
-    {
-      id: 'loans',
-      label: 'Loans',
-      icon: 'loans',
-    },
   ];
 
+  ngOnInit(): void {
+    // Auto-expand loans accordion if currently on /loans route or if activeNavId relates to loans
+    this.checkIfLoansRoute();
+    this.router.events
+      .pipe(filter((e) => e instanceof NavigationEnd))
+      .subscribe(() => this.checkIfLoansRoute());
+  }
+
+  private checkIfLoansRoute(): void {
+    const url = this.router.url;
+    if (url.includes('/loans') || this.activeNavId().startsWith('loans')) {
+      this.isLoansExpanded.set(true);
+    }
+  }
+
   onSelectNav(item: NavItem): void {
+    if (item.isAccordion) {
+      // Toggle accordion open/close
+      this.isLoansExpanded.update((v) => !v);
+      this.navChange.emit(item.id);
+      if (item.route) {
+        this.router.navigate([item.route]);
+      }
+      return;
+    }
+
     this.navChange.emit(item.id);
     if (item.route) {
       this.router.navigate([item.route]);
     }
+  }
+
+  onSelectSubItem(subItem: NavSubItem, event: MouseEvent): void {
+    event.stopPropagation();
+    this.navChange.emit(subItem.id);
+    this.router.navigate([subItem.route], { queryParams: subItem.queryParams });
   }
 
   confirmLogout(): void {
@@ -114,3 +218,4 @@ export class SideNavComponent {
     this.authService.logout();
   }
 }
+

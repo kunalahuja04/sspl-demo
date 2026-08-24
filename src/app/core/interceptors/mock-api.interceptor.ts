@@ -24,7 +24,7 @@ import {
 /**
  * Mock API Interceptor
  * Intercepts outgoing requests when `environment.useMockApi === true` and
- * returns realistic mocked data structured within standard SSPL Bank response envelopes.
+ * returns realistic mocked data structured within standard TestBedGateway response envelopes.
  * Emulates asynchronous backend network delays using RxJS delay.
  */
 export const mockApiInterceptor: HttpInterceptorFn = (
@@ -42,11 +42,12 @@ export const mockApiInterceptor: HttpInterceptorFn = (
 
   // Extract requestNo from request body if envelope was used
   const reqNo = req.body?.header?.requestNo || deviceInfoService.generateRequestNo();
+  const txnId = deviceInfoService.generateTxnId();
 
   // Helper to construct mock envelope response
   const createEnvelopeResponse = <T>(
     body: T,
-    status: 'success' | 'failed' = 'success',
+    status: 'success' | 'failed' | 'error' = 'success',
   ): HttpResponse<ApiResponse<T>> => {
     return new HttpResponse<ApiResponse<T>>({
       status: 200,
@@ -61,7 +62,7 @@ export const mockApiInterceptor: HttpInterceptorFn = (
     });
   };
 
-  // 1. Generate Session Token (Pre-login)
+  // 1. Generate Session Token (Pre-login initialization)
   if (url.includes(API_ENDPOINTS.AUTH.GENERATE_SESSION_TOKEN)) {
     const sampleCodes = ['TCWYXg', 'K8M4Np', 'R9X2Va', 'Q5B7Zw', 'H3D9Le', 'W2Y6Fs'];
     const chosenCode = sampleCodes[Math.floor(Math.random() * sampleCodes.length)];
@@ -84,65 +85,94 @@ export const mockApiInterceptor: HttpInterceptorFn = (
     return of(createEnvelopeResponse(responseBody)).pipe(delay(mockDelay));
   }
 
-  // 1b. Bank List Endpoint (Post session-token, pre-login)
-  if (url.includes(API_ENDPOINTS.AUTH.BANK_LIST)) {
+  // 1b. Bank List Endpoint (/TestBedGateway/API/banking/bank/list)
+  if (
+    url.includes(API_ENDPOINTS.BANKING.BANK_LIST) ||
+    url.includes('/banking/bank/list') ||
+    url.includes('/auth/bankList')
+  ) {
     const bankListBody = {
       bankListResponse: {
         banks: [
           {
-            bankCode: 'BHARAT',
-            bankShortCode: 'BHAR',
-            tenantId: 'TENANTBHARAT',
-            bankName: 'Bharat Bank',
+            bankId: 'BANK0001',
+            tenantId: 'TENANT0001',
+            bankName: 'Bharat Sahakari Bank Ltd',
             theme: {
+              footerText: '#041F31',
+              primaryColor: '#082F49',
+              secondaryColor: '#075985',
               headerBgColor: '#082F49',
               menuBgColor: '#075985',
               footerBgColor: '#041F31',
             },
+            shortName: 'BHAR',
+            bankCode: 'BANK0001',
+            bankShortCode: 'BHAR',
           },
           {
-            bankCode: 'COSMOS',
-            bankShortCode: 'COSM',
-            tenantId: 'TENANTCOSMOS',
-            bankName: 'Cosmos Bank',
+            bankId: 'BANK0003',
+            tenantId: 'TENANT0003',
+            bankName: 'Cosmos Cooperative Bank Ltd',
             theme: {
+              footerText: '#431407',
+              primaryColor: '#9A3412',
+              secondaryColor: '#7C2D12',
               headerBgColor: '#9A3412',
               menuBgColor: '#7C2D12',
               footerBgColor: '#431407',
             },
+            shortName: 'CCBL',
+            bankCode: 'BANK0003',
+            bankShortCode: 'CCBL',
           },
           {
-            bankCode: 'DNS',
-            bankShortCode: 'DNSB',
-            tenantId: 'TENANTDNS',
+            bankId: 'BANK0002',
+            tenantId: 'TENANT0002',
             bankName: 'DNS Bank',
             theme: {
+              footerText: '#052E16',
+              primaryColor: '#166534',
+              secondaryColor: '#14532D',
               headerBgColor: '#166534',
               menuBgColor: '#14532D',
               footerBgColor: '#052E16',
             },
+            shortName: 'DNS',
+            bankCode: 'BANK0002',
+            bankShortCode: 'DNS',
           },
           {
-            bankCode: 'JALGAONJANATA',
-            bankShortCode: 'JALG',
-            tenantId: 'TENANTJALGAONJANATA',
-            bankName: 'Jalgaon Janata Bank',
+            bankId: 'BANK0004',
+            tenantId: 'TENANT0004',
+            bankName: 'Jalgaon Janata Bank Ltd',
             theme: {
+              footerText: '#422006',
+              primaryColor: '#854D0E',
+              secondaryColor: '#A16207',
               headerBgColor: '#854D0E',
               menuBgColor: '#A16207',
               footerBgColor: '#422006',
             },
+            shortName: 'JJBL',
+            bankCode: 'BANK0004',
+            bankShortCode: 'JJBL',
           },
           {
-            bankCode: 'KARADURBAN',
-            bankShortCode: 'KARA',
-            tenantId: 'TENANTKARADURBAN',
-            bankName: 'Karad Urban Bank',
+            bankId: 'BANK0005',
+            tenantId: 'TENANT0005',
+            bankName: 'Karad Urban Cooperative Bank',
             theme: {
+              footerText: '#1E1B4B',
+              primaryColor: '#312E81',
+              secondaryColor: '#4338CA',
               headerBgColor: '#312E81',
               menuBgColor: '#4338CA',
               footerBgColor: '#1E1B4B',
             },
+            shortName: 'KUCB',
+            bankCode: 'BANK0005',
+            bankShortCode: 'KUCB',
           },
         ],
       },
@@ -151,33 +181,76 @@ export const mockApiInterceptor: HttpInterceptorFn = (
     return of(createEnvelopeResponse(bankListBody)).pipe(delay(mockDelay));
   }
 
-  // 2. Login Endpoint (Creates Access and Refresh Tokens linked to session)
-  if (url.includes(API_ENDPOINTS.AUTH.LOGIN)) {
-    const requestBody = req.body?.body || req.body || {};
-    const customerId = requestBody.customerId || 'SSPL_USER_84920';
-    const tenant = (requestBody.tenantId || 'SSPL001').split('—')[0].trim();
-    const sessionTok =
-      requestBody.sessionToken ||
-      'SES_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+  // 1c. Customer Bank List Endpoint (/TestBedGateway/API/banking/customer/bank/list)
+  if (
+    url.includes(API_ENDPOINTS.BANKING.CUSTOMER_BANK_LIST) ||
+    url.includes('/banking/customer/bank/list')
+  ) {
+    const customerBankListBody = {
+      customerBankListResponse: {
+        banks: [
+          {
+            bankId: 'BANK0001',
+            tenantId: 'TENANT0001',
+            bankName: 'Bharat Sahakari Bank Ltd',
+            shortName: 'BHAR',
+          },
+          {
+            bankId: 'BANK0003',
+            tenantId: 'TENANT0003',
+            bankName: 'Cosmos Cooperative Bank Ltd',
+            shortName: 'CCBL',
+          },
+          {
+            bankId: 'BANK0005',
+            tenantId: 'TENANT0005',
+            bankName: 'Karad Urban Cooperative Bank',
+            shortName: 'KUCB',
+          },
+        ],
+      },
+    };
+
+    return of(createEnvelopeResponse(customerBankListBody)).pipe(delay(mockDelay));
+  }
+
+  // 2. Web Login Endpoint (/TestBedGateway/API/banking/web/login)
+  if (
+    url.includes(API_ENDPOINTS.BANKING.LOGIN) ||
+    url.includes('/banking/web/login') ||
+    url.includes('/auth/login')
+  ) {
+    const reqData =
+      req.body?.body?.webLoginRequest ||
+      req.body?.webLoginRequest ||
+      req.body?.body ||
+      req.body ||
+      {};
+    const bankId = reqData.bankId || 'BANK0004';
+    const username = reqData.username || reqData.customerId || 'sagar123';
+    const tenant = reqData.tenantId || `TENANT${bankId.replace('BANK', '')}`;
 
     const accessToken =
       'SSPL-AT-' + Math.random().toString(36).substring(2, 12).toUpperCase() + '-' + Date.now();
     const refreshToken =
       'SSPL-RT-' + Math.random().toString(36).substring(2, 12).toUpperCase() + '-' + Date.now();
+    const sessionTok =
+      reqData.sessionToken || 'SES_' + Math.random().toString(36).substring(2, 10).toUpperCase();
 
     const responseBody = {
+      status: 1,
       accessToken,
       refreshToken,
       sessionToken: sessionTok,
-      expiresIn: 900, // 15 mins
+      expiresIn: 900,
       tokenType: 'Bearer',
       user: {
-        id: customerId,
-        name: 'Rajesh K. Sharma',
-        username: customerId,
-        tenant: tenant || 'SSPL001',
-        lastLogin: '08 Jun, 09:41',
-        avatarInitials: 'RK',
+        id: username,
+        name: username === 'sagar123' ? 'Sagar Koli' : 'Rajesh K. Sharma',
+        username,
+        tenant,
+        lastLogin: '25 Aug, 10:15',
+        avatarInitials: username === 'sagar123' ? 'SK' : 'RK',
         role: 'Personal Banking',
       },
     };
@@ -185,24 +258,28 @@ export const mockApiInterceptor: HttpInterceptorFn = (
     return of(createEnvelopeResponse(responseBody)).pipe(delay(mockDelay));
   }
 
-  // 2b. Registration Endpoint (New customer onboarding)
-  if (url.includes(API_ENDPOINTS.AUTH.REGISTER)) {
+  // 2b. Customer Register Endpoint (/TestBedGateway/API/banking/customer/register)
+  if (
+    url.includes(API_ENDPOINTS.BANKING.REGISTER) ||
+    url.includes('/banking/customer/register') ||
+    url.includes('/auth/register')
+  ) {
     const rb = req.body?.body?.registerRequest || req.body?.registerRequest || {};
-    const bankCode: string = rb.bankCode || 'BHARAT';
+    const bankId: string = rb.bankId || rb.bankCode || 'BANK0004';
     const customerId: string =
-      rb.customerId || `${bankCode}-CUST-${Math.floor(10000 + Math.random() * 90000)}`;
-    const username: string = rb.username || 'user' + Math.random().toString(36).substring(2, 7);
+      rb.customerId || `JALGAON-CUST-${Math.floor(10000 + Math.random() * 90000)}`;
+    const username: string = rb.username || 'sagar123';
+    const firstName: string = rb.firstName || 'Sagar';
+    const lastName: string = rb.lastName || 'Koli';
     const lobCode: string = rb.lobCode || 'RETAIL';
-
-    // Derive tenantId from bankCode
-    const tenantId = `TENANT${bankCode}`;
+    const tenantId = `TENANT${bankId.replace('BANK', '')}`;
     const userSeq = Math.floor(500000000000 + Math.random() * 99999);
-    const shortCode = bankCode.substring(0, 4).toUpperCase();
-    const userRef = `USER-${shortCode}-${String(userSeq).substring(0, 4)}`;
+    const userRef = `USER-JJBL-00${String(userSeq).substring(10)}`;
 
     const registrationResponse = {
       registrationResponse: {
-        bankCode,
+        bankId,
+        bankCode: bankId,
         customerId,
         tenantId,
         userReference: userRef,
@@ -210,68 +287,67 @@ export const mockApiInterceptor: HttpInterceptorFn = (
         userId: userSeq,
         channelId: 9001,
         username,
+        firstName,
+        lastName,
       },
     };
 
     return of(createEnvelopeResponse(registrationResponse)).pipe(delay(mockDelay));
   }
 
-  // 2c. LOB List Endpoint (Fetch Lines of Business for a given bank)
-  if (url.includes(API_ENDPOINTS.AUTH.LOB_LIST)) {
-    const bankCode: string = (
+  // 2c. LOB List Endpoint (/TestBedGateway/API/banking/lob/list)
+  if (
+    url.includes(API_ENDPOINTS.BANKING.LOB_LIST) ||
+    url.includes('/banking/lob/list') ||
+    url.includes('/auth/getLobList')
+  ) {
+    const bankId: string = (
+      req.body?.body?.lobRequest?.bankId ||
+      req.body?.lobRequest?.bankId ||
       req.body?.body?.lobRequest?.bankCode ||
       req.body?.lobRequest?.bankCode ||
-      ''
+      'BANK0001'
     ).toUpperCase();
 
-    // Each bank has its own set of supported LOBs
     const bankLobMap: Record<string, Array<{ lobCode: string; lobName: string }>> = {
+      BANK0001: [
+        { lobCode: 'RETAIL', lobName: 'Retail Banking' },
+        { lobCode: 'AGRICULTURE', lobName: 'Agriculture Banking' },
+      ],
+      BANK0002: [
+        { lobCode: 'RETAIL', lobName: 'Retail Banking' },
+        { lobCode: 'SME', lobName: 'SME Banking' },
+        { lobCode: 'AGRICULTURE', lobName: 'Agriculture Banking' },
+      ],
+      BANK0003: [
+        { lobCode: 'RETAIL', lobName: 'Retail Banking' },
+        { lobCode: 'CORPORATE', lobName: 'Corporate Banking' },
+        { lobCode: 'NRI', lobName: 'NRI Banking' },
+      ],
+      BANK0004: [
+        { lobCode: 'RETAIL', lobName: 'Retail Banking' },
+        { lobCode: 'AGRICULTURE', lobName: 'Agriculture Banking' },
+        { lobCode: 'MICROFINANCE', lobName: 'Micro Finance' },
+      ],
+      BANK0005: [
+        { lobCode: 'AGRICULTURE', lobName: 'Agriculture Banking' },
+        { lobCode: 'RETAIL', lobName: 'Retail Banking' },
+        { lobCode: 'MICROFINANCE', lobName: 'Micro Finance' },
+      ],
       BHARAT: [
         { lobCode: 'RETAIL', lobName: 'Retail Banking' },
-        { lobCode: 'CORPORATE', lobName: 'Corporate Banking' },
-        { lobCode: 'SME', lobName: 'SME Banking' },
         { lobCode: 'AGRICULTURE', lobName: 'Agriculture Banking' },
-        { lobCode: 'NRI', lobName: 'NRI Banking' },
-        { lobCode: 'TREASURY', lobName: 'Treasury & FX' },
-      ],
-      COSMOS: [
-        { lobCode: 'RETAIL', lobName: 'Retail Banking' },
-        { lobCode: 'CORPORATE', lobName: 'Corporate Banking' },
-        { lobCode: 'NRI', lobName: 'NRI Banking' },
-        { lobCode: 'MICROFINANCE', lobName: 'Micro Finance' },
-        { lobCode: 'SME', lobName: 'SME Banking' },
-      ],
-      DNS: [
-        { lobCode: 'RETAIL', lobName: 'Retail Banking' },
-        { lobCode: 'SME', lobName: 'SME Banking' },
-        { lobCode: 'AGRICULTURE', lobName: 'Agriculture Banking' },
-        { lobCode: 'MICROFINANCE', lobName: 'Micro Finance' },
-      ],
-      JALGAONJANATA: [
-        { lobCode: 'RETAIL', lobName: 'Retail Banking' },
-        { lobCode: 'AGRICULTURE', lobName: 'Agriculture Banking' },
-        { lobCode: 'MICROFINANCE', lobName: 'Micro Finance' },
-        { lobCode: 'SME', lobName: 'SME Banking' },
-      ],
-      KARADURBAN: [
-        { lobCode: 'AGRICULTURE', lobName: 'Agriculture Banking' },
-        { lobCode: 'RETAIL', lobName: 'Retail Banking' },
-        { lobCode: 'MICROFINANCE', lobName: 'Micro Finance' },
-        { lobCode: 'SME', lobName: 'SME Banking' },
-        { lobCode: 'NRI', lobName: 'NRI Banking' },
       ],
     };
 
-    // Fallback with broad defaults
-    const lobs = bankLobMap[bankCode] ?? [
+    const lobs = bankLobMap[bankId] ?? [
       { lobCode: 'RETAIL', lobName: 'Retail Banking' },
-      { lobCode: 'CORPORATE', lobName: 'Corporate Banking' },
-      { lobCode: 'SME', lobName: 'SME Banking' },
+      { lobCode: 'AGRICULTURE', lobName: 'Agriculture Banking' },
     ];
 
     const lobListBody = {
       lobListResponse: {
-        bankCode,
+        bankId,
         lobs,
       },
     };
@@ -279,32 +355,44 @@ export const mockApiInterceptor: HttpInterceptorFn = (
     return of(createEnvelopeResponse(lobListBody)).pipe(delay(mockDelay));
   }
 
-  // 2d. User Profile Endpoint (Fetch Banking Profile Details)
-  if (url.includes(API_ENDPOINTS.AUTH.PROFILE)) {
-    let bankCode = 'BHARAT';
-    let customerId = 'BHARAT-CUST-10003';
-    let tenantId = 'TENANTBHARAT';
-    let userRef = 'USER-BHAR-0019';
+  // 2d. Customer Profile Endpoint (/TestBedGateway/API/banking/customer/profile)
+  if (
+    url.includes(API_ENDPOINTS.BANKING.PROFILE) ||
+    url.includes('/banking/customer/profile') ||
+    url.includes('/auth/profile')
+  ) {
+    let firstName = 'Sagar';
+    let lastName = 'Koli';
+    let fullName = 'Sagar Koli';
+    let bankId = 'BANK0004';
+    let bankName = 'Jalgaon Janata Bank Ltd';
+    let mobileNumber = '8898832785';
+    let customerId = 'JALGAON-CUST-10001';
+    let tenantId = 'TENANT0004';
+    let userReference = 'USER-JJBL-0022';
     let lobCode = 'RETAIL';
-    let username = 'vishal123';
-    let mobileNumber = '8884045346';
+    let username = 'sagar123';
 
     try {
       const storedBankStr = sessionStorage.getItem('sspl_selected_bank');
       if (storedBankStr) {
         const storedBank = JSON.parse(storedBankStr);
-        if (storedBank?.bankCode) {
-          bankCode = storedBank.bankCode;
-          tenantId = storedBank.tenantId || `TENANT${bankCode}`;
-          const shortCode = (storedBank.bankShortCode || bankCode.substring(0, 4)).toUpperCase();
-          userRef = `USER-${shortCode}-0019`;
-        }
+        if (storedBank?.bankId) bankId = storedBank.bankId;
+        if (storedBank?.bankName) bankName = storedBank.bankName;
+        if (storedBank?.tenantId) tenantId = storedBank.tenantId;
+        if (storedBank?.shortName) userReference = `USER-${storedBank.shortName}-0022`;
       }
       const storedUserStr = sessionStorage.getItem('sspl_user');
       if (storedUserStr) {
         const storedUser = JSON.parse(storedUserStr);
         if (storedUser?.id) customerId = storedUser.id;
         if (storedUser?.username) username = storedUser.username;
+        if (storedUser?.name) {
+          fullName = storedUser.name;
+          const parts = storedUser.name.split(' ');
+          firstName = parts[0] || firstName;
+          lastName = parts.slice(1).join(' ') || lastName;
+        }
       }
     } catch {
       // Fallback
@@ -312,11 +400,15 @@ export const mockApiInterceptor: HttpInterceptorFn = (
 
     const profileBody = {
       profileResponse: {
-        bankCode,
+        firstName,
+        lastName,
+        bankId,
         mobileNumber,
         customerId,
         tenantId,
-        userReference: userRef,
+        fullName,
+        bankName,
+        userReference,
         lobCode,
         username,
       },
@@ -325,9 +417,40 @@ export const mockApiInterceptor: HttpInterceptorFn = (
     return of(createEnvelopeResponse(profileBody)).pipe(delay(mockDelay));
   }
 
-  // 3. Refresh Token Endpoint
+  // 3. Balance Enquiry Endpoint (/TestBedGateway/API/banking/balance/enquiry)
+  if (
+    url.includes(API_ENDPOINTS.BANKING.BALANCE_ENQUIRY) ||
+    url.includes('/banking/balance/enquiry') ||
+    url.includes('/dashboard/balanceEnquiry')
+  ) {
+    const currentTxnId = deviceInfoService.generateTxnId();
+    const balanceResponseBody = {
+      balanceResponse: {
+        correlationId: reqNo,
+        accounts: [
+          {
+            ledgerBalance: 72500.75,
+            accountType: 'SAVINGS',
+            accountNumberMasked: 'XXXXXXXX0001',
+            currency: 'INR',
+            availableBalance: 72000.75,
+          },
+          {
+            ledgerBalance: 127975,
+            accountType: 'CURRENT',
+            accountNumberMasked: 'XXXXXXXX0002',
+            currency: 'INR',
+            availableBalance: 324460,
+          },
+        ],
+        transactionId: currentTxnId,
+      },
+    };
 
+    return of(createEnvelopeResponse(balanceResponseBody)).pipe(delay(mockDelay));
+  }
 
+  // 4. Refresh Token Endpoint
   if (url.includes(API_ENDPOINTS.AUTH.REFRESH_TOKEN)) {
     const newAccessToken =
       'SSPL-AT-' + Math.random().toString(36).substring(2, 12).toUpperCase() + '-' + Date.now();
@@ -344,45 +467,45 @@ export const mockApiInterceptor: HttpInterceptorFn = (
     return of(createEnvelopeResponse(responseBody)).pipe(delay(mockDelay));
   }
 
-  // 4. Logout Endpoint
+  // 5. Logout Endpoint
   if (url.includes(API_ENDPOINTS.AUTH.LOGOUT)) {
     return of(
       createEnvelopeResponse({ message: 'Session terminated and tokens invalidated successfully' }),
     ).pipe(delay(mockDelay / 2));
   }
 
-  // 5. Dashboard Summary Endpoint
+  // 6. Dashboard Summary Endpoint
   if (url.includes(API_ENDPOINTS.DASHBOARD.SUMMARY)) {
     const summary: DashboardSummaryData = {
-      totalBalanceFormatted: '₹10.32L',
+      totalBalanceFormatted: '₹3.96L',
       totalBalanceSubtitle: 'Across all accounts',
       todaysCredits: '+₹1,37,000',
-      todaysCreditsCount: '3 transactions',
+      todaysCreditsCount: '2 transactions',
       todaysDebits: '-₹16,390',
-      todaysDebitsCount: '5 transactions',
-      activeAccountsCount: '3',
+      todaysDebitsCount: '3 transactions',
+      activeAccountsCount: '2',
       activeAccountsSubtitle: 'All accounts in good standing',
     };
 
     return of(createEnvelopeResponse(summary)).pipe(delay(mockDelay));
   }
 
-  // 6. Dashboard Accounts Endpoint
+  // 7. Dashboard Accounts Endpoint
   if (url.includes(API_ENDPOINTS.DASHBOARD.ACCOUNTS)) {
     const accounts: BankAccountData[] = [
       {
         id: 'acc_01',
         type: 'Savings Account',
         category: 'savings',
-        accountNumber: '•••• •••• 4521',
-        fullAccountNumber: '50100483924521',
-        ifsc: 'IFSC: SSPL0001042',
-        branch: 'SSPL Navi Mumbai Main',
-        availableBalance: '₹1,82,400.00',
-        ledgerBalance: '₹1,82,400.00',
+        accountNumber: '•••• •••• 0001',
+        fullAccountNumber: '50100483920001',
+        ifsc: 'IFSC: JJBL0001042',
+        branch: 'Jalgaon Main Branch',
+        availableBalance: '₹72,000.75',
+        ledgerBalance: '₹72,500.75',
         currency: 'INR',
         status: 'Active',
-        unclearedFunds: '₹0.00',
+        unclearedFunds: '₹500.00 (Cheque in clearing)',
         lienAmount: '₹0.00',
         interestRate: '3.50% p.a.',
         nomineeRegistered: true,
@@ -391,34 +514,17 @@ export const mockApiInterceptor: HttpInterceptorFn = (
         id: 'acc_02',
         type: 'Current Account',
         category: 'current',
-        accountNumber: '•••• •••• 8832',
-        fullAccountNumber: '50200891028832',
-        ifsc: 'IFSC: SSPL0000011',
-        branch: 'SSPL Fort, Mumbai',
-        availableBalance: '₹8,50,000.00',
-        ledgerBalance: '₹8,52,000.00',
+        accountNumber: '•••• •••• 0002',
+        fullAccountNumber: '50200891020002',
+        ifsc: 'IFSC: JJBL0000011',
+        branch: 'Pune Camp Branch',
+        availableBalance: '₹3,24,460.00',
+        ledgerBalance: '₹1,27,975.00',
         currency: 'INR',
         status: 'Active',
-        unclearedFunds: '₹2,000.00 (Cheque in clearing)',
+        unclearedFunds: '₹0.00',
         lienAmount: '₹0.00',
         interestRate: 'N/A (Current Account)',
-        nomineeRegistered: true,
-      },
-      {
-        id: 'acc_03',
-        type: 'Savings Account (NRI)',
-        category: 'nri',
-        accountNumber: '•••• •••• 7310',
-        fullAccountNumber: '50300174827310',
-        ifsc: 'IFSC: SSPL0009001',
-        branch: 'SSPL Overseas Branch',
-        availableBalance: '$45,200.50',
-        ledgerBalance: '$45,200.50',
-        currency: 'USD',
-        status: 'Active',
-        unclearedFunds: '$0.00',
-        lienAmount: '$0.00',
-        interestRate: '4.25% p.a. (NRE)',
         nomineeRegistered: true,
       },
     ];
@@ -426,47 +532,37 @@ export const mockApiInterceptor: HttpInterceptorFn = (
     return of(createEnvelopeResponse(accounts)).pipe(delay(mockDelay));
   }
 
-  // 7. Dashboard Transactions Endpoint
+  // 8. Dashboard Transactions Endpoint
   if (url.includes(API_ENDPOINTS.DASHBOARD.TRANSACTIONS)) {
     const transactions: TransactionData[] = [
       {
         id: 'txn_01',
-        title: 'NEFT Cr — HDFC Bank',
-        date: '08 Jun · A/C •••• 4521',
-        account: 'A/C •••• 4521',
-        amount: '+₹45,000',
+        title: 'NEFT Cr — Salary Credit',
+        date: '25 Aug · A/C •••• 0001',
+        account: 'A/C •••• 0001',
+        amount: '+₹72,000',
         type: 'credit',
-        reference: 'NEFT26060893019',
+        reference: 'NEFT26082593019',
         status: 'Completed',
       },
       {
         id: 'txn_02',
-        title: 'UPI — Swiggy',
-        date: '07 Jun · A/C •••• 4521',
-        account: 'A/C •••• 4521',
+        title: 'UPI — Swiggy Orders',
+        date: '24 Aug · A/C •••• 0001',
+        account: 'A/C •••• 0001',
         amount: '-₹850',
         type: 'debit',
-        reference: 'UPI26060718392',
+        reference: 'UPI26082418392',
         status: 'Completed',
       },
       {
         id: 'txn_03',
-        title: 'ATM Withdrawal',
-        date: '05 Jun · A/C •••• 4521',
-        account: 'A/C •••• 4521',
-        amount: '-₹10,000',
-        type: 'debit',
-        reference: 'ATM26060599104',
-        status: 'Completed',
-      },
-      {
-        id: 'txn_04',
-        title: 'Salary Credit',
-        date: '02 Jun · A/C •••• 4521',
-        account: 'A/C •••• 4521',
-        amount: '+₹92,000',
+        title: 'RTGS Cr — Business Payment',
+        date: '22 Aug · A/C •••• 0002',
+        account: 'A/C •••• 0002',
+        amount: '+₹65,000',
         type: 'credit',
-        reference: 'SAL26060284920',
+        reference: 'RTGS26082299104',
         status: 'Completed',
       },
     ];
@@ -511,4 +607,3 @@ export const mockApiInterceptor: HttpInterceptorFn = (
   // Pass through if not explicitly intercepted
   return next(req);
 };
-

@@ -30,7 +30,7 @@ export class BankService {
   }
 
   /**
-   * Fetches the bank list from the API (called after generateSessionToken).
+   * Fetches the bank list from the API (/TestBedGateway/API/banking/bank/list).
    * Returns banks with their theme configuration.
    */
   fetchBankList(): Observable<BankInfo[]> {
@@ -38,10 +38,25 @@ export class BankService {
 
     const payload: BankListRequest = this.requestBuilder.buildRequest({});
 
-    return this.http.post<BankListResponse>(API_ENDPOINTS.AUTH.BANK_LIST, payload).pipe(
+    return this.http.post<BankListResponse>(API_ENDPOINTS.BANKING.BANK_LIST, payload).pipe(
       map((response) => {
-        const banks = response.body?.bankListResponse?.banks || [];
-        return banks;
+        const rawBanks = response.body?.bankListResponse?.banks || [];
+        return rawBanks.map((b) => ({
+          ...b,
+          bankId: b.bankId || b.bankCode || '',
+          shortName: b.shortName || b.bankShortCode || '',
+          bankCode: b.bankId || b.bankCode || '',
+          bankShortCode: b.shortName || b.bankShortCode || '',
+          theme: {
+            ...b.theme,
+            primaryColor: b.theme?.primaryColor || b.theme?.headerBgColor || '#082F49',
+            secondaryColor: b.theme?.secondaryColor || b.theme?.menuBgColor || '#075985',
+            footerText: b.theme?.footerText || b.theme?.footerBgColor || '#041F31',
+            headerBgColor: b.theme?.primaryColor || b.theme?.headerBgColor || '#082F49',
+            menuBgColor: b.theme?.secondaryColor || b.theme?.menuBgColor || '#075985',
+            footerBgColor: b.theme?.footerText || b.theme?.footerBgColor || '#041F31',
+          },
+        }));
       }),
       tap((banks: BankInfo[]) => {
         this.banksSignal.set(banks);
@@ -59,6 +74,26 @@ export class BankService {
       }),
     );
   }
+
+  /**
+   * Fetches the list of banks associated with a customer's registered mobile number.
+   */
+  fetchCustomerBankList(mobileNumber: string): Observable<any[]> {
+    const payload = this.requestBuilder.buildRequest({
+      customerBankRequest: { mobileNumber },
+    });
+
+    return this.http
+      .post<any>(API_ENDPOINTS.BANKING.CUSTOMER_BANK_LIST, payload)
+      .pipe(
+        map((response) => response.body?.customerBankListResponse?.banks || []),
+        catchError((err) => {
+          console.error('[BankService] Failed to fetch customer bank list:', err);
+          return of([]);
+        }),
+      );
+  }
+
 
   /**
    * Selects a bank, applies its theme, and persists to storage.

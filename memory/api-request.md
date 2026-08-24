@@ -1,17 +1,38 @@
-# SSPL Bank API Architecture & Request/Response Context Memory
+# SSPL Core Banking API Architecture & Request/Response Reference
 
-This document serves as the single source of truth for all API interactions, envelopes, schemas, auth lifecycles, interceptors, and environment configurations across the SSPL Core Banking platform.
+This document serves as the single source of truth for all API interactions, envelopes, schemas, auth lifecycles, proxy routing, interceptors, and environment configurations across the SSPL Core Banking platform.
 
 ---
 
-## 1. Architectural Overview & Envelope Standard
+## 1. Gateway & Proxy Configuration
 
-All API requests and responses adhere to an enterprise envelope pattern consisting of a structured **`header`** and optional **`body`**.
+- **Proxy Target**: `http://10.10.213.33:91/`
+- **Proxy Context Path**: `/TestBedGateway`
+- **API Base URL**: `/TestBedGateway/API/banking`
+- **Proxy Config File**: `proxy.conf.json`
+- **Angular Dev Server Config**: `angular.json` under `projects.sspl-demo.architect.serve.options.proxyConfig`.
+
+```json
+{
+  "/TestBedGateway": {
+    "target": "http://10.10.213.33:91",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  }
+}
+```
+
+---
+
+## 2. Architectural Overview & Envelope Standard
+
+All API requests and responses adhere to an enterprise envelope pattern consisting of a structured **`header`** and **`body`**.
 
 ```mermaid
 flowchart LR
     Client[Angular Client Application] -->|ApiRequest Envelope| Interceptors[Auth & Mock Interceptor Pipeline]
-    Interceptors -->|Live Mode / Mock Mode| Backend[Core Banking Backend / Mock Handler]
+    Interceptors -->|Live Proxy / Mock Mode| Backend[TestBedGateway / Mock Handler]
     Backend -->|ApiResponse Envelope| Client
 ```
 
@@ -21,180 +42,126 @@ flowchart LR
   "header": {
     "requestNo": "REQ122",
     "deviceInfo": {
-      "deviceId": "abskc",
-      "os": "macOS",
-      "osVersion": "14.4"
-    },
-    "token": "SSPL-AT-...",
-    "sessionToken": "SSPL-SES-...",
-    "timestamp": "2026-08-22T17:25:00.000Z"
-  },
-  "body": {}
-}
-```
-
-### Standard Response Envelope (`ApiResponse<TBody>`)
-```json
-{
-  "header": {
-    "requestNo": "REQ122",
-    "status": "success",
-    "txnId": "1785927966931ZSOFXmXLq2I945728",
-    "responseCode": "200",
-    "message": "Operation completed successfully"
-  },
-  "body": {}
-}
-```
-
----
-
-## 2. Authentication & Session Lifecycle
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant UI as Login / Client UI
-    participant Session as SessionService
-    participant Auth as AuthService
-    participant Interceptor as HttpInterceptor
-    participant API as Backend (or Mock Interceptor)
-
-    Note over UI, API: Phase 1: Pre-login Session Establishment
-    UI->>Session: generateSessionToken()
-    Session->>Interceptor: POST /auth/generateSessionToken (Header: DeviceInfo, RequestNo; Body: {})
-    Interceptor->>API: Route Request
-    API-->>Interceptor: Status: success, txnId, sessionToken & Captcha
-    Interceptor-->>Session: Return SessionTokenResponse
-    Session-->>UI: Display Captcha with Noise Lines
-
-    Note over UI, API: Phase 1b: Bank List (Post session-token, pre-login)
-    UI->>Interceptor: POST /auth/bankList (Body: {})
-    API-->>UI: bankListResponse with banks[], tenantId, bankName & theme colors
-    UI->>UI: Populate bank dropdown + apply selected bank theme to CSS variables
-
-    Note over UI, API: Phase 2: Login & Token Creation
-    UI->>Auth: login(tenant, customerId, sessionToken)
-    Auth->>Interceptor: POST /auth/login
-    Interceptor->>API: Route Login with SessionToken
-    API-->>Interceptor: Return AccessToken, RefreshToken & User Details
-    Interceptor-->>Auth: Save Tokens in Signals & SessionStorage
-    Auth-->>UI: Navigate to Dashboard
-
-    Note over UI, API: Phase 3: Authenticated Calls
-    UI->>Interceptor: GET /dashboard/summary
-    Interceptor->>Interceptor: Inject Bearer Token & X-Session-Token Headers
-    Interceptor->>API: Fetch Dashboard Data
-    API-->>UI: Return Summary / Accounts / Transactions
-
-    Note over UI, API: Phase 4: Token Rotation
-    Auth->>Interceptor: POST /auth/refreshToken (Body: refreshToken, sessionToken)
-    API-->>Auth: New AccessToken + RefreshToken
-
-    Note over UI, API: Phase 5: Logout
-    Auth->>Interceptor: POST /auth/logout
-    API-->>Auth: Invalidate Session
-```
-
----
-
-## 3. Detailed API Endpoint Specifications
-
-### 3.1. Generate Session Token (Pre-Login)
-- **Endpoint**: `POST /auth/generateSessionToken`
-- **Purpose**: Generates a secure server session token before authentication and supplies challenge data (Captcha code, noise lines) to prevent automated bot attacks.
-- **Trigger**: Invoked automatically on Login page initialization or when refreshing captcha.
-
-#### Request Example
-```json
-{
-  "header": {
-    "requestNo": "REQ122",
-    "deviceInfo": {
-      "deviceId": "abskc",
-      "os": "jhbca",
-      "osVersion": "917"
+      "browser": "Google",
+      "browserVersion": "12345560.150150.5115"
     }
   },
   "body": {}
 }
 ```
 
-#### Response Example
+### Standard Response Envelope (Success) (`ApiResponse<TBody>`)
 ```json
 {
   "header": {
     "requestNo": "REQ122",
     "status": "success",
-    "txnId": "1785927966931ZSOFXmXLq2I945728"
+    "txnId": "1787579580999y2fZvxpN0ZU6943b0"
   },
-  "body": {
-    "sessionToken": "SSPL-SES-TC938-1785927966931",
-    "expiresAt": 1785928866931,
-    "captchaCode": "TCWYXg",
-    "noiseLines": [
-      { "x1": 5, "y1": 15, "x2": 135, "y2": 25, "color": "rgba(13, 34, 64, 0.25)" },
-      { "x1": 10, "y1": 30, "x2": 130, "y2": 10, "color": "rgba(201, 162, 39, 0.35)" },
-      { "x1": 20, "y1": 8, "x2": 120, "y2": 32, "color": "rgba(13, 34, 64, 0.20)" }
-    ]
+  "body": {}
+}
+```
+
+### Standard Response Envelope (Error)
+```json
+{
+  "header": {
+    "errorMessage": "Customer is already registered",
+    "errorCode": "5206",
+    "requestNo": "REQ122",
+    "status": "error",
+    "txnId": "1787579580999y2fZvxpN0ZU6943b0"
   }
 }
 ```
 
 ---
 
-### 3.2. Bank List (Post Session-Token, Pre-Login)
-- **Endpoint**: `POST /auth/bankList`
-- **Purpose**: Returns the list of available banks with their `tenantId`, display name, and full theme configuration (`headerBgColor`, `menuBgColor`, `footerBgColor`). Called immediately after a successful `generateSessionToken` response so the bank dropdown is populated before the user interacts with the form.
-- **Theme Application**: On selecting a bank, `ThemeService` applies `--color-brand-primary` and related CSS variables to `document.documentElement` dynamically. The change is instant and persists across the login → dashboard navigation via `sessionStorage`.
+## 3. Endpoints Specification
 
-#### Request Example
+### 3.1 Bank List API
+- **Endpoint**: `POST /TestBedGateway/API/banking/bank/list`
+- **Description**: Fetches all onboarded banks, their tenant IDs, and UI theme color definitions.
+
+#### Request
 ```json
 {
   "header": {
     "requestNo": "REQ122",
     "deviceInfo": {
-      "deviceId": "abskc",
-      "os": "jhbca",
-      "osVersion": "917"
+      "browser": "Google",
+      "browserVersion": "12345560.150150.5115"
     }
   },
   "body": {}
 }
 ```
 
-#### Response Example
+#### Response
 ```json
 {
   "header": {
     "requestNo": "REQ122",
     "status": "success",
-    "txnId": "1787289005903DdnFT4GJcI76943b0"
+    "txnId": "1787579471378iX6v11s5gpa6943b0"
   },
   "body": {
     "bankListResponse": {
       "banks": [
         {
-          "bankCode": "BHARAT",
-          "bankShortCode": "BHAR",
-          "tenantId": "TENANTBHARAT",
-          "bankName": "Bharat Bank",
+          "bankId": "BANK0001",
+          "tenantId": "TENANT0001",
+          "bankName": "Bharat Sahakari Bank Ltd",
           "theme": {
-            "headerBgColor": "#082F49",
-            "menuBgColor": "#075985",
-            "footerBgColor": "#041F31"
-          }
+            "footerText": "#041F31",
+            "primaryColor": "#082F49",
+            "secondaryColor": "#075985"
+          },
+          "shortName": "BHAR"
         },
         {
-          "bankCode": "DNS",
-          "bankShortCode": "DNSB",
-          "tenantId": "TENANTDNS",
+          "bankId": "BANK0003",
+          "tenantId": "TENANT0003",
+          "bankName": "Cosmos Cooperative Bank Ltd",
+          "theme": {
+            "footerText": "#431407",
+            "primaryColor": "#9A3412",
+            "secondaryColor": "#7C2D12"
+          },
+          "shortName": "CCBL"
+        },
+        {
+          "bankId": "BANK0002",
+          "tenantId": "TENANT0002",
           "bankName": "DNS Bank",
           "theme": {
-            "headerBgColor": "#166534",
-            "menuBgColor": "#14532D",
-            "footerBgColor": "#052E16"
-          }
+            "footerText": "#052E16",
+            "primaryColor": "#166534",
+            "secondaryColor": "#14532D"
+          },
+          "shortName": "DNS"
+        },
+        {
+          "bankId": "BANK0004",
+          "tenantId": "TENANT0004",
+          "bankName": "Jalgaon Janata Bank Ltd",
+          "theme": {
+            "footerText": "#422006",
+            "primaryColor": "#854D0E",
+            "secondaryColor": "#A16207"
+          },
+          "shortName": "JJBL"
+        },
+        {
+          "bankId": "BANK0005",
+          "tenantId": "TENANT0005",
+          "bankName": "Karad Urban Cooperative Bank",
+          "theme": {
+            "footerText": "#1E1B4B",
+            "primaryColor": "#312E81",
+            "secondaryColor": "#4338CA"
+          },
+          "shortName": "KUCB"
         }
       ]
     }
@@ -202,185 +169,50 @@ sequenceDiagram
 }
 ```
 
-#### Theme CSS Variables Applied (by `ThemeService`)
-| CSS Variable | Source Field | Effect |
-|---|---|---|
-| `--color-brand-primary` | `headerBgColor` | Login header, nav bar background |
-| `--color-brand-primary-hover` | `headerBgColor` + lighten | Button hover state |
-| `--color-bg-inverse` | `headerBgColor` | Inverted surface background |
-| `--sspl-menu-bg` | `menuBgColor` | Sidebar/navigation background |
-| `--sspl-footer-bg` | `footerBgColor` | Footer section background |
-
 ---
 
-### 3.3. Customer Login
-- **Endpoint**: `POST /auth/login`
-- **Purpose**: Authenticates credentials within the active session token and generates corresponding access and refresh tokens.
-- **Trigger**: Invoked when user submits the login form.
+### 3.2 Lines of Business (LOB) List API
+- **Endpoint**: `POST /TestBedGateway/API/banking/lob/list`
+- **Description**: Fetches supported Lines of Business for a specified bank.
 
-#### Request Example
-```json
-{
-  "header": {
-    "requestNo": "REQ123",
-    "deviceInfo": {
-      "deviceId": "abskc",
-      "os": "macOS",
-      "osVersion": "14.4"
-    },
-    "sessionToken": "SSPL-SES-TC938-1785927966931"
-  },
-  "body": {
-    "tenantId": "SSPL001",
-    "customerId": "SSPL_USER_84920",
-    "password": "SecurePassword@2026!",
-    "captchaCode": "TCWYXg",
-    "sessionToken": "SSPL-SES-TC938-1785927966931"
-  }
-}
-```
-
-#### Response Example
-```json
-{
-  "header": {
-    "requestNo": "REQ123",
-    "status": "success",
-    "txnId": "1785927967812ABXZyKl823091"
-  },
-  "body": {
-    "accessToken": "SSPL-AT-90A81BC-1785927967",
-    "refreshToken": "SSPL-RT-44D12EF-1785927967",
-    "sessionToken": "SSPL-SES-TC938-1785927966931",
-    "expiresIn": 900,
-    "tokenType": "Bearer",
-    "user": {
-      "id": "SSPL_USER_84920",
-      "name": "Rajesh K. Sharma",
-      "username": "SSPL_USER_84920",
-      "tenant": "SSPL001",
-      "lastLogin": "08 Jun, 09:41",
-      "avatarInitials": "RK",
-      "role": "Personal Banking"
-    }
-  }
-}
-```
-
----
-
-### 3.3. Refresh Token
-- **Endpoint**: `POST /auth/refreshToken`
-- **Purpose**: Generates a new short-lived access token and rotated refresh token when access token expires.
-
-#### Request Example
-```json
-{
-  "header": {
-    "requestNo": "REQ124",
-    "deviceInfo": { "deviceId": "abskc", "os": "macOS", "osVersion": "14.4" },
-    "sessionToken": "SSPL-SES-TC938-1785927966931"
-  },
-  "body": {
-    "refreshToken": "SSPL-RT-44D12EF-1785927967",
-    "sessionToken": "SSPL-SES-TC938-1785927966931"
-  }
-}
-```
-
-#### Response Example
-```json
-{
-  "header": {
-    "requestNo": "REQ124",
-    "status": "success",
-    "txnId": "1785927969012LKJXyQl983210"
-  },
-  "body": {
-    "accessToken": "SSPL-AT-7889A12-1785927969",
-    "refreshToken": "SSPL-RT-3391BC1-1785927969",
-    "expiresIn": 900,
-    "tokenType": "Bearer"
-  }
-}
-```
-
----
-
-### 3.4. Logout
-- **Endpoint**: `POST /auth/logout`
-- **Purpose**: Revokes the active session token, access token, and refresh token on the server.
-
-#### Request Example
-```json
-{
-  "header": {
-    "requestNo": "REQ125",
-    "deviceInfo": { "deviceId": "abskc", "os": "macOS", "osVersion": "14.4" },
-    "sessionToken": "SSPL-SES-TC938-1785927966931"
-  },
-  "body": {
-    "sessionToken": "SSPL-SES-TC938-1785927966931"
-  }
-}
-```
-
-#### Response Example
-```json
-{
-  "header": {
-    "requestNo": "REQ125",
-    "status": "success",
-    "txnId": "1785927970001ZSOFXmXLq2I945728"
-  },
-  "body": {
-    "message": "Session terminated and tokens invalidated successfully"
-  }
-}
-```
-
----
-
-### 3.5. Line of Business List API
-- **Endpoint**: `POST /auth/getLobList`
-- **Purpose**: Fetches dynamically available Lines of Business (LOBs) for a given bank code.
-- **Trigger**: Invoked during registration upon bank selection.
-
-#### Request Example
+#### Request
 ```json
 {
   "header": {
     "requestNo": "REQ122",
     "deviceInfo": {
-      "deviceId": "abskc",
-      "os": "macOS",
-      "osVersion": "14.4"
+      "browser": "Google",
+      "browserVersion": "12345560.150150.5115"
     }
   },
   "body": {
     "lobRequest": {
-      "bankCode": "BHARAT"
+      "bankId": "BANK0001"
     }
   }
 }
 ```
 
-#### Response Example
+#### Response
 ```json
 {
   "header": {
     "requestNo": "REQ122",
     "status": "success",
-    "txnId": "17872891747689LKHkHsLDvT6943b0"
+    "txnId": "1787579505096MPCGaOvT1Ji6943b0"
   },
   "body": {
     "lobListResponse": {
-      "bankCode": "BHARAT",
+      "bankId": "BANK0001",
       "lobs": [
-        { "lobCode": "RETAIL", "lobName": "Retail Banking" },
-        { "lobCode": "CORPORATE", "lobName": "Corporate Banking" },
-        { "lobCode": "SME", "lobName": "SME Banking" },
-        { "lobCode": "AGRICULTURE", "lobName": "Agriculture Banking" }
+        {
+          "lobCode": "RETAIL",
+          "lobName": "Retail Banking"
+        },
+        {
+          "lobCode": "AGRICULTURE",
+          "lobName": "Agriculture Banking"
+        }
       ]
     }
   }
@@ -389,11 +221,70 @@ sequenceDiagram
 
 ---
 
-### 3.6. User Registration API
-- **Endpoint**: `POST /auth/register`
-- **Purpose**: Onboards new customer credentials with bankCode, lobCode, username, mobileNumber, password, and customerId.
+### 3.3 Customer Bank List API
+- **Endpoint**: `POST /TestBedGateway/API/banking/customer/bank/list`
+- **Description**: Fetches list of banks registered with a specific customer mobile number.
 
-#### Request Example
+#### Request
+```json
+{
+  "header": {
+    "requestNo": "REQ122",
+    "deviceInfo": {
+      "browser": "Google",
+      "browserVersion": "12345560.150150.5115"
+    }
+  },
+  "body": {
+    "customerBankRequest": {
+      "mobileNumber": "9766588867"
+    }
+  }
+}
+```
+
+#### Response
+```json
+{
+  "header": {
+    "requestNo": "REQ122",
+    "status": "success",
+    "txnId": "1787579549288epLtgAzJR0a6943b0"
+  },
+  "body": {
+    "customerBankListResponse": {
+      "banks": [
+        {
+          "bankId": "BANK0001",
+          "tenantId": "TENANT0001",
+          "bankName": "Bharat Sahakari Bank Ltd",
+          "shortName": "BHAR"
+        },
+        {
+          "bankId": "BANK0003",
+          "tenantId": "TENANT0003",
+          "bankName": "Cosmos Cooperative Bank Ltd",
+          "shortName": "CCBL"
+        },
+        {
+          "bankId": "BANK0005",
+          "tenantId": "TENANT0005",
+          "bankName": "Karad Urban Cooperative Bank",
+          "shortName": "KUCB"
+        }
+      ]
+    }
+  }
+}
+```
+
+---
+
+### 3.4 Customer Registration API
+- **Endpoint**: `POST /TestBedGateway/API/banking/customer/register`
+- **Description**: Registers a new customer into the banking platform.
+
+#### Request
 ```json
 {
   "header": {
@@ -405,47 +296,64 @@ sequenceDiagram
   },
   "body": {
     "registerRequest": {
-      "bankCode": "BHARAT",
+      "customerId": "JALGAON-CUST-10001",
+      "username": "sagar123",
+      "firstName": "Sagar",
+      "lastName": "Koli",
+      "bankId": "BANK0004",
       "lobCode": "RETAIL",
-      "username": "vishal123",
-      "mobileNumber": "8884045346",
-      "password": "Vishal@123",
-      "customerId": "BHARAT-CUST-10003"
+      "mobileNumber": "8898832785",
+      "password": "Sagar@123"
     }
   }
 }
 ```
 
-#### Response Example
+#### Response (Success)
 ```json
 {
   "header": {
     "requestNo": "REQ122",
     "status": "success",
-    "txnId": "1787289621927rBoSezoMcEC6943b0"
+    "txnId": "1787579580999y2fZvxpN0ZU6943b0"
   },
   "body": {
     "registrationResponse": {
-      "bankCode": "BHARAT",
-      "customerId": "BHARAT-CUST-10003",
-      "tenantId": "TENANTBHARAT",
-      "userReference": "USER-BHAR-0019",
+      "bankId": "BANK0004",
+      "customerId": "JALGAON-CUST-10001",
+      "tenantId": "TENANT0004",
+      "userReference": "USER-JJBL-0022",
       "lobCode": "RETAIL",
-      "userId": 500000000019,
+      "userId": 50000000000012,
       "channelId": 9001,
-      "username": "vishal123"
+      "username": "sagar123",
+      "firstName": "Sagar",
+      "lastName": "Koli"
     }
+  }
+}
+```
+
+#### Response (Error)
+```json
+{
+  "header": {
+    "errorMessage": "Customer is already registered",
+    "errorCode": "5206",
+    "requestNo": "REQ122",
+    "status": "error",
+    "txnId": "1787579580999y2fZvxpN0ZU6943b0"
   }
 }
 ```
 
 ---
 
-### 3.7. User Profile API
-- **Endpoint**: `POST /auth/profile`
-- **Purpose**: Retrieves the customer's personal credentials, registered bank, and line of business. The frontend uses this to display customer banking details (Account numbers, IFSC, LOB, Username, Mobile number) while strictly excluding internal tenant identifiers (`tenantId`, `userReference`).
+### 3.5 Web Login API
+- **Endpoint**: `POST /TestBedGateway/API/banking/web/login`
+- **Description**: Authenticates a user into the web banking portal.
 
-#### Request Example
+#### Request
 ```json
 {
   "header": {
@@ -454,49 +362,38 @@ sequenceDiagram
       "browser": "Google",
       "browserVersion": "12345560.150150.5115"
     }
-  },
-  "body": {}
-}
-```
-
-#### Response Example
-```json
-{
-  "header": {
-    "requestNo": "REQ122",
-    "status": "success",
-    "txnId": "1787290034331bkazlwbzyv16943b0"
   },
   "body": {
-    "profileResponse": {
-      "bankCode": "BHARAT",
-      "mobileNumber": "8884045346",
-      "customerId": "BHARAT-CUST-10003",
-      "tenantId": "TENANTBHARAT",
-      "userReference": "USER-BHAR-0019",
-      "lobCode": "RETAIL",
-      "username": "vishal123"
+    "webLoginRequest": {
+      "bankId": "BANK0004",
+      "username": "sagar123",
+      "password": "Sagar@123"
     }
+  }
+}
+```
+
+#### Response
+```json
+{
+  "header": {
+    "requestNo": "REQ122",
+    "status": "success",
+    "txnId": "1787579616199JfsFCWGptji6943b0"
+  },
+  "body": {
+    "status": 1
   }
 }
 ```
 
 ---
 
-### 3.8. Dashboard Endpoints
-- `GET /dashboard/summary` — Returns consolidated financial balances and credit/debit KPIs.
-- `GET /dashboard/accounts` — Returns list of accounts (Savings, Current, NRI, FDs).
-- `GET /dashboard/transactions` — Returns recent transaction ledger items.
-- `GET /dashboard/accounts/:id/refresh` — Triggers account balance refresh with core banking switch.
+### 3.6 Balance Enquiry API
+- **Endpoint**: `POST /TestBedGateway/API/banking/balance/enquiry`
+- **Description**: Retrieves real-time account balances, ledger balances, and masked account identifiers.
 
----
-
-### 3.9. Balance Enquiry API
-- **Endpoint**: `POST /dashboard/balanceEnquiry`
-- **Purpose**: Returns real-time ledger and available balances, currencies, masked account numbers, and account types across all linked customer accounts.
-- **Trigger**: Invoked when customer clicks "Balance Enquiry" on the dashboard or navigates to `/balance-enquiry`.
-
-#### Request Example
+#### Request
 ```json
 {
   "header": {
@@ -510,26 +407,34 @@ sequenceDiagram
 }
 ```
 
-#### Response Example
+#### Response
 ```json
 {
   "header": {
     "requestNo": "REQ122",
     "status": "success",
-    "txnId": "1787289836691OT7EmimVALC6943b0"
+    "txnId": "17875796443491f42d2a45055455"
   },
   "body": {
     "balanceResponse": {
       "correlationId": "REQ122",
       "accounts": [
         {
-          "ledgerBalance": 77975,
-          "accountType": "CURRENT",
-          "accountNumberMasked": "XXXXXXXX0003",
+          "ledgerBalance": 72500.75,
+          "accountType": "SAVINGS",
+          "accountNumberMasked": "XXXXXXXX0001",
           "currency": "INR",
-          "availableBalance": 2324460
+          "availableBalance": 72000.75
+        },
+        {
+          "ledgerBalance": 127975,
+          "accountType": "CURRENT",
+          "accountNumberMasked": "XXXXXXXX0002",
+          "currency": "INR",
+          "availableBalance": 324460
         }
-      ]
+      ],
+      "transactionId": "17875796443491f42d2a45055455"
     }
   }
 }
@@ -537,40 +442,46 @@ sequenceDiagram
 
 ---
 
-## 4. HTTP Interceptors Architecture
+### 3.7 Customer Profile API
+- **Endpoint**: `POST /TestBedGateway/API/banking/customer/profile`
+- **Description**: Returns personal and banking profile information for the authenticated user.
 
-### 1. `authInterceptor` (`src/app/core/interceptors/auth.interceptor.ts`)
-- Automatically resolves relative API paths against `environment.apiBaseUrl`.
-- Injects HTTP headers:
-  - `Authorization: Bearer <accessToken>`
-  - `X-Session-Token: <sessionToken>`
-  - `X-Device-Id: <deviceId>`
-- Listens for `401 Unauthorized` responses to trigger token rotation or logout.
-
-### 2. `mockApiInterceptor` (`src/app/core/interceptors/mock-api.interceptor.ts`)
-- Active when `environment.useMockApi === true`.
-- Intercepts requests and returns realistic payloads wrapped in the standard `ApiResponse` envelope.
-- Emulates asynchronous backend network delays using RxJS `delay(environment.mockDelayMs)`.
-
----
-
-## 5. Switching from Mock to Live Backend
-
-To point the application to your actual backend server:
-
-Open `src/environments/environment.ts` and adjust the two properties:
-
-```typescript
-export const environment = {
-  production: false,
-  // 1. Set your backend base URL:
-  apiBaseUrl: 'https://your-actual-api-domain.com/api/v1',
-  // 2. Set useMockApi to false:
-  useMockApi: false,
-  mockDelayMs: 0,
-  apiVersion: 'v1',
-  appVersion: '1.0.0'
-};
+#### Request
+```json
+{
+  "header": {
+    "requestNo": "REQ122",
+    "deviceInfo": {
+      "browser": "Google",
+      "browserVersion": "12345560.150150.5115"
+    }
+  },
+  "body": {}
+}
 ```
 
-That's it! When `useMockApi` is `false`, `mockApiInterceptor` immediately passes all requests through to the live server URL with all auth headers and envelopes intact.
+#### Response
+```json
+{
+  "header": {
+    "requestNo": "REQ122",
+    "status": "success",
+    "txnId": "1787579671161AyBqMNZPEDi6943b0"
+  },
+  "body": {
+    "profileResponse": {
+      "firstName": "Sagar",
+      "lastName": "Koli",
+      "bankId": "BANK0004",
+      "mobileNumber": "8898832785",
+      "customerId": "JALGAON-CUST-10001",
+      "tenantId": "TENANT0004",
+      "fullName": "Sagar Koli",
+      "bankName": "Jalgaon Janata Bank Ltd",
+      "userReference": "USER-JJBL-0022",
+      "lobCode": "RETAIL",
+      "username": "sagar123"
+    }
+  }
+}
+```

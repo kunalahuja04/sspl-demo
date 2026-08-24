@@ -44,7 +44,15 @@ export const routes: Routes = [
     title: 'Balance Enquiry — SSPL Net Banking',
   },
   {
+    path: 'loans',
+    loadComponent: () =>
+      import('./pages/loans/loans-page.component').then((m) => m.LoansPageComponent),
+    canActivate: [authGuard],
+    title: 'Loans & Lending Offerings — SSPL Net Banking',
+  },
+  {
     path: 'my-accounts',
+
     redirectTo: 'dashboard',
     pathMatch: 'full',
   },

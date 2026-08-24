@@ -565,13 +565,13 @@
         <p class="font-body text-label-sm font-bold tracking-wider text-muted uppercase mb-3">Account Details</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
           @for (detail of [
-          { label: 'Bank Code', value: user.bankCode },
+          { label: 'Bank Code', value: user.bankId || user.bankCode || '—' },
           { label: 'Customer ID', value: user.customerId },
           { label: 'Tenant ID', value: user.tenantId },
           { label: 'Username', value: user.username },
           { label: 'User Reference', value: user.userReference },
-          { label: 'User ID', value: user.userId.toString() },
-          { label: 'Channel ID', value: user.channelId.toString() },
+          { label: 'User ID', value: user.userId ? user.userId.toString() : '—' },
+          { label: 'Channel ID', value: user.channelId ? user.channelId.toString() : '—' },
           { label: 'Line of Business', value: getLobLabel(user.lobCode) }
           ]; track detail.label) {
           <div class="flex items-center justify-between py-2.5 border-b border-border-default last:border-0">
@@ -579,6 +579,7 @@
             <span class="font-mono text-body-sm text-primary font-semibold">{{ detail.value }}</span>
           </div>
           }
+
         </div>
 
         <!-- Save hint -->

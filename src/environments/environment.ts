@@ -1,13 +1,13 @@
 export const environment = {
   production: false,
   /**
-   * Base URL for the SSPL Core Banking & Auth APIs.
-   * When switching to real backend, simply update this URL and set `useMockApi: false`.
+   * Base URL for the Core Banking APIs.
+   * Uses TestBedGateway proxy target (http://10.10.213.33:91/TestBedGateway/API/banking).
    */
-  apiBaseUrl: 'https://api.ssplbank.internal/api/v1',
+  apiBaseUrl: '/TestBedGateway/API/banking',
   /**
    * When true, requests are intercepted by `MockApiInterceptor` with simulated delay.
-   * Toggle to false to route all HTTP calls to the live `apiBaseUrl`.
+   * Toggle to false to route all HTTP calls to the live server via the TestBedGateway proxy.
    */
   useMockApi: true,
   /**
@@ -15,5 +15,5 @@ export const environment = {
    */
   mockDelayMs: 400,
   apiVersion: 'v1',
-  appVersion: '1.0.0'
+  appVersion: '1.0.0',
 };

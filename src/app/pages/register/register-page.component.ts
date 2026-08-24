@@ -91,8 +91,8 @@ export class RegisterPageComponent implements OnInit {
           const bank = persisted || (banks.length > 0 ? banks[0] : null);
           if (bank) {
             this.selectedBank = bank;
-            this.generateCustomerId(bank.bankCode);
-            this.loadLobsForBank(bank.bankCode);
+            this.generateCustomerId(bank.shortName || bank.bankShortCode || bank.bankId || 'BANK');
+            this.loadLobsForBank(bank.bankId || bank.bankCode || '');
           }
         },
       });
@@ -101,8 +101,8 @@ export class RegisterPageComponent implements OnInit {
       const bank = persisted || (this.banks().length > 0 ? this.banks()[0] : null);
       if (bank) {
         this.selectedBank = bank;
-        this.generateCustomerId(bank.bankCode);
-        this.loadLobsForBank(bank.bankCode);
+        this.generateCustomerId(bank.shortName || bank.bankShortCode || bank.bankId || 'BANK');
+        this.loadLobsForBank(bank.bankId || bank.bankCode || '');
       }
     }
   }
@@ -116,8 +116,8 @@ export class RegisterPageComponent implements OnInit {
     this.bankService.selectBank(bank);
     this.selectedLobCode = '';
     this.lobOptions.set([]);
-    this.generateCustomerId(bank.bankCode);
-    this.loadLobsForBank(bank.bankCode);
+    this.generateCustomerId(bank.shortName || bank.bankShortCode || bank.bankId || 'BANK');
+    this.loadLobsForBank(bank.bankId || bank.bankCode || '');
   }
 
   /**
@@ -126,14 +126,14 @@ export class RegisterPageComponent implements OnInit {
    */
   private generateCustomerId(bankCode: string): void {
     const seq = Math.floor(10000 + Math.random() * 90000);
-    this.customerId = `${bankCode}-CUST-${seq}`;
+    this.customerId = `${bankCode.toUpperCase()}-CUST-${seq}`;
   }
 
-  private loadLobsForBank(bankCode: string): void {
+  private loadLobsForBank(bankId: string): void {
     this.lobsLoading.set(true);
     this.lobsError.set(null);
 
-    this.lobService.fetchLobsForBank(bankCode).subscribe({
+    this.lobService.fetchLobsForBank(bankId).subscribe({
       next: (lobs) => {
         this.lobOptions.set(lobs);
         this.lobsLoading.set(false);
@@ -149,8 +149,10 @@ export class RegisterPageComponent implements OnInit {
   }
 
   retryLoadLobs(): void {
-    if (this.selectedBank) this.loadLobsForBank(this.selectedBank.bankCode);
+    if (this.selectedBank) this.loadLobsForBank(this.selectedBank.bankId || this.selectedBank.bankCode || '');
   }
+
+
 
   selectLob(code: string): void {
     this.selectedLobCode = code;
@@ -196,13 +198,15 @@ export class RegisterPageComponent implements OnInit {
     this.isSubmitting.set(true);
 
     this.registrationService.register({
-      bankCode: this.selectedBank.bankCode,
+      bankId: this.selectedBank.bankId || this.selectedBank.bankCode || 'BANK0004',
+      bankCode: this.selectedBank.bankId || this.selectedBank.bankCode || 'BANK0004',
       lobCode: this.selectedLobCode,
       username: this.username,
       mobileNumber: this.mobileNumber,
       password: this.password,
       customerId: this.customerId,
     }).subscribe({
+
       next: (result) => {
         this.isSubmitting.set(false);
         this.registeredUser.set(result);

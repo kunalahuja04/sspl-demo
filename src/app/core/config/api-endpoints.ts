@@ -1,15 +1,25 @@
 /**
  * Centralized API endpoints registry.
- * Keeps endpoint paths organized and easily maintainable.
+ * Maps to /TestBedGateway/API/banking/* endpoints.
  */
 export const API_ENDPOINTS = {
+  BANKING: {
+    BANK_LIST: '/bank/list',
+    LOB_LIST: '/lob/list',
+    CUSTOMER_BANK_LIST: '/customer/bank/list',
+    REGISTER: '/customer/register',
+    LOGIN: '/web/login',
+    BALANCE_ENQUIRY: '/balance/enquiry',
+    PROFILE: '/customer/profile',
+  },
   AUTH: {
     GENERATE_SESSION_TOKEN: '/auth/generateSessionToken',
-    BANK_LIST: '/auth/bankList',
-    LOGIN: '/auth/login',
-    REGISTER: '/auth/register',
-    LOB_LIST: '/auth/getLobList',
-    PROFILE: '/auth/profile',
+    BANK_LIST: '/bank/list',
+    LOGIN: '/web/login',
+    REGISTER: '/customer/register',
+    LOB_LIST: '/lob/list',
+    CUSTOMER_BANK_LIST: '/customer/bank/list',
+    PROFILE: '/customer/profile',
     REFRESH_TOKEN: '/auth/refreshToken',
     LOGOUT: '/auth/logout',
     VALIDATE_CAPTCHA: '/auth/validateCaptcha',
@@ -18,7 +28,7 @@ export const API_ENDPOINTS = {
     SUMMARY: '/dashboard/summary',
     ACCOUNTS: '/dashboard/accounts',
     TRANSACTIONS: '/dashboard/transactions',
-    BALANCE_ENQUIRY: '/dashboard/balanceEnquiry',
+    BALANCE_ENQUIRY: '/balance/enquiry',
     REFRESH_ACCOUNT: (accountId: string) => `/dashboard/accounts/${accountId}/refresh`,
-  }
+  },
 } as const;

@@ -1,0 +1,8 @@
+{
+  "/TestBedGateway": {
+    "target": "http://10.10.213.33:91",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  }
+}

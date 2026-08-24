@@ -19,7 +19,7 @@ import { BankService } from './bank.service';
  *   --sspl-footer-bg            → footerBgColor
  */
 
-const THEMED_ROUTES = ['/login', '/register', '/dashboard', '/my-accounts', '/profile', '/balance-enquiry'];
+const THEMED_ROUTES = ['/login', '/register', '/dashboard', '/my-accounts', '/profile', '/balance-enquiry', '/loans'];
 
 
 @Injectable({
@@ -68,30 +68,38 @@ export class ThemeService {
 
   /**
    * Applies bank-specific theme colors to the document root CSS variables.
-   * Should only be called from themed routes (login, dashboard).
+   * Should only be called from themed routes (login, dashboard, profile, balance-enquiry).
    */
   applyTheme(theme: BankTheme): void {
     const root = document.documentElement;
 
-    root.style.setProperty('--color-brand-primary', theme.headerBgColor);
-    root.style.setProperty('--color-brand-primary-hover', this.lightenHex(theme.headerBgColor, 20));
-    root.style.setProperty('--color-bg-inverse', theme.headerBgColor);
-    root.style.setProperty('--sspl-menu-bg', theme.menuBgColor);
-    root.style.setProperty('--sspl-footer-bg', theme.footerBgColor);
+    const primaryColor = theme.primaryColor || theme.headerBgColor || '#082F49';
+    const secondaryColor = theme.secondaryColor || theme.menuBgColor || '#075985';
+    const footerText = theme.footerText || theme.footerBgColor || '#041F31';
+
+    root.style.setProperty('--color-brand-primary', primaryColor);
+    root.style.setProperty('--color-brand-primary-hover', this.lightenHex(primaryColor, 20));
+    root.style.setProperty('--color-bg-inverse', primaryColor);
+    root.style.setProperty('--sspl-menu-bg', secondaryColor);
+    root.style.setProperty('--sspl-footer-bg', footerText);
 
     try {
       sessionStorage.setItem(
         'sspl_active_theme',
         JSON.stringify({
-          headerBgColor: theme.headerBgColor,
-          menuBgColor: theme.menuBgColor,
-          footerBgColor: theme.footerBgColor,
+          primaryColor,
+          secondaryColor,
+          footerText,
+          headerBgColor: primaryColor,
+          menuBgColor: secondaryColor,
+          footerBgColor: footerText,
         }),
       );
     } catch {
       // Storage fallback
     }
   }
+
 
   /**
    * Restores a persisted bank theme on app boot or when re-entering a themed route.
