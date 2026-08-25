@@ -7,6 +7,7 @@ import { DashboardHeaderComponent } from '../dashboard/components/dashboard-head
 import { LoanService } from '../../services/loan.service';
 import { BankService } from '../../services/bank.service';
 import { AuthService } from '../../services/auth.service';
+import { ProfileService } from '../../services/profile.service';
 import {
   LoanType,
   ExtendedLoanCategory,
@@ -64,6 +65,7 @@ export class LoansPageComponent implements OnInit {
   private loanService = inject(LoanService);
   private bankService = inject(BankService);
   private authService = inject(AuthService);
+  private profileService = inject(ProfileService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
@@ -73,7 +75,58 @@ export class LoansPageComponent implements OnInit {
   // Selected Bank & User Profile
   readonly selectedBank = this.bankService.selectedBank;
   readonly currentUser = this.authService.currentUser;
+  readonly customerProfile = this.profileService.profile;
   readonly bankingMetrics = this.loanService.bankingHealthMetrics;
+
+  // Dynamic Customer Profile Detail Getters
+  readonly customerName = computed(() => {
+    const profile = this.profileService.profile();
+    if (profile?.fullName) return profile.fullName;
+    if (profile?.firstName && profile?.lastName) return `${profile.firstName} ${profile.lastName}`;
+    if (profile?.username) return profile.username;
+    const user = this.authService.currentUser();
+    if (user?.name) return user.name;
+    if (user?.username) return user.username;
+    return 'Valued Customer';
+  });
+
+  readonly customerMobile = computed(() => {
+    const profile = this.profileService.profile();
+    if (profile?.mobileNumber) {
+      return profile.mobileNumber.startsWith('+91')
+        ? profile.mobileNumber
+        : `+91 ${profile.mobileNumber}`;
+    }
+    return '+91 88840 45346';
+  });
+
+  readonly customerMobileMasked = computed(() => {
+    const mob = this.profileService.profile()?.mobileNumber || '8884045346';
+    const clean = mob.replace(/\D/g, '');
+    const last4 = clean.length >= 4 ? clean.slice(-4) : '5346';
+    return `••• ${last4}`;
+  });
+
+  readonly customerEmail = computed(() => {
+    const profile = this.profileService.profile();
+    if (profile?.username) {
+      return `${profile.username.toLowerCase()}@ssplbank.internal`;
+    }
+    const authUser = this.authService.currentUser();
+    if (authUser?.username) {
+      return `${authUser.username.toLowerCase()}@ssplbank.internal`;
+    }
+    return 'customer@ssplbank.internal';
+  });
+
+  readonly customerId = computed(() => {
+    return (
+      this.profileService.profile()?.customerId ||
+      this.authService.currentUser()?.id ||
+      'SSPL-CUST-84920'
+    );
+  });
+
 
   // View Mode: 'pre_approved' (Default pre-approved catalog) | 'custom_enquiry' (New / Different loan requirement)
   readonly activeViewMode = signal<'pre_approved' | 'custom_enquiry'>('pre_approved');
@@ -323,9 +376,9 @@ export class LoansPageComponent implements OnInit {
   readonly enquiryExistingEmi = signal<number>(15000);
   readonly enquiryPreferredBranch = signal<string>('Jalgaon Main Branch');
   readonly enquiryRemarks = signal<string>('');
-  readonly enquiryApplicantName = signal<string>('Vishal Sharma');
-  readonly enquiryApplicantPhone = signal<string>('+91 88840 45346');
-  readonly enquiryApplicantEmail = signal<string>('vishal.sharma@ssplbank.internal');
+  readonly enquiryApplicantName = signal<string>('');
+  readonly enquiryApplicantPhone = signal<string>('');
+  readonly enquiryApplicantEmail = signal<string>('');
 
   // Custom Enquiry Submission & Result State
   readonly isEnquiryModalOpen = signal<boolean>(false);
@@ -394,6 +447,15 @@ export class LoansPageComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    // Sync profile details if already cached or fetch from customer profile API
+    if (!this.profileService.profile()) {
+      this.profileService.fetchProfile().subscribe(() => {
+        this.syncProfileToEnquiry();
+      });
+    } else {
+      this.syncProfileToEnquiry();
+    }
+
     // Read route query parameters to pre-select loan type if provided (e.g. /loans?type=home)
     this.route.queryParams.subscribe((params) => {
       const type = params['type'] as LoanType | undefined;
@@ -424,6 +486,19 @@ export class LoansPageComponent implements OnInit {
       }
     });
   }
+
+  private syncProfileToEnquiry(): void {
+    if (!this.enquiryApplicantName() || this.enquiryApplicantName() === 'Valued Customer') {
+      this.enquiryApplicantName.set(this.customerName());
+    }
+    if (!this.enquiryApplicantPhone()) {
+      this.enquiryApplicantPhone.set(this.customerMobile());
+    }
+    if (!this.enquiryApplicantEmail() || this.enquiryApplicantEmail() === 'customer@ssplbank.internal') {
+      this.enquiryApplicantEmail.set(this.customerEmail());
+    }
+  }
+
 
   onNavChange(navId: string): void {
     if (navId.startsWith('loans-')) {
@@ -679,7 +754,7 @@ export class LoansPageComponent implements OnInit {
 
   resendOtp(): void {
     this.startOtpTimer();
-    this.showToast('info', 'New high-security OTP sent to registered mobile +91 88840 45346');
+    this.showToast('info', `New high-security OTP sent to registered mobile ${this.customerMobile()}`);
   }
 
   simulateUpload(docId: string): void {
@@ -706,7 +781,7 @@ export class LoansPageComponent implements OnInit {
         monthlyEmi: calc.monthlyEmi,
         interestRate: offer.interestRate,
         disbursalAccount: this.selectedDisbursalAccount(),
-        customerId: 'SSPL_USER_84920',
+        customerId: this.customerId(),
         otpCode: this.enteredOtp(),
         agreeKfs: this.agreeKfs(),
         agreeNach: this.agreeNach(),
@@ -726,6 +801,7 @@ export class LoansPageComponent implements OnInit {
         },
       });
   }
+
 
   downloadKfsPdf(): void {
     this.showToast('info', 'Downloading Official Key Fact Statement (KFS.pdf)...');
