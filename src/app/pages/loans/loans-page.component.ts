@@ -51,13 +51,7 @@ export interface CustomLoanOption {
 @Component({
   selector: 'sspl-loans-page',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    RouterModule,
-    SideNavComponent,
-    DashboardHeaderComponent,
-  ],
+  imports: [CommonModule, FormsModule, RouterModule, SideNavComponent, DashboardHeaderComponent],
   templateUrl: './loans-page.component.html',
   styleUrl: './loans-page.component.scss',
 })
@@ -126,7 +120,6 @@ export class LoansPageComponent implements OnInit {
       'SSPL-CUST-84920'
     );
   });
-
 
   // View Mode: 'pre_approved' (Default pre-approved catalog) | 'custom_enquiry' (New / Different loan requirement)
   readonly activeViewMode = signal<'pre_approved' | 'custom_enquiry'>('pre_approved');
@@ -398,8 +391,18 @@ export class LoansPageComponent implements OnInit {
 
   // Available Disbursal Accounts
   readonly disbursalAccounts = [
-    { id: 'acc_01', name: 'Primary Savings A/C •••• 0001', branch: 'Jalgaon Main Branch', balance: '₹72,000.75' },
-    { id: 'acc_02', name: 'Business Current A/C •••• 0002', branch: 'Pune Camp Branch', balance: '₹3,24,460.00' },
+    {
+      id: 'acc_01',
+      name: 'Primary Savings A/C •••• 0001',
+      branch: 'Jalgaon Main Branch',
+      balance: '₹72,000.75',
+    },
+    {
+      id: 'acc_02',
+      name: 'Business Current A/C •••• 0002',
+      branch: 'Pune Camp Branch',
+      balance: '₹3,24,460.00',
+    },
   ];
 
   // Filtered Pre-Approved Offers based on active tab
@@ -494,11 +497,13 @@ export class LoansPageComponent implements OnInit {
     if (!this.enquiryApplicantPhone()) {
       this.enquiryApplicantPhone.set(this.customerMobile());
     }
-    if (!this.enquiryApplicantEmail() || this.enquiryApplicantEmail() === 'customer@ssplbank.internal') {
+    if (
+      !this.enquiryApplicantEmail() ||
+      this.enquiryApplicantEmail() === 'customer@ssplbank.internal'
+    ) {
       this.enquiryApplicantEmail.set(this.customerEmail());
     }
   }
-
 
   onNavChange(navId: string): void {
     if (navId.startsWith('loans-')) {
@@ -645,9 +650,7 @@ export class LoansPageComponent implements OnInit {
     this.enquiryEmploymentType.set(emp);
   }
 
-
   submitCustomLoanEnquiry(): void {
-
     const opt = this.selectedCustomOption();
     if (this.enquiryAmount() <= 0) {
       this.showToast('error', 'Please enter a valid loan requirement amount.');
@@ -679,7 +682,10 @@ export class LoansPageComponent implements OnInit {
         this.isSubmittingEnquiry.set(false);
         this.enquiryResult.set(response);
         this.isEnquiryModalOpen.set(true);
-        this.showToast('success', 'Custom loan enquiry registered! A dedicated loan specialist has been assigned.');
+        this.showToast(
+          'success',
+          'Custom loan enquiry registered! A dedicated loan specialist has been assigned.',
+        );
       },
       error: () => {
         this.isSubmittingEnquiry.set(false);
@@ -754,7 +760,10 @@ export class LoansPageComponent implements OnInit {
 
   resendOtp(): void {
     this.startOtpTimer();
-    this.showToast('info', `New high-security OTP sent to registered mobile ${this.customerMobile()}`);
+    this.showToast(
+      'info',
+      `New high-security OTP sent to registered mobile ${this.customerMobile()}`,
+    );
   }
 
   simulateUpload(docId: string): void {
@@ -793,7 +802,10 @@ export class LoansPageComponent implements OnInit {
           this.isSubmitting.set(false);
           this.sanctionResult.set(response);
           this.modalStep.set(5); // Move to Step 5: Under Review Tracker
-          this.showToast('success', 'Application submitted successfully! Currently under underwriting review.');
+          this.showToast(
+            'success',
+            'Application submitted successfully! Currently under underwriting review.',
+          );
         },
         error: () => {
           this.isSubmitting.set(false);
@@ -801,7 +813,6 @@ export class LoansPageComponent implements OnInit {
         },
       });
   }
-
 
   downloadKfsPdf(): void {
     this.showToast('info', 'Downloading Official Key Fact Statement (KFS.pdf)...');
