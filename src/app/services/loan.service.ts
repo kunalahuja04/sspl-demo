@@ -2,12 +2,16 @@ import { Injectable, signal, computed } from '@angular/core';
 import { Observable, of, delay } from 'rxjs';
 import {
   LoanType,
+  ExtendedLoanCategory,
   PreApprovedLoanOffer,
   UserBankingHealthMetrics,
   LoanCalculationResult,
   LoanApplicationPayload,
   LoanSanctionResponse,
+  CustomLoanEnquiryPayload,
+  LoanEnquiryResponse,
 } from '../models';
+
 
 @Injectable({
   providedIn: 'root',
@@ -376,6 +380,73 @@ export class LoanService {
   }
 
   /**
+   * Indicative Annual Percentage Rates for custom loan types
+   */
+  getIndicativeRate(category: ExtendedLoanCategory): number {
+    const rateMap: Record<ExtendedLoanCategory, number> = {
+      home: 8.4,
+      personal: 10.25,
+      car: 8.75,
+      education: 8.95,
+      business: 11.5,
+      gold: 8.2,
+      lap: 9.15,
+      commercial_vehicle: 9.5,
+      agriculture: 7.0,
+    };
+    return rateMap[category] || 9.0;
+  }
+
+  /**
+   * Submits custom loan enquiry and assigns a specialized loan relationship officer
+   */
+  submitCustomLoanEnquiry(payload: CustomLoanEnquiryPayload): Observable<LoanEnquiryResponse> {
+    const ticketNumber = `SSPL-ENQ-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const indicativeRoi = this.getIndicativeRate(payload.loanCategory);
+    const totalMonths = payload.tenureMonths || payload.tenureYears * 12;
+    const calc = this.calculateEmi(payload.requiredAmount, indicativeRoi, totalMonths);
+
+    const officers = [
+      {
+        name: 'Rahul V. Sharma',
+        designation: 'Senior Loan Relationship Manager',
+        contactNumber: '+91 98220 54321',
+        branchName: payload.preferredBranch || 'Central Lending Hub — Jalgaon Main',
+      },
+      {
+        name: 'Priyanka S. Deshmukh',
+        designation: 'Chief Underwriting & Mortgage Specialist',
+        contactNumber: '+91 98231 87654',
+        branchName: payload.preferredBranch || 'Retail Lending Center — Pune Camp',
+      },
+      {
+        name: 'Amitabh Sen',
+        designation: 'Commercial & MSME Lending Lead',
+        contactNumber: '+91 98200 43210',
+        branchName: payload.preferredBranch || 'Corporate Banking Desk — Mumbai',
+      },
+    ];
+
+    const assignedOfficer = officers[Math.floor(Math.random() * officers.length)];
+
+    const response: LoanEnquiryResponse = {
+      ticketNumber,
+      status: 'SUBMITTED',
+      loanCategory: payload.loanCategory,
+      loanTitle: payload.customLoanTitle,
+      requestedAmount: payload.requiredAmount,
+      tenureMonths: totalMonths,
+      indicativeRoi,
+      indicativeMonthlyEmi: calc.monthlyEmi,
+      assignedOfficer,
+      submittedAt: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+      expectedCallbackTime: 'Within 2 Hours (9:00 AM – 6:30 PM)',
+    };
+
+    return of(response).pipe(delay(700));
+  }
+
+  /**
    * Format amount into readable Lakhs / Crores (e.g. ₹35.0 L / ₹1.2 Cr)
    */
   formatCompactAmount(amount: number): string {
@@ -388,3 +459,4 @@ export class LoanService {
     return this.formatCurrency(amount);
   }
 }
+

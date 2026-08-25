@@ -94,3 +94,52 @@ export interface LoanSanctionResponse {
   }>;
 }
 
+export type ExtendedLoanCategory =
+
+  | 'home'
+  | 'personal'
+  | 'car'
+  | 'education'
+  | 'business'
+  | 'gold'
+  | 'lap'
+  | 'commercial_vehicle'
+  | 'agriculture';
+
+export interface CustomLoanEnquiryPayload {
+  loanCategory: ExtendedLoanCategory;
+  customLoanTitle: string;
+  requiredAmount: number;
+  tenureYears: number;
+  tenureMonths: number;
+  loanPurpose: string;
+  employmentType: 'SALARIED' | 'SELF_EMPLOYED_PROFESSIONAL' | 'SELF_EMPLOYED_BUSINESS' | 'NRI' | 'AGRICULTURIST';
+  monthlyIncome: number;
+  existingMonthlyEmi: number;
+  preferredBankCode: string;
+  preferredBranch?: string;
+  applicantName: string;
+  applicantMobile: string;
+  applicantEmail: string;
+  specialRemarks?: string;
+}
+
+export interface LoanEnquiryResponse {
+  ticketNumber: string;
+  status: 'SUBMITTED' | 'IN_REVIEW' | 'CONTACTED';
+  loanCategory: ExtendedLoanCategory;
+  loanTitle: string;
+  requestedAmount: number;
+  tenureMonths: number;
+  indicativeRoi: number;
+  indicativeMonthlyEmi: number;
+  assignedOfficer: {
+    name: string;
+    designation: string;
+    contactNumber: string;
+    branchName: string;
+  };
+  submittedAt: string;
+  expectedCallbackTime: string;
+}
+
