@@ -29,7 +29,7 @@ export class DashboardPageComponent implements OnInit {
   private router = inject(Router);
 
   // Active navigation tab
-  readonly activeNavId = signal<string>('my-accounts');
+  readonly activeNavId = signal<string>('dashboard');
 
   // Modal and toast state signals
   readonly selectedAccount = this.dashboardService.selectedAccount;
@@ -42,10 +42,11 @@ export class DashboardPageComponent implements OnInit {
 
   onNavChange(navId: string): void {
     this.activeNavId.set(navId);
-    if (navId !== 'my-accounts' && navId !== 'dashboard' && navId !== 'balance-enquiry') {
+    if (navId !== 'dashboard' && navId !== 'balance-enquiry') {
       this.showToast('info', `Navigating to ${navId.replace('-', ' ').toUpperCase()} section...`);
     }
   }
+
 
   openBalanceEnquiry(account: BankAccount): void {
     this.dashboardService.selectAccountForEnquiry(account);

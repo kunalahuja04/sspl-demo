@@ -89,6 +89,8 @@ export class BalanceEnquiryService {
     const labelMap: Record<string, string> = {
       SAVINGS: 'Savings Account',
       CURRENT: 'Current Account',
+      EEFC_SAVINGS: 'EEFC / Foreign Currency A/C',
+      GLOBAL_CURRENCY: 'Global Currency Account',
       NRE_SAVINGS: 'NRE Savings Account',
       NRO_SAVINGS: 'NRO Savings Account',
       FIXED_DEPOSIT: 'Fixed Deposit',
@@ -97,3 +99,4 @@ export class BalanceEnquiryService {
     return labelMap[accountType?.toUpperCase()] ?? accountType;
   }
 }
+

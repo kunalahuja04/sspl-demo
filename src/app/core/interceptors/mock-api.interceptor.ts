@@ -442,10 +442,18 @@ export const mockApiInterceptor: HttpInterceptorFn = (
             currency: 'INR',
             availableBalance: 324460,
           },
+          {
+            ledgerBalance: 4850.0,
+            accountType: 'EEFC_SAVINGS',
+            accountNumberMasked: 'XXXXXXXX0003',
+            currency: 'USD',
+            availableBalance: 4850.0,
+          },
         ],
         transactionId: currentTxnId,
       },
     };
+
 
     return of(createEnvelopeResponse(balanceResponseBody)).pipe(delay(mockDelay));
   }

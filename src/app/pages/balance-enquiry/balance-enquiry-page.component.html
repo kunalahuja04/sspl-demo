@@ -67,66 +67,57 @@
 
       <!-- ── Summary Strip ── -->
       @if (!isLoading() && accounts().length > 0) {
-      <div class="grid grid-cols-3 gap-4">
-        <!-- Total Available Balance -->
+      <div class="flex flex-col md:flex-row items-stretch gap-4">
+
+        <!-- Total Available Balance Card (Main Card) -->
         <div
-          class="col-span-3 md:col-span-1 p-5 rounded-2xl bg-gradient-to-br from-brand-primary to-brand-primary-hover text-white shadow-lg relative overflow-hidden">
+          class="flex-1 p-5.5 rounded-2xl bg-gradient-to-br from-brand-primary to-brand-primary-hover text-white shadow-lg relative overflow-hidden">
           <div class="absolute inset-0 opacity-10"
             style="background: radial-gradient(circle at 80% 20%, white 0%, transparent 60%)"></div>
-          <div class="relative z-10">
-            <div class="flex items-center justify-between mb-3">
-              <span class="text-white/70 text-label-sm font-semibold uppercase tracking-wider">Total Available
-                (INR)</span>
-              <div class="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
-                <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path
-                    d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
-                  <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
-                </svg>
+          <div class="relative z-10 space-y-4">
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-white/75 text-label-xs font-bold uppercase tracking-wider">Total Available (INR)</span>
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/15 text-white text-[11px] font-medium">
+                  <span class="w-1.5 h-1.5 rounded-full bg-status-success animate-pulse"></span>
+                  Live Core Balance
+                </span>
               </div>
+              <div class="font-mono text-display-md font-extrabold tracking-tight text-white">{{ totalAvailableInr() }}</div>
             </div>
-            <div class="font-mono text-display-md font-extrabold tracking-tight">{{ totalAvailable() }}</div>
-            <div class="mt-2 flex items-center gap-1.5">
-              <span class="inline-block w-1.5 h-1.5 rounded-full bg-brand-accent animate-pulse"></span>
-              <span class="text-white/60 text-label-xs">Live — {{ accounts().length }} account{{accounts().length > 1
-                ? 's' : ''}} linked</span>
+
+            <!-- Separate USD Available Balance Row -->
+            <div class="pt-3 border-t border-white/15 flex items-center justify-between flex-wrap gap-2">
+              <div class="flex items-center gap-2">
+                <span class="text-white/70 text-label-xs font-semibold uppercase tracking-wider">Total Available (USD):</span>
+                <span class="font-mono text-heading-md font-extrabold text-brand-accent tracking-tight">{{ totalAvailableUsd() }}</span>
+              </div>
+              <span class="text-[11px] font-mono text-white/60 bg-white/10 px-2 py-0.5 rounded-md font-medium">
+                USD Foreign Currency
+              </span>
             </div>
           </div>
         </div>
 
-        <!-- Accounts Count -->
-        <div class="p-5 rounded-2xl bg-bg-surface border border-border-default shadow-sm flex items-center gap-4">
-          <div class="w-11 h-11 rounded-xl bg-bg-muted flex items-center justify-center shrink-0">
-            <svg class="w-5 h-5 text-brand-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2">
-              <rect width="20" height="14" x="2" y="5" rx="2" />
-              <line x1="2" x2="22" y1="10" y2="10" />
-            </svg>
+        <!-- Linked Accounts Card (Smaller / Compact) -->
+        <div
+          class="p-5 rounded-2xl bg-bg-surface border border-border-default shadow-sm flex md:flex-col justify-between items-start gap-3 md:w-56 shrink-0">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-brand-primary/10 text-brand-primary flex items-center justify-center shrink-0">
+              <svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect width="20" height="14" x="2" y="5" rx="2" />
+                <line x1="2" x2="22" y1="10" y2="10" />
+              </svg>
+            </div>
+            <span class="text-label-xs text-secondary uppercase tracking-wider font-bold">Linked Accounts</span>
           </div>
+
           <div>
-            <p class="text-label-sm text-secondary uppercase tracking-wider font-semibold">Linked Accounts</p>
-            <p class="font-bold text-heading-xl text-primary font-mono mt-0.5">{{ accounts().length }}</p>
+            <div class="font-mono font-extrabold text-heading-xl text-primary">{{ accounts().length }}</div>
+            <span class="text-[11px] text-muted block mt-0.5">Active &amp; Verified</span>
           </div>
         </div>
 
-        <!-- Correlation ID -->
-        <div class="p-5 rounded-2xl bg-bg-surface border border-border-default shadow-sm flex items-center gap-4">
-          <div class="w-11 h-11 rounded-xl bg-bg-muted flex items-center justify-center shrink-0">
-            <svg class="w-5 h-5 text-brand-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2">
-              <path d="m9 9-2 2 2 2" />
-              <path d="m13 13 2-2-2-2" />
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.3-4.3" />
-            </svg>
-          </div>
-          <div class="min-w-0">
-            <p class="text-label-sm text-secondary uppercase tracking-wider font-semibold">Correlation ID</p>
-            <p class="font-mono text-label-md text-primary mt-0.5 truncate" title="{{ correlationId() }}">
-              {{ correlationId() || '—' }}
-            </p>
-          </div>
-        </div>
       </div>
       }
 

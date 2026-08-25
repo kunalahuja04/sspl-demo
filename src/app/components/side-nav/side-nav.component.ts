@@ -46,7 +46,7 @@ export class SideNavComponent implements OnInit {
   private router = inject(Router);
 
   // Input signals for active nav identifier
-  activeNavId = input<string>('my-accounts');
+  activeNavId = input<string>('dashboard');
 
   // Output event for navigation change
   navChange = output<string>();
@@ -70,17 +70,12 @@ export class SideNavComponent implements OnInit {
       route: '/dashboard',
     },
     {
-      id: 'my-accounts',
-      label: 'My Accounts',
-      icon: 'wallet',
-      route: '/dashboard',
-    },
-    {
       id: 'balance-enquiry',
       label: 'Balance Enquiry',
       icon: 'balance',
       route: '/balance-enquiry',
     },
+
     {
       id: 'profile',
       label: 'User Profile',
