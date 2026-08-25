@@ -1,8 +1,9 @@
 export const environment = {
   production: true,
-  apiBaseUrl: 'https://api.ssplbank.com/api/v1',
-  useMockApi: false,
-  mockDelayMs: 0,
+  apiBaseUrl: '/TestBedGateway/API/banking',
+  useMockApi: true,
+  mockDelayMs: 350,
   apiVersion: 'v1',
-  appVersion: '1.0.0'
+  appVersion: '1.0.0',
 };
+

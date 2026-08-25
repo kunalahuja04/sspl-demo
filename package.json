@@ -6,8 +6,10 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
+    "deploy": "ng deploy --dir=dist/sspl-demo/browser",
     "test": "ng test"
   },
+
   "prettier": {
     "printWidth": 100,
     "singleQuote": true,
