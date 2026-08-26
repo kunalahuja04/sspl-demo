@@ -1,8 +1,11 @@
 /**
  * Centralized API endpoints registry.
- * Maps to /TestBedGateway/API/banking/* endpoints.
+ * Maps to /TestBedGateway/API/banking/* and /TestBedGateway/API/security/* endpoints.
  */
 export const API_ENDPOINTS = {
+  SECURITY: {
+    GENERATE_SESSION_TOKEN: '/TestBedGateway/API/security/generateSessionToken',
+  },
   BANKING: {
     BANK_LIST: '/bank/list',
     LOB_LIST: '/lob/list',
@@ -13,7 +16,7 @@ export const API_ENDPOINTS = {
     PROFILE: '/customer/profile',
   },
   AUTH: {
-    GENERATE_SESSION_TOKEN: '/auth/generateSessionToken',
+    GENERATE_SESSION_TOKEN: '/TestBedGateway/API/security/generateSessionToken',
     BANK_LIST: '/bank/list',
     LOGIN: '/web/login',
     REGISTER: '/customer/register',

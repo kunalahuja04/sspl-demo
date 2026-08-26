@@ -66,8 +66,14 @@ export const mockApiInterceptor: HttpInterceptorFn = (
   };
 
   // 1. Generate Session Token (Pre-login initialization)
-  if (url.includes(API_ENDPOINTS.AUTH.GENERATE_SESSION_TOKEN)) {
+  if (
+    url.includes('/security/generateSessionToken') ||
+    url.includes(API_ENDPOINTS.SECURITY.GENERATE_SESSION_TOKEN) ||
+    url.includes('/auth/generateSessionToken') ||
+    url.includes('generateSessionToken')
+  ) {
     const sampleCodes = ['TCWYXg', 'K8M4Np', 'R9X2Va', 'Q5B7Zw', 'H3D9Le', 'W2Y6Fs'];
+
     const chosenCode = sampleCodes[Math.floor(Math.random() * sampleCodes.length)];
     const token =
       'SSPL-SES-' + Math.random().toString(36).substring(2, 8).toUpperCase() + '-' + Date.now();

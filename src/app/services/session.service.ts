@@ -34,11 +34,23 @@ export class SessionService {
    * On success, captures the Authorization HTTP response header, captcha, noise lines, and txnId.
    */
   generateSessionToken(): Observable<SessionTokenResponse> {
+    // Clear any previous stale session and auth tokens
+    try {
+      sessionStorage.removeItem('sspl_auth_token');
+      sessionStorage.removeItem('sspl_session_token');
+      sessionStorage.removeItem('sspl_access_token');
+      localStorage.removeItem('sspl_auth_token');
+      localStorage.removeItem('sspl_session_token');
+      localStorage.removeItem('sspl_access_token');
+    } catch {
+      // Storage access fallback
+    }
+
     const requestPayload: GenerateSessionTokenRequest = this.requestBuilder.buildRequest({});
 
     return this.http
       .post<GenerateSessionTokenResponse>(
-        API_ENDPOINTS.AUTH.GENERATE_SESSION_TOKEN,
+        API_ENDPOINTS.SECURITY.GENERATE_SESSION_TOKEN,
         requestPayload,
         { observe: 'response' },
       )
@@ -74,7 +86,6 @@ export class SessionService {
             if (sessionData.txnId) {
               sessionStorage.setItem('sspl_last_txn_id', sessionData.txnId);
             }
-
           } catch {
             // Storage access fallback
           }

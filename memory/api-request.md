@@ -131,9 +131,11 @@ sequenceDiagram
 ## 4. Endpoints Specification
 
 ### 4.0 Generate Session Token API
-- **Endpoint**: `POST /TestBedGateway/API/banking/auth/generateSessionToken`
+- **Endpoint**: `POST /TestBedGateway/API/security/generateSessionToken`
 - **Description**: Pre-login initialization to generate session token, captcha code, and captcha noise lines.
-- **HTTP Response Header**: `Authorization: <SessionToken>`
+- **HTTP Request Headers**: `channelkey: WEB`, `channelver: v1.0`, `content-type: application/json`, `Accept-Language: en_US` *(No authorization header)*
+- **HTTP Response Header**: `authorization: <SessionToken>`
+
 
 #### Request
 ```json

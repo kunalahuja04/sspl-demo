@@ -13,14 +13,15 @@ import { DeviceInfoService } from '../services/device-info.service';
 
 /**
  * Authentication and Request Header Interceptor.
- * - Prepends apiBaseUrl for relative paths
- * - Injects standard banking HTTP headers for all requests starting from generateSessionToken:
+ * - Prepends apiBaseUrl for relative paths and supports /TestBedGateway/API/security/* endpoints
+ * - Injects standard banking HTTP headers:
  *     channelkey: WEB
  *     channelver: v1.0
  *     content-type: application/json
  *     Accept-Language: en_US
- *     authorization: <token> (if available, raw without Bearer prefix)
+ *     authorization: <token> (only for requests AFTER generateSessionToken)
  *     X-Device-Id: <deviceId>
+ * - Never sends authorization header on generateSessionToken endpoint
  * - Captures fresh raw Authorization HTTP headers from responses
  * - Handles unauthorized 401 responses
  */
@@ -37,12 +38,23 @@ export const authInterceptor: HttpInterceptorFn = (
     !req.url.startsWith('https://') &&
     !req.url.startsWith('assets/')
   ) {
-    const base = environment.apiBaseUrl.replace(/\/+$/, '');
-    const path = req.url.startsWith('/') ? req.url : `/${req.url}`;
-    finalUrl = `${base}${path}`;
+    if (req.url.startsWith('/TestBedGateway/')) {
+      finalUrl = req.url;
+    } else if (req.url.startsWith('/security/')) {
+      finalUrl = `/TestBedGateway/API${req.url}`;
+    } else {
+      const base = environment.apiBaseUrl.replace(/\/+$/, '');
+      const path = req.url.startsWith('/') ? req.url : `/${req.url}`;
+      finalUrl = `${base}${path}`;
+    }
   }
 
-  // 2. Read stored Authorization token from storage
+  // 2. Determine if this request is generateSessionToken
+  const isGenerateSession =
+    req.url.includes('generateSessionToken') ||
+    req.url.includes('/security/generateSessionToken');
+
+  // 3. Read stored Authorization token from storage
   let authToken: string | null = null;
   try {
     authToken =
@@ -56,7 +68,7 @@ export const authInterceptor: HttpInterceptorFn = (
     // Storage access fallback
   }
 
-  // 3. Attach standard banking HTTP headers
+  // 4. Attach standard banking HTTP headers
   let headers = req.headers;
 
   if (!headers.has('channelkey') && !headers.has('ChannelKey')) {
@@ -75,7 +87,10 @@ export const authInterceptor: HttpInterceptorFn = (
     headers = headers.set('Accept-Language', 'en_US');
   }
 
-  if (authToken && !headers.has('authorization') && !headers.has('Authorization')) {
+  // Do NOT send authorization header on generateSessionToken
+  if (isGenerateSession) {
+    headers = headers.delete('authorization').delete('Authorization');
+  } else if (authToken && !headers.has('authorization') && !headers.has('Authorization')) {
     headers = headers.set('authorization', authToken);
   }
 
@@ -93,7 +108,7 @@ export const authInterceptor: HttpInterceptorFn = (
 
   return next(authReq).pipe(
     tap((event: HttpEvent<unknown>) => {
-      // 4. Capture fresh raw Authorization header returned in HTTP response
+      // 5. Capture fresh raw Authorization header returned in HTTP response
       if (event instanceof HttpResponse) {
         const incomingAuth =
           event.headers.get('authorization') ||
