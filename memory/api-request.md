@@ -31,9 +31,9 @@ All API requests and responses adhere to an enterprise envelope pattern consisti
 
 ```mermaid
 flowchart LR
-    Client[Angular Client Application] -->|ApiRequest Envelope| Interceptors[Auth & Mock Interceptor Pipeline]
+    Client[Angular Client Application] -->|ApiRequest Envelope + HttpHeaders| Interceptors[Auth & Mock Interceptor Pipeline]
     Interceptors -->|Live Proxy / Mock Mode| Backend[TestBedGateway / Mock Handler]
-    Backend -->|ApiResponse Envelope| Client
+    Backend -->|ApiResponse Envelope + HttpHeaders| Client
 ```
 
 ### Standard Request Envelope (`ApiRequest<TBody>`)
@@ -77,11 +77,94 @@ flowchart LR
 
 ---
 
-## 3. Endpoints Specification
+## 3. Authentication & HTTP Authorization Header Lifecycle
 
-### 3.1 Bank List API
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant App as Angular App
+    participant Interceptor as Auth Interceptor
+    participant Gateway as TestBedGateway Backend
+
+    Note over App,Gateway: Pre-Login & Session Initialization
+    App->>Gateway: POST /auth/generateSessionToken (Empty Body Envelope)
+    Gateway-->>App: HTTP 200 + Response Header `Authorization: <SessionToken>`
+    App->>Interceptor: Stores Session Authorization Token in sessionStorage
+
+    Note over App,Gateway: Pre-Login Requests (Bank List, LOBs, Register, Login)
+    App->>Interceptor: Request (e.g. /bank/list, /web/login)
+    Interceptor->>Gateway: HTTP Request with Header `Authorization: <SessionToken>`
+
+    Note over App,Gateway: Web Login Execution
+    App->>Gateway: POST /web/login (Payload: webLoginRequest) + Header `Authorization: <SessionToken>`
+    Gateway-->>App: HTTP 200 + Response Header `Authorization: <FreshUserAccessToken>`
+    App->>Interceptor: Stores Fresh User Authorization Token in sessionStorage
+
+    Note over App,Gateway: Authenticated Portal Calls (Profile, Balance, Loans)
+    App->>Interceptor: Request (e.g. /customer/profile, /balance/enquiry)
+    Interceptor->>Gateway: HTTP Request with Header `Authorization: <FreshUserAccessToken>`
+```
+
+### Key Security & Transport Rules:
+1. **HTTP Headers vs. Body Headers**:
+   - `Authorization` tokens are **NOT** passed inside the JSON request body or JSON `header` object.
+   - All authorization tokens are transmitted strictly via the **HTTP Request Headers**: `Authorization: Bearer <token>` or `Authorization: <token>`.
+2. **Session Token Capture**:
+   - Calling `POST /auth/generateSessionToken` returns a pre-login `Authorization` HTTP response header.
+   - This header is automatically captured and used for subsequent pre-login requests (`bank/list`, `customer/bank/list`, `lob/list`, `customer/register`, `web/login`).
+3. **Login Token Rotation**:
+   - Calling `POST /web/login` authenticates the user and returns a fresh `Authorization` HTTP response header.
+   - This fresh token is automatically stored and applied to all subsequent authenticated API calls (`balance/enquiry`, `customer/profile`, loan applications).
+
+---
+
+## 4. Endpoints Specification
+
+### 4.0 Generate Session Token API
+- **Endpoint**: `POST /TestBedGateway/API/banking/auth/generateSessionToken`
+- **Description**: Pre-login initialization to generate session token, captcha code, and captcha noise lines.
+- **HTTP Response Header**: `Authorization: <SessionToken>`
+
+#### Request
+```json
+{
+  "header": {
+    "requestNo": "REQ122",
+    "deviceInfo": {
+      "browser": "Google",
+      "browserVersion": "12345560.150150.5115"
+    }
+  },
+  "body": {}
+}
+```
+
+#### Response
+```json
+{
+  "header": {
+    "requestNo": "REQ122",
+    "status": "success",
+    "txnId": "1787579471378iX6v11s5gpa6943b0"
+  },
+  "body": {
+    "sessionToken": "SSPL-SES-DEFAULT",
+    "expiresAt": 1787580371378,
+    "captchaCode": "TCWYXg",
+    "noiseLines": [
+      { "x1": 5, "y1": 15, "x2": 135, "y2": 25, "color": "rgba(13, 34, 64, 0.25)" }
+    ]
+  }
+}
+```
+
+---
+
+### 4.1 Bank List API
 - **Endpoint**: `POST /TestBedGateway/API/banking/bank/list`
 - **Description**: Fetches all onboarded banks, their tenant IDs, and UI theme color definitions.
+- **HTTP Request Header**: `Authorization: <SessionToken>`
 
 #### Request
 ```json
@@ -171,9 +254,10 @@ flowchart LR
 
 ---
 
-### 3.2 Lines of Business (LOB) List API
+### 4.2 Lines of Business (LOB) List API
 - **Endpoint**: `POST /TestBedGateway/API/banking/lob/list`
 - **Description**: Fetches supported Lines of Business for a specified bank.
+- **HTTP Request Header**: `Authorization: <SessionToken>`
 
 #### Request
 ```json
@@ -221,9 +305,10 @@ flowchart LR
 
 ---
 
-### 3.3 Customer Bank List API
+### 4.3 Customer Bank List API
 - **Endpoint**: `POST /TestBedGateway/API/banking/customer/bank/list`
 - **Description**: Fetches list of banks registered with a specific customer mobile number.
+- **HTTP Request Header**: `Authorization: <SessionToken>`
 
 #### Request
 ```json
@@ -280,9 +365,10 @@ flowchart LR
 
 ---
 
-### 3.4 Customer Registration API
+### 4.4 Customer Registration API
 - **Endpoint**: `POST /TestBedGateway/API/banking/customer/register`
 - **Description**: Registers a new customer into the banking platform.
+- **HTTP Request Header**: `Authorization: <SessionToken>`
 
 #### Request
 ```json
@@ -349,9 +435,11 @@ flowchart LR
 
 ---
 
-### 3.5 Web Login API
+### 4.5 Web Login API
 - **Endpoint**: `POST /TestBedGateway/API/banking/web/login`
 - **Description**: Authenticates a user into the web banking portal.
+- **HTTP Request Header**: `Authorization: <SessionToken>`
+- **HTTP Response Header**: `Authorization: <FreshUserAccessToken>`
 
 #### Request
 ```json
@@ -389,9 +477,10 @@ flowchart LR
 
 ---
 
-### 3.6 Balance Enquiry API
+### 4.6 Balance Enquiry API
 - **Endpoint**: `POST /TestBedGateway/API/banking/balance/enquiry`
 - **Description**: Retrieves real-time account balances, ledger balances, and masked account identifiers.
+- **HTTP Request Header**: `Authorization: <FreshUserAccessToken>`
 
 #### Request
 ```json
@@ -442,9 +531,10 @@ flowchart LR
 
 ---
 
-### 3.7 Customer Profile API
+### 4.7 Customer Profile API
 - **Endpoint**: `POST /TestBedGateway/API/banking/customer/profile`
 - **Description**: Returns personal and banking profile information for the authenticated user.
+- **HTTP Request Header**: `Authorization: <FreshUserAccessToken>`
 
 #### Request
 ```json

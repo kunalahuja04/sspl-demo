@@ -4,6 +4,7 @@ import {
   HttpHandlerFn,
   HttpEvent,
   HttpResponse,
+  HttpHeaders,
 } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Observable, of, delay } from 'rxjs';
@@ -48,9 +49,11 @@ export const mockApiInterceptor: HttpInterceptorFn = (
   const createEnvelopeResponse = <T>(
     body: T,
     status: 'success' | 'failed' | 'error' = 'success',
+    headers: HttpHeaders = new HttpHeaders(),
   ): HttpResponse<ApiResponse<T>> => {
     return new HttpResponse<ApiResponse<T>>({
       status: 200,
+      headers,
       body: {
         header: {
           requestNo: reqNo,
@@ -82,8 +85,15 @@ export const mockApiInterceptor: HttpInterceptorFn = (
       noiseLines,
     };
 
-    return of(createEnvelopeResponse(responseBody)).pipe(delay(mockDelay));
+    const sessionAuthHeader = `Bearer ${token}`;
+    const headers = new HttpHeaders({
+      Authorization: sessionAuthHeader,
+      'Access-Control-Expose-Headers': 'Authorization',
+    });
+
+    return of(createEnvelopeResponse(responseBody, 'success', headers)).pipe(delay(mockDelay));
   }
+
 
   // 1b. Bank List Endpoint (/TestBedGateway/API/banking/bank/list)
   if (
@@ -255,8 +265,15 @@ export const mockApiInterceptor: HttpInterceptorFn = (
       },
     };
 
-    return of(createEnvelopeResponse(responseBody)).pipe(delay(mockDelay));
+    const loginAuthHeader = `Bearer ${accessToken}`;
+    const headers = new HttpHeaders({
+      Authorization: loginAuthHeader,
+      'Access-Control-Expose-Headers': 'Authorization',
+    });
+
+    return of(createEnvelopeResponse(responseBody, 'success', headers)).pipe(delay(mockDelay));
   }
+
 
   // 2b. Customer Register Endpoint (/TestBedGateway/API/banking/customer/register)
   if (

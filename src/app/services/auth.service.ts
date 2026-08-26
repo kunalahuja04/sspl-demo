@@ -1,5 +1,5 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap, catchError, of, map } from 'rxjs';
 import { API_ENDPOINTS } from '../core/config/api-endpoints';
@@ -8,7 +8,6 @@ import {
   LoginRequest,
   LoginResponse,
   LoginResponseBody,
-  AuthUserInfo,
   RefreshTokenRequest,
   RefreshTokenResponse,
   LogoutRequest,
@@ -53,13 +52,14 @@ export class AuthService {
 
   /**
    * Performs authentication via HTTP call with standard envelope.
-   * On success, sets access token, refresh token, and user session.
+   * On success, captures the fresh Authorization HTTP response header,
+   * sets access token, refresh token, and user session.
    */
   login(
     bankIdOrTenant: string,
     usernameOrCustomerId: string,
     password?: string,
-    token?: string,
+    _token?: string,
   ): Observable<LoginResponseBody> {
     const bankId = bankIdOrTenant.split('—')[0].trim() || 'BANK0004';
     const requestPayload: LoginRequest = this.requestBuilder.buildRequest({
@@ -68,25 +68,32 @@ export class AuthService {
         username: usernameOrCustomerId,
         password: password || '',
       },
-      tenantId: bankId,
-      customerId: usernameOrCustomerId,
-      sessionToken: token,
     });
 
-    return this.http.post<LoginResponse>(API_ENDPOINTS.BANKING.LOGIN, requestPayload).pipe(
-      map((response) => {
-        const body = response.body;
-        if (!body) {
-          throw new Error(
-            response.header?.errorMessage || response.header?.message || 'Login failed',
-          );
-        }
-        return body;
-      }),
-      tap((data: LoginResponseBody) => {
-        this.setSession(data, bankId, usernameOrCustomerId);
-      }),
-    );
+    return this.http
+      .post<LoginResponse>(API_ENDPOINTS.BANKING.LOGIN, requestPayload, {
+        observe: 'response',
+      })
+      .pipe(
+        map((httpResponse: HttpResponse<LoginResponse>) => {
+          const authHeader =
+            httpResponse.headers.get('Authorization') ||
+            httpResponse.headers.get('authorization') ||
+            '';
+          const response = httpResponse.body;
+          const body = response?.body;
+          if (!body) {
+            throw new Error(
+              response?.header?.errorMessage || response?.header?.message || 'Login failed',
+            );
+          }
+          return { body, authHeader };
+        }),
+        tap(({ body, authHeader }) => {
+          this.setSession(body, bankId, usernameOrCustomerId, authHeader);
+        }),
+        map(({ body }) => body),
+      );
   }
 
   /**
@@ -135,6 +142,7 @@ export class AuthService {
     authData: LoginResponseBody,
     bankId?: string,
     username?: string,
+    authHeader?: string,
   ): void {
     const user: User = authData.user || {
       id: username || 'sagar123',
@@ -146,15 +154,15 @@ export class AuthService {
       role: 'Personal Banking',
     };
 
-    const accessToken =
+    const authToken =
+      authHeader ||
       authData.accessToken ||
       'SSPL-AT-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+    const accessToken = authToken.replace(/^Bearer\s+/i, '');
     const refreshToken =
       authData.refreshToken ||
       'SSPL-RT-' + Math.random().toString(36).substring(2, 10).toUpperCase();
-    const sessionToken =
-      authData.sessionToken ||
-      'SES_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+    const sessionToken = authData.sessionToken || accessToken;
 
     this.currentUserSignal.set(user);
     this.sessionTokenSignal.set(sessionToken);
@@ -163,6 +171,7 @@ export class AuthService {
     this.activeTenant.set(user.tenant);
 
     try {
+      sessionStorage.setItem('sspl_auth_token', authToken);
       sessionStorage.setItem('sspl_access_token', accessToken);
       sessionStorage.setItem('sspl_refresh_token', refreshToken);
       sessionStorage.setItem('sspl_session_token', sessionToken);
@@ -172,7 +181,6 @@ export class AuthService {
     }
   }
 
-
   private clearSession(): void {
     this.currentUserSignal.set(null);
     this.sessionTokenSignal.set(null);
@@ -181,10 +189,12 @@ export class AuthService {
     this.activeTenant.set('SSPL001');
 
     try {
+      sessionStorage.removeItem('sspl_auth_token');
       sessionStorage.removeItem('sspl_access_token');
       sessionStorage.removeItem('sspl_refresh_token');
       sessionStorage.removeItem('sspl_session_token');
       sessionStorage.removeItem('sspl_user');
+      localStorage.removeItem('sspl_auth_token');
       localStorage.removeItem('sspl_access_token');
       localStorage.removeItem('sspl_refresh_token');
       localStorage.removeItem('sspl_session_token');
@@ -197,6 +207,8 @@ export class AuthService {
   private restoreSessionFromStorage(): void {
     try {
       const storedUser = sessionStorage.getItem('sspl_user') || localStorage.getItem('sspl_user');
+      const storedAuthToken =
+        sessionStorage.getItem('sspl_auth_token') || localStorage.getItem('sspl_auth_token');
       const storedAccessToken =
         sessionStorage.getItem('sspl_access_token') || localStorage.getItem('sspl_access_token');
       const storedSessionToken =
@@ -204,11 +216,12 @@ export class AuthService {
       const storedRefreshToken =
         sessionStorage.getItem('sspl_refresh_token') || localStorage.getItem('sspl_refresh_token');
 
-      if (storedUser && storedAccessToken) {
+      if (storedUser && (storedAccessToken || storedAuthToken)) {
         const user: User = JSON.parse(storedUser);
+        const token = storedAccessToken || storedAuthToken?.replace(/^Bearer\s+/i, '') || '';
         this.currentUserSignal.set(user);
-        this.accessTokenSignal.set(storedAccessToken);
-        this.sessionTokenSignal.set(storedSessionToken);
+        this.accessTokenSignal.set(token);
+        this.sessionTokenSignal.set(storedSessionToken || token);
         this.refreshTokenSignal.set(storedRefreshToken);
         this.activeTenant.set(user.tenant || 'SSPL001');
       }

@@ -3,18 +3,20 @@ import {
   HttpRequest,
   HttpHandlerFn,
   HttpEvent,
+  HttpResponse,
   HttpErrorResponse,
 } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { Observable, catchError, throwError } from 'rxjs';
+import { Observable, tap, catchError, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { DeviceInfoService } from '../services/device-info.service';
 
 /**
  * Authentication and Request Header Interceptor.
  * - Prepends apiBaseUrl for relative paths
- * - Injects Bearer token and Session token
- * - Attaches device tracking headers
+ * - Injects Authorization HTTP Header into subsequent requests
+ * - Captures fresh Authorization HTTP headers from responses
+ * - Attaches device tracking headers (X-Device-Id)
  * - Handles unauthorized 401 responses
  */
 export const authInterceptor: HttpInterceptorFn = (
@@ -35,28 +37,26 @@ export const authInterceptor: HttpInterceptorFn = (
     finalUrl = `${base}${path}`;
   }
 
-  // 2. Read stored tokens from storage or memory
-  let accessToken: string | null = null;
-  let sessionToken: string | null = null;
-
+  // 2. Read stored Authorization token from storage
+  let authToken: string | null = null;
   try {
-    accessToken =
-      sessionStorage.getItem('sspl_access_token') || localStorage.getItem('sspl_access_token');
-    sessionToken =
-      sessionStorage.getItem('sspl_session_token') || localStorage.getItem('sspl_session_token');
+    authToken =
+      sessionStorage.getItem('sspl_auth_token') ||
+      sessionStorage.getItem('sspl_access_token') ||
+      sessionStorage.getItem('sspl_session_token') ||
+      localStorage.getItem('sspl_auth_token') ||
+      localStorage.getItem('sspl_access_token') ||
+      localStorage.getItem('sspl_session_token');
   } catch {
     // Storage access fallback
   }
 
-  // 3. Build headers
+  // 3. Attach Authorization header to request's HttpHeaders if available
   let headers = req.headers;
 
-  if (accessToken && !headers.has('Authorization')) {
-    headers = headers.set('Authorization', `Bearer ${accessToken}`);
-  }
-
-  if (sessionToken && !headers.has('X-Session-Token')) {
-    headers = headers.set('X-Session-Token', sessionToken);
+  if (authToken && !headers.has('Authorization')) {
+    const formattedToken = authToken.startsWith('Bearer ') ? authToken : `Bearer ${authToken}`;
+    headers = headers.set('Authorization', formattedToken);
   }
 
   // Inject device & tracking headers if missing
@@ -65,7 +65,6 @@ export const authInterceptor: HttpInterceptorFn = (
     headers = headers.set('X-Device-Id', deviceInfo.deviceId);
   }
 
-
   // Clone request with updated URL & headers
   const authReq = req.clone({
     url: finalUrl,
@@ -73,10 +72,30 @@ export const authInterceptor: HttpInterceptorFn = (
   });
 
   return next(authReq).pipe(
+    tap((event: HttpEvent<unknown>) => {
+      // 4. Capture fresh Authorization header returned in HTTP response
+      if (event instanceof HttpResponse) {
+        const incomingAuth =
+          event.headers.get('Authorization') ||
+          event.headers.get('authorization') ||
+          event.headers.get('X-Auth-Token') ||
+          event.headers.get('x-auth-token');
+
+        if (incomingAuth) {
+          try {
+            sessionStorage.setItem('sspl_auth_token', incomingAuth);
+            const cleanToken = incomingAuth.replace(/^Bearer\s+/i, '');
+            sessionStorage.setItem('sspl_access_token', cleanToken);
+            sessionStorage.setItem('sspl_session_token', cleanToken);
+          } catch {
+            // Storage access fallback
+          }
+        }
+      }
+    }),
     catchError((error: HttpErrorResponse) => {
       if (error.status === 401) {
         console.warn('[AuthInterceptor] 401 Unauthorized encountered. Session or Token expired.');
-        // Can trigger token refresh or session termination here
       }
       return throwError(() => error);
     }),

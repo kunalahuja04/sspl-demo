@@ -87,18 +87,13 @@ export type CustomerBankListResponse = ApiResponse<CustomerBankListResponseBody>
  * 2. Web Login API (/TestBedGateway/API/banking/web/login)
  */
 export interface WebLoginRequestBody {
-  webLoginRequest?: {
+  webLoginRequest: {
     bankId: string;
     username: string;
     password?: string;
   };
-  // Fallbacks for legacy payload structure
-  tenantId?: string;
-  customerId?: string;
-  password?: string;
-  captchaCode?: string;
-  sessionToken?: string;
 }
+
 
 export interface AuthUserInfo {
   id: string;
