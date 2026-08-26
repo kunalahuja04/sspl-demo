@@ -14,7 +14,8 @@ import { DeviceInfoService } from '../services/device-info.service';
 /**
  * Authentication and Request Header Interceptor.
  * - Prepends apiBaseUrl for relative paths
- * - Injects Authorization HTTP Header into subsequent requests
+ * - Injects raw Authorization HTTP Header into subsequent requests (no Bearer prefix)
+ * - Injects Accept-Language header
  * - Captures fresh Authorization HTTP headers from responses
  * - Attaches device tracking headers (X-Device-Id)
  * - Handles unauthorized 401 responses
@@ -51,12 +52,15 @@ export const authInterceptor: HttpInterceptorFn = (
     // Storage access fallback
   }
 
-  // 3. Attach Authorization header to request's HttpHeaders if available
+  // 3. Attach raw Authorization & Accept-Language headers to request's HttpHeaders if available
   let headers = req.headers;
 
-  if (authToken && !headers.has('Authorization')) {
-    const formattedToken = authToken.startsWith('Bearer ') ? authToken : `Bearer ${authToken}`;
-    headers = headers.set('Authorization', formattedToken);
+  if (authToken && !headers.has('Authorization') && !headers.has('authorization')) {
+    headers = headers.set('authorization', authToken);
+  }
+
+  if (!headers.has('Accept-Language') && !headers.has('accept-language')) {
+    headers = headers.set('Accept-Language', 'en_US');
   }
 
   // Inject device & tracking headers if missing
@@ -73,7 +77,7 @@ export const authInterceptor: HttpInterceptorFn = (
 
   return next(authReq).pipe(
     tap((event: HttpEvent<unknown>) => {
-      // 4. Capture fresh Authorization header returned in HTTP response
+      // 4. Capture fresh raw Authorization header returned in HTTP response
       if (event instanceof HttpResponse) {
         const incomingAuth =
           event.headers.get('Authorization') ||
@@ -84,9 +88,8 @@ export const authInterceptor: HttpInterceptorFn = (
         if (incomingAuth) {
           try {
             sessionStorage.setItem('sspl_auth_token', incomingAuth);
-            const cleanToken = incomingAuth.replace(/^Bearer\s+/i, '');
-            sessionStorage.setItem('sspl_access_token', cleanToken);
-            sessionStorage.setItem('sspl_session_token', cleanToken);
+            sessionStorage.setItem('sspl_access_token', incomingAuth);
+            sessionStorage.setItem('sspl_session_token', incomingAuth);
           } catch {
             // Storage access fallback
           }

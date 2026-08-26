@@ -108,14 +108,19 @@ sequenceDiagram
 
 ### Key Security & Transport Rules:
 1. **HTTP Headers vs. Body Headers**:
-   - `Authorization` tokens are **NOT** passed inside the JSON request body or JSON `header` object.
-   - All authorization tokens are transmitted strictly via the **HTTP Request Headers**: `Authorization: Bearer <token>` or `Authorization: <token>`.
+   - `authorization` tokens are **NOT** passed inside the JSON request body or JSON `header` object.
+   - All authorization tokens are transmitted strictly via the **HTTP Request Headers**: `authorization: <token>` (raw token string, without `Bearer` prefix).
+   - Standard headers included:
+     - `--header 'authorization: <token>'`
+     - `--header 'Accept-Language: en_US'`
+     - `--header 'X-Device-Id: <deviceId>'`
 2. **Session Token Capture**:
-   - Calling `POST /auth/generateSessionToken` returns a pre-login `Authorization` HTTP response header.
+   - Calling `POST /auth/generateSessionToken` returns a pre-login `authorization` HTTP response header.
    - This header is automatically captured and used for subsequent pre-login requests (`bank/list`, `customer/bank/list`, `lob/list`, `customer/register`, `web/login`).
 3. **Login Token Rotation**:
-   - Calling `POST /web/login` authenticates the user and returns a fresh `Authorization` HTTP response header.
+   - Calling `POST /web/login` authenticates the user and returns a fresh `authorization` HTTP response header.
    - This fresh token is automatically stored and applied to all subsequent authenticated API calls (`balance/enquiry`, `customer/profile`, loan applications).
+
 
 ---
 

@@ -85,14 +85,14 @@ export const mockApiInterceptor: HttpInterceptorFn = (
       noiseLines,
     };
 
-    const sessionAuthHeader = `Bearer ${token}`;
     const headers = new HttpHeaders({
-      Authorization: sessionAuthHeader,
-      'Access-Control-Expose-Headers': 'Authorization',
+      authorization: token,
+      'Access-Control-Expose-Headers': 'authorization, Authorization',
     });
 
     return of(createEnvelopeResponse(responseBody, 'success', headers)).pipe(delay(mockDelay));
   }
+
 
 
   // 1b. Bank List Endpoint (/TestBedGateway/API/banking/bank/list)
@@ -265,14 +265,14 @@ export const mockApiInterceptor: HttpInterceptorFn = (
       },
     };
 
-    const loginAuthHeader = `Bearer ${accessToken}`;
     const headers = new HttpHeaders({
-      Authorization: loginAuthHeader,
-      'Access-Control-Expose-Headers': 'Authorization',
+      authorization: accessToken,
+      'Access-Control-Expose-Headers': 'authorization, Authorization',
     });
 
     return of(createEnvelopeResponse(responseBody, 'success', headers)).pipe(delay(mockDelay));
   }
+
 
 
   // 2b. Customer Register Endpoint (/TestBedGateway/API/banking/customer/register)

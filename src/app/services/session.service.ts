@@ -70,13 +70,11 @@ export class SessionService {
           try {
             sessionStorage.setItem('sspl_auth_token', sessionData.sessionToken);
             sessionStorage.setItem('sspl_session_token', sessionData.sessionToken);
-            sessionStorage.setItem(
-              'sspl_access_token',
-              sessionData.sessionToken.replace(/^Bearer\s+/i, ''),
-            );
+            sessionStorage.setItem('sspl_access_token', sessionData.sessionToken);
             if (sessionData.txnId) {
               sessionStorage.setItem('sspl_last_txn_id', sessionData.txnId);
             }
+
           } catch {
             // Storage access fallback
           }

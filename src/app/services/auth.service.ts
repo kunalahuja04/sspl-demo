@@ -158,11 +158,11 @@ export class AuthService {
       authHeader ||
       authData.accessToken ||
       'SSPL-AT-' + Math.random().toString(36).substring(2, 10).toUpperCase();
-    const accessToken = authToken.replace(/^Bearer\s+/i, '');
+    const accessToken = authToken;
     const refreshToken =
       authData.refreshToken ||
       'SSPL-RT-' + Math.random().toString(36).substring(2, 10).toUpperCase();
-    const sessionToken = authData.sessionToken || accessToken;
+    const sessionToken = authData.sessionToken || authToken;
 
     this.currentUserSignal.set(user);
     this.sessionTokenSignal.set(sessionToken);
@@ -218,7 +218,7 @@ export class AuthService {
 
       if (storedUser && (storedAccessToken || storedAuthToken)) {
         const user: User = JSON.parse(storedUser);
-        const token = storedAccessToken || storedAuthToken?.replace(/^Bearer\s+/i, '') || '';
+        const token = storedAuthToken || storedAccessToken || '';
         this.currentUserSignal.set(user);
         this.accessTokenSignal.set(token);
         this.sessionTokenSignal.set(storedSessionToken || token);
@@ -230,3 +230,4 @@ export class AuthService {
     }
   }
 }
+
