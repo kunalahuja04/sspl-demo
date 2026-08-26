@@ -2,9 +2,11 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap, catchError, of } from 'rxjs';
 import { API_ENDPOINTS } from '../core/config/api-endpoints';
+import { ApiRequestBuilderService } from '../core/services/api-request-builder.service';
 import {
   BalanceEnquiryAccount,
   BalanceEnquiryApiResponse,
+  BalanceEnquiryRequest,
 } from '../models';
 
 @Injectable({
@@ -12,6 +14,7 @@ import {
 })
 export class BalanceEnquiryService {
   private http = inject(HttpClient);
+  private requestBuilder = inject(ApiRequestBuilderService);
 
   // State signals
   private accountsSignal = signal<BalanceEnquiryAccount[]>([]);
@@ -34,19 +37,11 @@ export class BalanceEnquiryService {
     this.isLoadingSignal.set(true);
     this.errorSignal.set(null);
 
-    const requestBody = {
-      header: {
-        requestNo: 'REQ' + Date.now(),
-        deviceInfo: {
-          browser: 'Google',
-          browserVersion: navigator.userAgent,
-        },
-      },
-      body: {},
-    };
+    const requestBody: BalanceEnquiryRequest = this.requestBuilder.buildRequest({});
 
     return this.http
       .post<BalanceEnquiryApiResponse>(API_ENDPOINTS.BANKING.BALANCE_ENQUIRY, requestBody)
+
       .pipe(
         tap((response) => {
           const data = response?.body?.balanceResponse;

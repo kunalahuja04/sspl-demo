@@ -94,17 +94,12 @@ export const authInterceptor: HttpInterceptorFn = (
     headers = headers.set('authorization', authToken);
   }
 
-  // Inject device & tracking headers if missing
-  const deviceInfo = deviceInfoService.getDeviceInfo();
-  if (!headers.has('X-Device-Id') && deviceInfo.deviceId) {
-    headers = headers.set('X-Device-Id', deviceInfo.deviceId);
-  }
-
   // Clone request with updated URL & headers
   const authReq = req.clone({
     url: finalUrl,
     headers,
   });
+
 
   return next(authReq).pipe(
     tap((event: HttpEvent<unknown>) => {

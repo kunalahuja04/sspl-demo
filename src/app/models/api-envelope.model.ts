@@ -4,13 +4,8 @@
  */
 
 export interface DeviceInfo {
-  deviceId?: string;
-  os?: string;
-  osVersion?: string;
-  browser?: string;
-  browserVersion?: string;
-  appVersion?: string;
-  ipAddress?: string;
+  browser: string;
+  browserVersion: string;
 }
 
 export interface ApiRequestHeader {
@@ -37,4 +32,3 @@ export interface ApiResponse<TBody = Record<string, unknown>> {
   header: ApiResponseHeader;
   body?: TBody;
 }
-

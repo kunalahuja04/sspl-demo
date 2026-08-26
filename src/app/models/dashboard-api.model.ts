@@ -71,5 +71,7 @@ export interface BalanceEnquiryResponseBody {
   balanceResponse: BalanceEnquiryData;
 }
 
+export type BalanceEnquiryRequest = ApiRequest<Record<string, unknown>>;
 export type BalanceEnquiryApiResponse = ApiResponse<BalanceEnquiryResponseBody>;
+
 
