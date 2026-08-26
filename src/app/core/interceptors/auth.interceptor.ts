@@ -14,10 +14,14 @@ import { DeviceInfoService } from '../services/device-info.service';
 /**
  * Authentication and Request Header Interceptor.
  * - Prepends apiBaseUrl for relative paths
- * - Injects raw Authorization HTTP Header into subsequent requests (no Bearer prefix)
- * - Injects Accept-Language header
- * - Captures fresh Authorization HTTP headers from responses
- * - Attaches device tracking headers (X-Device-Id)
+ * - Injects standard banking HTTP headers for all requests starting from generateSessionToken:
+ *     channelkey: WEB
+ *     channelver: v1.0
+ *     content-type: application/json
+ *     Accept-Language: en_US
+ *     authorization: <token> (if available, raw without Bearer prefix)
+ *     X-Device-Id: <deviceId>
+ * - Captures fresh raw Authorization HTTP headers from responses
  * - Handles unauthorized 401 responses
  */
 export const authInterceptor: HttpInterceptorFn = (
@@ -52,15 +56,27 @@ export const authInterceptor: HttpInterceptorFn = (
     // Storage access fallback
   }
 
-  // 3. Attach raw Authorization & Accept-Language headers to request's HttpHeaders if available
+  // 3. Attach standard banking HTTP headers
   let headers = req.headers;
 
-  if (authToken && !headers.has('Authorization') && !headers.has('authorization')) {
-    headers = headers.set('authorization', authToken);
+  if (!headers.has('channelkey') && !headers.has('ChannelKey')) {
+    headers = headers.set('channelkey', 'WEB');
+  }
+
+  if (!headers.has('channelver') && !headers.has('ChannelVer')) {
+    headers = headers.set('channelver', 'v1.0');
+  }
+
+  if (!headers.has('content-type') && !headers.has('Content-Type')) {
+    headers = headers.set('content-type', 'application/json');
   }
 
   if (!headers.has('Accept-Language') && !headers.has('accept-language')) {
     headers = headers.set('Accept-Language', 'en_US');
+  }
+
+  if (authToken && !headers.has('authorization') && !headers.has('Authorization')) {
+    headers = headers.set('authorization', authToken);
   }
 
   // Inject device & tracking headers if missing
@@ -80,8 +96,8 @@ export const authInterceptor: HttpInterceptorFn = (
       // 4. Capture fresh raw Authorization header returned in HTTP response
       if (event instanceof HttpResponse) {
         const incomingAuth =
-          event.headers.get('Authorization') ||
           event.headers.get('authorization') ||
+          event.headers.get('Authorization') ||
           event.headers.get('X-Auth-Token') ||
           event.headers.get('x-auth-token');
 

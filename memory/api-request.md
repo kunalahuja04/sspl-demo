@@ -110,9 +110,12 @@ sequenceDiagram
 1. **HTTP Headers vs. Body Headers**:
    - `authorization` tokens are **NOT** passed inside the JSON request body or JSON `header` object.
    - All authorization tokens are transmitted strictly via the **HTTP Request Headers**: `authorization: <token>` (raw token string, without `Bearer` prefix).
-   - Standard headers included:
-     - `--header 'authorization: <token>'`
+   - Standard headers included on all requests:
+     - `--header 'channelkey: WEB'`
+     - `--header 'channelver: v1.0'`
+     - `--header 'content-type: application/json'`
      - `--header 'Accept-Language: en_US'`
+     - `--header 'authorization: <token>'` (when available)
      - `--header 'X-Device-Id: <deviceId>'`
 2. **Session Token Capture**:
    - Calling `POST /auth/generateSessionToken` returns a pre-login `authorization` HTTP response header.
@@ -120,6 +123,7 @@ sequenceDiagram
 3. **Login Token Rotation**:
    - Calling `POST /web/login` authenticates the user and returns a fresh `authorization` HTTP response header.
    - This fresh token is automatically stored and applied to all subsequent authenticated API calls (`balance/enquiry`, `customer/profile`, loan applications).
+
 
 
 ---
