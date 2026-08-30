@@ -10,11 +10,12 @@
     <!-- Top Dashboard Header -->
     <sspl-dashboard-header></sspl-dashboard-header>
 
-    <main class="flex-1 p-4 md:p-6 space-y-6 max-w-4xl mx-auto w-full pb-16">
+    <main class="flex-1 p-4 md:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto w-full pb-16">
 
       <!-- ── Toast Notification Banner ── -->
       @if (toastMessage()) {
-      <div class="fixed top-5 right-5 z-50 animate-fade-in flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border text-body-sm font-semibold transition-all"
+      <div
+        class="fixed top-5 right-5 z-50 animate-fade-in flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border text-body-sm font-semibold transition-all"
         [class.bg-status-success-bg]="toastMessage()?.type === 'success'"
         [class.text-status-success-text]="toastMessage()?.type === 'success'"
         [class.border-status-success/30]="toastMessage()?.type === 'success'"
@@ -25,16 +26,27 @@
         [class.text-status-danger-text]="toastMessage()?.type === 'error'"
         [class.border-status-danger/30]="toastMessage()?.type === 'error'">
         <span>{{ toastMessage()?.text }}</span>
-        <button type="button" (click)="toastMessage.set(null)" class="text-current opacity-70 hover:opacity-100 cursor-pointer">✕</button>
+        <button type="button" (click)="toastMessage.set(null)"
+          class="text-current opacity-70 hover:opacity-100 cursor-pointer">✕</button>
       </div>
       }
 
-      <!-- ── 1. Header & View Mode Switcher ── -->
+      <!-- ── 1. Page Header & View Mode Switcher ── -->
       <div class="flex items-center justify-between gap-4 flex-wrap pb-2 border-b border-border-default/60">
         <div>
-          <h1 class="text-heading-xl font-bold text-primary tracking-tight">Loans &amp; Advances</h1>
-          <p class="text-body-sm text-secondary">
-            Instant paperless credit facilities with zero documentation.
+          <div class="flex items-center gap-2.5 mb-1">
+            <button type="button" (click)="onNavChange('dashboard')"
+              class="w-8 h-8 rounded-lg bg-bg-muted hover:bg-bg-surface border border-border-default flex items-center justify-center transition-colors cursor-pointer"
+              title="Back to Dashboard">
+              <svg class="w-4 h-4 text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+            </button>
+            <h1 class="text-heading-xl font-bold text-primary tracking-tight">Loans &amp; Lending Offerings</h1>
+          </div>
+          <p class="text-body-sm text-secondary pl-10.5">
+            Instant paperless credit facilities with zero physical documentation and 100% digital disbursement.
           </p>
         </div>
 
@@ -47,9 +59,10 @@
             [class.shadow-xs]="activeViewMode() === 'pre_approved'"
             [class.text-secondary]="activeViewMode() !== 'pre_approved'">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+              <path
+                d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
             </svg>
-            <span>Pre-Approved Offers</span>
+            <span>Pre-Approved Offers ({{ allOffers().length }})</span>
           </button>
 
           <button type="button" (click)="switchViewMode('custom_enquiry')"
@@ -61,7 +74,9 @@
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
               <path d="M14 2v4a2 2 0 0 0 2 2h4" />
-              <path d="M10 9H8" /><path d="M16 13H8" /><path d="M16 17H8" />
+              <path d="M10 9H8" />
+              <path d="M16 13H8" />
+              <path d="M16 17H8" />
             </svg>
             <span>Enquire Different Loan</span>
           </button>
@@ -69,607 +84,839 @@
       </div>
 
       <!-- ========================================================================================= -->
-      <!-- ── SECTION A: PRE-APPROVED LOAN FLOW (Matches Screenshot Flow) ── -->
+      <!-- ── SECTION A: PRE-APPROVED LOAN FLOW (Enterprise Web Experience) ── -->
       <!-- ========================================================================================= -->
       @if (activeViewMode() === 'pre_approved') {
 
+        <!-- Horizontal Stepper (Visible during active application wizard) -->
+        @if (preApprovedStep() !== 'overview' && preApprovedStep() !== 'success') {
+        <div class="p-4 rounded-2xl bg-bg-surface border border-border-default shadow-xs">
+          <div class="grid grid-cols-4 gap-2">
+            <!-- Step 1 Indicator -->
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-body-xs shrink-0 transition-all"
+                [class.bg-amber-500]="preApprovedStep() === 'customise'"
+                [class.text-white]="preApprovedStep() === 'customise'"
+                [class.bg-emerald-600]="preApprovedStep() === 'verify_docs' || preApprovedStep() === 'terms' || preApprovedStep() === 'confirm'"
+                [class.text-white]="preApprovedStep() === 'verify_docs' || preApprovedStep() === 'terms' || preApprovedStep() === 'confirm'">
+                @if (preApprovedStep() === 'verify_docs' || preApprovedStep() === 'terms' || preApprovedStep() === 'confirm') {
+                  ✓
+                } @else {
+                  1
+                }
+              </div>
+              <div class="hidden sm:block min-w-0">
+                <p class="text-label-xs font-bold uppercase" [class.text-primary]="preApprovedStep() === 'customise'" [class.text-muted]="preApprovedStep() !== 'customise'">Step 1</p>
+                <p class="text-body-xs font-semibold text-primary truncate">Customise Loan</p>
+              </div>
+            </div>
+
+            <!-- Step 2 Indicator -->
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-body-xs shrink-0 transition-all"
+                [class.bg-amber-500]="preApprovedStep() === 'verify_docs'"
+                [class.text-white]="preApprovedStep() === 'verify_docs'"
+                [class.bg-emerald-600]="preApprovedStep() === 'terms' || preApprovedStep() === 'confirm'"
+                [class.text-white]="preApprovedStep() === 'terms' || preApprovedStep() === 'confirm'"
+                [class.bg-bg-muted]="preApprovedStep() === 'customise'"
+                [class.text-muted]="preApprovedStep() === 'customise'">
+                @if (preApprovedStep() === 'terms' || preApprovedStep() === 'confirm') {
+                  ✓
+                } @else {
+                  2
+                }
+              </div>
+              <div class="hidden sm:block min-w-0">
+                <p class="text-label-xs font-bold uppercase" [class.text-primary]="preApprovedStep() === 'verify_docs'" [class.text-muted]="preApprovedStep() !== 'verify_docs'">Step 2</p>
+                <p class="text-body-xs font-semibold text-primary truncate">Verification</p>
+              </div>
+            </div>
+
+            <!-- Step 3 Indicator -->
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-body-xs shrink-0 transition-all"
+                [class.bg-amber-500]="preApprovedStep() === 'terms'"
+                [class.text-white]="preApprovedStep() === 'terms'"
+                [class.bg-emerald-600]="preApprovedStep() === 'confirm'"
+                [class.text-white]="preApprovedStep() === 'confirm'"
+                [class.bg-bg-muted]="preApprovedStep() === 'customise' || preApprovedStep() === 'verify_docs'"
+                [class.text-muted]="preApprovedStep() === 'customise' || preApprovedStep() === 'verify_docs'">
+                @if (preApprovedStep() === 'confirm') {
+                  ✓
+                } @else {
+                  3
+                }
+              </div>
+              <div class="hidden sm:block min-w-0">
+                <p class="text-label-xs font-bold uppercase" [class.text-primary]="preApprovedStep() === 'terms'" [class.text-muted]="preApprovedStep() !== 'terms'">Step 3</p>
+                <p class="text-body-xs font-semibold text-primary truncate">Terms &amp; Consent</p>
+              </div>
+            </div>
+
+            <!-- Step 4 Indicator -->
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-body-xs shrink-0 transition-all"
+                [class.bg-amber-500]="preApprovedStep() === 'confirm'"
+                [class.text-white]="preApprovedStep() === 'confirm'"
+                [class.bg-bg-muted]="preApprovedStep() !== 'confirm'"
+                [class.text-muted]="preApprovedStep() !== 'confirm'">
+                4
+              </div>
+              <div class="hidden sm:block min-w-0">
+                <p class="text-label-xs font-bold uppercase" [class.text-primary]="preApprovedStep() === 'confirm'" [class.text-muted]="preApprovedStep() !== 'confirm'">Step 4</p>
+                <p class="text-body-xs font-semibold text-primary truncate">Confirm &amp; Disburse</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        }
+
         <!-- ────────────────── STEP 0: PRE-APPROVED OFFER OVERVIEW ────────────────── -->
         @if (preApprovedStep() === 'overview') {
-        <div class="space-y-5 animate-fade-in max-w-lg mx-auto">
+        <div class="space-y-6 animate-fade-in">
 
-          <!-- Pre-approved Offer Switcher Chips (Home, Personal, Car, etc.) -->
-          <div class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+          <!-- Offer Category Selector Pills -->
+          <div class="flex items-center gap-2.5 overflow-x-auto pb-1 no-scrollbar">
             @for (offer of allOffers(); track offer.id) {
             <button type="button" (click)="selectPreApprovedOffer(offer)"
-              class="px-3.5 py-1.5 rounded-full text-label-xs font-bold shrink-0 transition-all border cursor-pointer"
+              class="px-4 py-2 rounded-xl text-label-xs font-bold shrink-0 transition-all border cursor-pointer flex items-center gap-2"
               [class.bg-brand-primary]="selectedOffer().id === offer.id"
               [class.text-white]="selectedOffer().id === offer.id"
               [class.border-brand-primary]="selectedOffer().id === offer.id"
               [class.bg-bg-surface]="selectedOffer().id !== offer.id"
               [class.text-secondary]="selectedOffer().id !== offer.id"
               [class.border-border-default]="selectedOffer().id !== offer.id">
-              {{ offer.title }} ({{ formatInr(offer.maxAmount) }})
+              <span>{{ offer.title }}</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono"
+                [class.bg-white/20]="selectedOffer().id === offer.id"
+                [class.bg-bg-muted]="selectedOffer().id !== offer.id">
+                {{ formatInr(offer.maxAmount) }}
+              </span>
             </button>
             }
           </div>
 
-          <!-- Hero Golden Card -->
-          <div class="relative overflow-hidden rounded-3xl p-6 text-[#1E293B] shadow-lg border border-amber-300/40 bg-gradient-to-br from-[#F5BF45] via-[#EAB308] to-[#D97706]">
-            <!-- Decorative circle overlay -->
-            <div class="absolute -top-10 -right-10 w-44 h-44 rounded-full bg-white/15 pointer-events-none blur-sm"></div>
-            <div class="absolute -bottom-12 -left-10 w-36 h-36 rounded-full bg-black/5 pointer-events-none"></div>
+          <!-- 2-Column Responsive Desktop Grid -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-            <div class="relative z-10 space-y-4">
-              <!-- Pre-approved pill badge -->
-              <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0B1E36] text-[#F5BF45] text-label-xs font-bold shadow-xs">
-                <svg class="w-3.5 h-3.5 text-[#F5BF45]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-                <span>PRE-APPROVED</span>
-              </div>
+            <!-- Left Main Column (8 of 12 cols) -->
+            <div class="lg:col-span-8 space-y-6">
 
-              <!-- Greeting & Headline -->
-              <div>
-                <p class="text-body-sm font-semibold text-[#0B1E36]/90">Congratulations, {{ customerName() }}!</p>
-                <h2 class="text-4xl font-extrabold tracking-tight text-[#0B1E36] font-mono mt-1">
-                  {{ formatInr(selectedOffer().maxAmount) }}
-                </h2>
-                <p class="text-body-xs font-medium text-[#0B1E36]/80 mt-1">
-                  {{ selectedOffer().title }} — No Documents Needed
-                </p>
-              </div>
+              <!-- Hero Golden Banner -->
+              <div class="relative overflow-hidden rounded-3xl p-6 sm:p-8 text-[#1E293B] shadow-xl border border-amber-300/40 bg-gradient-to-br from-[#F5BF45] via-[#EAB308] to-[#D97706]">
+                <!-- Decorative background elements -->
+                <div class="absolute -top-12 -right-12 w-64 h-64 rounded-full bg-white/20 pointer-events-none blur-md"></div>
+                <div class="absolute -bottom-16 -left-12 w-52 h-52 rounded-full bg-black/10 pointer-events-none"></div>
 
-              <!-- 3-Column Highlights Strip -->
-              <div class="grid grid-cols-3 gap-2 pt-2 border-t border-[#0B1E36]/15">
-                <div>
-                  <p class="text-[10px] font-bold uppercase tracking-wider text-[#0B1E36]/70">INTEREST</p>
-                  <p class="text-body-md font-bold text-[#0B1E36] font-mono">{{ selectedOffer().interestRate }}% p.a.</p>
+                <div class="relative z-10 space-y-5">
+                  <!-- Pre-approved pill badge -->
+                  <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0B1E36] text-[#F5BF45] text-label-xs font-extrabold shadow-sm">
+                    <svg class="w-4 h-4 text-[#F5BF45]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span>PRE-APPROVED CREDIT FACILITY</span>
+                  </div>
+
+                  <!-- Greeting & Headline -->
+                  <div class="space-y-1">
+                    <p class="text-body-md font-semibold text-[#0B1E36]/90">Congratulations, {{ customerName() }}!</p>
+                    <div class="text-4xl sm:text-5xl font-extrabold tracking-tight text-[#0B1E36] font-mono">
+                      {{ formatInr(selectedOffer().maxAmount) }}
+                    </div>
+                    <p class="text-body-sm font-medium text-[#0B1E36]/85 pt-1">
+                      {{ selectedOffer().title }} — 100% Digital &amp; Paperless Disbursement Straight to Your Bank Account
+                    </p>
+                  </div>
+
+                  <!-- 4-Column Stats Ribbon -->
+                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-[#0B1E36]/15">
+                    <div>
+                      <p class="text-[11px] font-bold uppercase tracking-wider text-[#0B1E36]/70">INTEREST RATE</p>
+                      <p class="text-body-lg font-bold text-[#0B1E36] font-mono mt-0.5">{{ selectedOffer().interestRate }}% p.a.</p>
+                    </div>
+                    <div>
+                      <p class="text-[11px] font-bold uppercase tracking-wider text-[#0B1E36]/70">PROCESSING FEE</p>
+                      <p class="text-body-lg font-bold text-[#0B1E36] mt-0.5">ZERO</p>
+                    </div>
+                    <div>
+                      <p class="text-[11px] font-bold uppercase tracking-wider text-[#0B1E36]/70">DISBURSAL SPEED</p>
+                      <p class="text-body-lg font-bold text-[#0B1E36] mt-0.5">Instant</p>
+                    </div>
+                    <div>
+                      <p class="text-[11px] font-bold uppercase tracking-wider text-[#0B1E36]/70">OFFER VALIDITY</p>
+                      <p class="text-body-sm font-bold text-[#0B1E36] mt-1">30 Jun 2026</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p class="text-[10px] font-bold uppercase tracking-wider text-[#0B1E36]/70">PROCESSING FEE</p>
-                  <p class="text-body-md font-bold text-[#0B1E36]">ZERO</p>
-                </div>
-                <div>
-                  <p class="text-[10px] font-bold uppercase tracking-wider text-[#0B1E36]/70">DISBURSAL</p>
-                  <p class="text-body-md font-bold text-[#0B1E36]">Instant</p>
+              </div>
+
+              <!-- "Why You're Pre-Approved" 4-Card Grid -->
+              <div class="p-6 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-4">
+                <h3 class="text-heading-sm font-bold text-primary">Why You're Pre-Approved</h3>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <!-- Score -->
+                  <div class="p-4 rounded-2xl bg-bg-muted/60 border border-border-default/80 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 rounded-xl bg-brand-primary/10 text-brand-primary flex items-center justify-center text-lg">
+                        💳
+                      </div>
+                      <div>
+                        <p class="text-label-xs text-muted uppercase font-bold">CIBIL Score</p>
+                        <p class="text-body-sm font-bold text-primary">Excellent Track Record</p>
+                      </div>
+                    </div>
+                    <span class="text-body-md font-extrabold font-mono text-primary">782 / 900</span>
+                  </div>
+
+                  <!-- Salary -->
+                  <div class="p-4 rounded-2xl bg-bg-muted/60 border border-border-default/80 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 rounded-xl bg-status-success-bg text-status-success-text flex items-center justify-center text-lg">
+                        📈
+                      </div>
+                      <div>
+                        <p class="text-label-xs text-muted uppercase font-bold">Salary Consistency</p>
+                        <p class="text-body-sm font-bold text-primary">Direct Inflows</p>
+                      </div>
+                    </div>
+                    <span class="text-body-md font-extrabold font-mono text-primary">12+ months</span>
+                  </div>
+
+                  <!-- Tenure -->
+                  <div class="p-4 rounded-2xl bg-bg-muted/60 border border-border-default/80 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 rounded-xl bg-brand-accent/15 text-brand-accent flex items-center justify-center text-lg">
+                        🏦
+                      </div>
+                      <div>
+                        <p class="text-label-xs text-muted uppercase font-bold">Banking Relationship</p>
+                        <p class="text-body-sm font-bold text-primary">Verified Customer</p>
+                      </div>
+                    </div>
+                    <span class="text-body-md font-bold text-primary">Since 2018</span>
+                  </div>
+
+                  <!-- Health -->
+                  <div class="p-4 rounded-2xl bg-bg-muted/60 border border-border-default/80 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 rounded-xl bg-status-success-bg text-status-success-text flex items-center justify-center text-lg">
+                        📊
+                      </div>
+                      <div>
+                        <p class="text-label-xs text-muted uppercase font-bold">Account Health</p>
+                        <p class="text-body-sm font-bold text-primary">Zero Repayment Bounces</p>
+                      </div>
+                    </div>
+                    <span class="text-body-md font-bold text-status-success">Flawless</span>
+                  </div>
                 </div>
               </div>
 
-              <!-- Validity Pill -->
-              <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/10 text-body-xs font-semibold text-[#0B1E36] w-full justify-center">
-                <svg class="w-3.5 h-3.5 text-[#0B1E36]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-                </svg>
-                <span>Offer valid until 30 Jun 2026</span>
+              <!-- Key Loan Privileges 4-Grid -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div class="p-4.5 rounded-2xl bg-bg-surface border border-border-default shadow-xs space-y-1">
+                  <span class="text-xl">📅</span>
+                  <p class="text-label-xs text-secondary">Max Tenure</p>
+                  <p class="text-body-md font-bold text-primary">{{ selectedOffer().maxTenureMonths }} Months</p>
+                </div>
+
+                <div class="p-4.5 rounded-2xl bg-bg-surface border border-border-default shadow-xs space-y-1">
+                  <span class="text-xl">🔒</span>
+                  <p class="text-label-xs text-secondary">Collateral</p>
+                  <p class="text-body-md font-bold text-primary">Zero / Unsecured</p>
+                </div>
+
+                <div class="p-4.5 rounded-2xl bg-bg-surface border border-border-default shadow-xs space-y-1">
+                  <span class="text-xl">⏩</span>
+                  <p class="text-label-xs text-secondary">Foreclosure</p>
+                  <p class="text-body-md font-bold text-primary">Nil Penalty (After 6M)</p>
+                </div>
+
+                <div class="p-4.5 rounded-2xl bg-bg-surface border border-border-default shadow-xs space-y-1">
+                  <span class="text-xl">⚡</span>
+                  <p class="text-label-xs text-secondary">Disbursal Mode</p>
+                  <p class="text-body-md font-bold text-primary">Direct Account Credit</p>
+                </div>
               </div>
+
             </div>
+
+            <!-- Right Action Sidebar Column (4 of 12 cols) -->
+            <div class="lg:col-span-4 space-y-6">
+
+              <!-- Action Card -->
+              <div class="p-6 rounded-3xl bg-[#0B1E36] text-white shadow-xl space-y-5">
+                <div class="space-y-1.5">
+                  <p class="text-[11px] font-bold uppercase tracking-wider text-white/70">OFFER READY FOR DISBURSAL</p>
+                  <h4 class="text-heading-md font-bold text-white">{{ selectedOffer().title }}</h4>
+                  <p class="text-body-xs text-white/80">
+                    Customise loan amount and tenure with instant live EMI calculation.
+                  </p>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-white/10 border border-white/15 space-y-2">
+                  <div class="flex items-center justify-between text-body-xs text-white/80">
+                    <span>Pre-Approved Amount:</span>
+                    <strong class="text-white font-mono">{{ formatInr(selectedOffer().maxAmount) }}</strong>
+                  </div>
+                  <div class="flex items-center justify-between text-body-xs text-white/80">
+                    <span>Applicable ROI:</span>
+                    <strong class="text-[#F5BF45] font-mono">{{ selectedOffer().interestRate }}% p.a.</strong>
+                  </div>
+                  <div class="flex items-center justify-between text-body-xs text-white/80">
+                    <span>Documentation:</span>
+                    <strong class="text-emerald-400">Zero (Auto-Verified)</strong>
+                  </div>
+                </div>
+
+                <button type="button" (click)="startPreApprovedFlow()"
+                  class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#F5BF45] to-[#EAB308] hover:from-[#EAB308] hover:to-[#D97706] text-[#0B1E36] font-bold text-body-md shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer">
+                  <span>Customise &amp; Apply Now</span>
+                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="m9 18 6-6-6-6" />
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Quick Switcher to other offerings -->
+              <div class="p-5 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-3">
+                <h4 class="text-body-sm font-bold text-primary">All Pre-Approved Limits</h4>
+                <div class="divide-y divide-border-default/60">
+                  @for (offer of allOffers(); track offer.id) {
+                  <button type="button" (click)="selectPreApprovedOffer(offer)"
+                    class="w-full py-3 flex items-center justify-between text-left hover:bg-bg-muted/50 rounded-xl px-2 transition-all cursor-pointer"
+                    [class.bg-brand-primary/5]="selectedOffer().id === offer.id">
+                    <div>
+                      <p class="text-body-xs font-bold text-primary">{{ offer.title }}</p>
+                      <p class="text-[11px] text-secondary">{{ offer.interestRate }}% p.a. · Up to {{ offer.maxTenureMonths }}M</p>
+                    </div>
+                    <span class="text-body-sm font-extrabold font-mono text-primary">{{ formatInr(offer.maxAmount) }}</span>
+                  </button>
+                  }
+                </div>
+              </div>
+
+            </div>
+
           </div>
-
-          <!-- Why You're Pre-Approved Card -->
-          <div class="p-5 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-4">
-            <h3 class="text-body-md font-bold text-primary">Why You're Pre-Approved</h3>
-
-            <div class="divide-y divide-border-default/60">
-              <!-- Item 1: CIBIL Score -->
-              <div class="flex items-center justify-between py-2.5">
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-lg bg-bg-muted flex items-center justify-center text-secondary">
-                    💳
-                  </div>
-                  <span class="text-body-sm font-medium text-primary">Excellent CIBIL Score</span>
-                </div>
-                <span class="text-body-sm font-bold font-mono text-primary">782 / 900</span>
-              </div>
-
-              <!-- Item 2: Salary Consistency -->
-              <div class="flex items-center justify-between py-2.5">
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-lg bg-bg-muted flex items-center justify-center text-secondary">
-                    📈
-                  </div>
-                  <span class="text-body-sm font-medium text-primary">Salary Consistency</span>
-                </div>
-                <span class="text-body-sm font-bold font-mono text-primary">12+ months</span>
-              </div>
-
-              <!-- Item 3: Banking Relationship -->
-              <div class="flex items-center justify-between py-2.5">
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-lg bg-bg-muted flex items-center justify-center text-secondary">
-                    🏦
-                  </div>
-                  <span class="text-body-sm font-medium text-primary">Banking Relationship</span>
-                </div>
-                <span class="text-body-sm font-bold text-primary">Since 2018</span>
-              </div>
-
-              <!-- Item 4: Account Health Score -->
-              <div class="flex items-center justify-between py-2.5">
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-lg bg-bg-muted flex items-center justify-center text-secondary">
-                    📊
-                  </div>
-                  <span class="text-body-sm font-medium text-primary">Account Health Score</span>
-                </div>
-                <span class="text-body-sm font-bold text-status-success">Excellent</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- 2x2 Feature Grid -->
-          <div class="grid grid-cols-2 gap-3">
-            <div class="p-4 rounded-2xl bg-bg-surface border border-border-default shadow-xs space-y-1">
-              <span class="text-base">📅</span>
-              <p class="text-label-xs text-secondary">Max Tenure</p>
-              <p class="text-body-sm font-bold text-primary">{{ selectedOffer().maxTenureMonths }} Months</p>
-            </div>
-
-            <div class="p-4 rounded-2xl bg-bg-surface border border-border-default shadow-xs space-y-1">
-              <span class="text-base">🔒</span>
-              <p class="text-label-xs text-secondary">No Collateral</p>
-              <p class="text-body-sm font-bold text-primary">Unsecured</p>
-            </div>
-
-            <div class="p-4 rounded-2xl bg-bg-surface border border-border-default shadow-xs space-y-1">
-              <span class="text-base">⏩</span>
-              <p class="text-label-xs text-secondary">Foreclosure</p>
-              <p class="text-body-sm font-bold text-primary">After 6M</p>
-            </div>
-
-            <div class="p-4 rounded-2xl bg-bg-surface border border-border-default shadow-xs space-y-1">
-              <span class="text-base">⚡</span>
-              <p class="text-label-xs text-secondary">Disbursal Mode</p>
-              <p class="text-body-sm font-bold text-primary">Direct Credit</p>
-            </div>
-          </div>
-
-          <!-- Primary CTA Button -->
-          <button type="button" (click)="startPreApprovedFlow()"
-            class="w-full py-4 px-6 rounded-2xl bg-[#0B1E36] hover:bg-[#0B1E36]/90 text-white font-bold text-body-md shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer">
-            <span>Customise &amp; Apply Now</span>
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="m9 18 6-6-6-6" />
-            </svg>
-          </button>
         </div>
         }
 
         <!-- ────────────────── STEP 1: CUSTOMISE YOUR LOAN ────────────────── -->
         @if (preApprovedStep() === 'customise') {
-        <div class="space-y-5 animate-fade-in max-w-lg mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fade-in">
 
-          <!-- Top Navigation & Stepper Bar -->
-          <div class="flex items-center justify-between">
-            <button type="button" (click)="preApprovedStep.set('overview')"
-              class="w-9 h-9 rounded-xl bg-bg-muted hover:bg-bg-surface border border-border-default flex items-center justify-center text-primary cursor-pointer">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="m15 18-6-6 6-6" />
-              </svg>
-            </button>
-            <h2 class="text-body-lg font-bold text-primary">Customise Your Loan</h2>
-            <!-- 4-Dot Progress Stepper -->
-            <div class="flex items-center gap-1.5">
-              <div class="w-4 h-2 rounded-full bg-amber-500"></div>
-              <div class="w-2 h-2 rounded-full bg-border-default"></div>
-              <div class="w-2 h-2 rounded-full bg-border-default"></div>
-              <div class="w-2 h-2 rounded-full bg-border-default"></div>
-            </div>
-          </div>
+          <!-- Left Configurator Column (7 of 12 cols) -->
+          <div class="lg:col-span-7 space-y-6">
 
-          <!-- Hero Dark Blue Monthly EMI Card -->
-          <div class="p-6 rounded-3xl bg-[#0B1E36] text-white shadow-xl space-y-4 relative overflow-hidden">
-            <div class="space-y-1">
-              <p class="text-[11px] font-bold uppercase tracking-wider text-white/70">YOUR MONTHLY EMI</p>
-              <div class="text-4xl font-extrabold font-mono tracking-tight text-white">
-                {{ formatInr(emiCalculation().monthlyEmi) }}
+            <!-- Amount Slider Card -->
+            <div class="p-6 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-body-md font-bold text-primary">Loan Amount</h3>
+                  <p class="text-body-xs text-secondary">Choose the exact capital requirement</p>
+                </div>
+                <div class="text-heading-lg font-extrabold font-mono text-primary">
+                  {{ formatInr(appliedAmount()) }}
+                </div>
               </div>
-              <p class="text-body-xs text-white/80">
-                for {{ tenureMonths() }} months · {{ selectedOffer().interestRate }}% p.a.
-              </p>
-            </div>
 
-            <!-- Breakdown Row -->
-            <div class="grid grid-cols-3 gap-2 pt-3 border-t border-white/15">
-              <div>
-                <p class="text-[10px] font-semibold text-white/70 uppercase">PRINCIPAL</p>
-                <p class="text-body-sm font-bold font-mono text-[#F5BF45]">{{ formatInr(appliedAmount()) }}</p>
+              <input type="range"
+                [min]="selectedOffer().minAmount"
+                [max]="selectedOffer().maxAmount"
+                step="10000"
+                [(ngModel)]="appliedAmount"
+                class="w-full h-2.5 rounded-full cursor-pointer accent-[#0B1E36]" />
+
+              <div class="flex items-center justify-between text-body-xs text-secondary font-mono">
+                <span>Min: {{ formatInr(selectedOffer().minAmount) }}</span>
+                <span>Max: {{ formatInr(selectedOffer().maxAmount) }}</span>
               </div>
-              <div>
-                <p class="text-[10px] font-semibold text-white/70 uppercase">TOTAL INTEREST</p>
-                <p class="text-body-sm font-bold font-mono text-[#F5BF45]">{{ formatInr(emiCalculation().totalInterest) }}</p>
-              </div>
-              <div>
-                <p class="text-[10px] font-semibold text-white/70 uppercase">TOTAL PAYABLE</p>
-                <p class="text-body-sm font-bold font-mono text-[#F5BF45]">{{ formatInr(emiCalculation().totalPayable) }}</p>
+
+              <!-- Quick Presets -->
+              <div class="flex items-center gap-2 pt-1 flex-wrap">
+                <span class="text-label-xs text-muted uppercase font-bold">Quick Select:</span>
+                @for (preset of [100000, 200000, 300000, 500000]; track preset) {
+                  @if (preset <= selectedOffer().maxAmount) {
+                  <button type="button" (click)="appliedAmount.set(preset)"
+                    class="px-3 py-1 rounded-lg text-label-xs font-semibold border border-border-default bg-bg-muted hover:bg-bg-surface transition-colors cursor-pointer">
+                    {{ formatInr(preset) }}
+                  </button>
+                  }
+                }
               </div>
             </div>
-          </div>
 
-          <!-- Loan Amount Slider Card -->
-          <div class="p-5 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-3">
-            <div class="flex items-center justify-between">
-              <span class="text-body-sm font-semibold text-secondary">Loan Amount</span>
-              <span class="text-heading-sm font-extrabold font-mono text-primary">{{ formatInr(appliedAmount()) }}</span>
+            <!-- Tenure Selector Card -->
+            <div class="p-6 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-body-md font-bold text-primary">Repayment Tenure</h3>
+                  <p class="text-body-xs text-secondary">Select comfortable duration for repayment</p>
+                </div>
+                <div class="text-heading-md font-extrabold text-primary">
+                  {{ tenureMonths() }} Months
+                </div>
+              </div>
+
+              <div class="grid grid-cols-5 gap-2.5">
+                @for (tenure of [12, 24, 36, 48, 60]; track tenure) {
+                <button type="button" (click)="tenureMonths.set(tenure)"
+                  class="py-3 rounded-2xl text-body-sm font-bold border transition-all cursor-pointer text-center"
+                  [class.bg-[#0B1E36]]="tenureMonths() === tenure"
+                  [class.text-white]="tenureMonths() === tenure"
+                  [class.border-[#0B1E36]]="tenureMonths() === tenure"
+                  [class.shadow-md]="tenureMonths() === tenure"
+                  [class.bg-bg-muted]="tenureMonths() !== tenure"
+                  [class.text-secondary]="tenureMonths() !== tenure"
+                  [class.border-border-default]="tenureMonths() !== tenure">
+                  {{ tenure }}M
+                </button>
+                }
+              </div>
             </div>
 
-            <input type="range"
-              [min]="selectedOffer().minAmount"
-              [max]="selectedOffer().maxAmount"
-              step="10000"
-              [(ngModel)]="appliedAmount"
-              class="w-full h-2 rounded-full cursor-pointer accent-[#0B1E36]" />
-
-            <div class="flex items-center justify-between text-body-xs text-secondary">
-              <span>{{ formatInr(selectedOffer().minAmount) }}</span>
-              <span>{{ formatInr(selectedOffer().maxAmount) }}</span>
+            <!-- 3 Highlights Strip -->
+            <div class="grid grid-cols-3 gap-3">
+              <div class="p-4 rounded-2xl bg-bg-surface border border-border-default text-center">
+                <p class="text-label-xs text-secondary uppercase font-bold">Interest Rate</p>
+                <p class="text-body-md font-bold text-primary mt-1 font-mono">{{ selectedOffer().interestRate }}% p.a.</p>
+              </div>
+              <div class="p-4 rounded-2xl bg-bg-surface border border-border-default text-center">
+                <p class="text-label-xs text-secondary uppercase font-bold">First EMI Date</p>
+                <p class="text-body-md font-bold text-primary mt-1">08 Jul 2026</p>
+              </div>
+              <div class="p-4 rounded-2xl bg-bg-surface border border-border-default text-center">
+                <p class="text-label-xs text-secondary uppercase font-bold">Processing Fee</p>
+                <p class="text-body-md font-bold text-status-success mt-1">₹0.00 (Waived)</p>
+              </div>
             </div>
 
-            <p class="text-[11px] text-muted">
-              Pre-approved limit: <strong class="text-primary">{{ formatInr(selectedOffer().maxAmount) }}</strong>
-            </p>
-          </div>
-
-          <!-- Tenure Selector Card -->
-          <div class="p-5 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-3">
-            <div class="flex items-center justify-between">
-              <span class="text-body-sm font-semibold text-secondary">Tenure</span>
-              <span class="text-heading-sm font-extrabold text-primary">{{ tenureMonths() }} Months</span>
-            </div>
-
-            <div class="grid grid-cols-5 gap-2">
-              @for (tenure of [12, 24, 36, 48, 60]; track tenure) {
-              <button type="button" (click)="tenureMonths.set(tenure)"
-                class="py-2.5 rounded-xl text-label-xs font-bold border transition-all cursor-pointer text-center"
-                [class.bg-[#0B1E36]]="tenureMonths() === tenure"
-                [class.text-white]="tenureMonths() === tenure"
-                [class.border-[#0B1E36]]="tenureMonths() === tenure"
-                [class.bg-bg-muted]="tenureMonths() !== tenure"
-                [class.text-secondary]="tenureMonths() !== tenure"
-                [class.border-border-default]="tenureMonths() !== tenure">
-                {{ tenure }}M
+            <!-- Navigation Actions -->
+            <div class="flex items-center justify-between gap-4 pt-2">
+              <button type="button" (click)="preApprovedStep.set('overview')"
+                class="px-6 py-3.5 rounded-2xl border border-border-default bg-bg-surface hover:bg-bg-muted text-secondary font-bold text-body-sm transition-all cursor-pointer flex items-center gap-2">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="m15 18-6-6 6-6" />
+                </svg>
+                <span>Back to Overview</span>
               </button>
-              }
+
+              <button type="button" (click)="goToVerifyDocs()"
+                class="px-8 py-3.5 rounded-2xl bg-[#0B1E36] hover:bg-[#0B1E36]/90 text-white font-bold text-body-md shadow-md transition-all flex items-center gap-2 cursor-pointer">
+                <span>Verify Documents</span>
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
+              </button>
             </div>
+
           </div>
 
-          <!-- 3 Feature Badges -->
-          <div class="grid grid-cols-3 gap-2">
-            <div class="p-3 rounded-2xl bg-bg-surface border border-border-default text-center">
-              <p class="text-[10px] text-secondary">Interest</p>
-              <p class="text-body-xs font-bold text-primary mt-0.5">{{ selectedOffer().interestRate }}% p.a.</p>
+          <!-- Right Live EMI Breakdown Column (5 of 12 cols) -->
+          <div class="lg:col-span-5 space-y-6">
+
+            <!-- Hero Dark Navy Monthly EMI Card -->
+            <div class="p-6 sm:p-7 rounded-3xl bg-[#0B1E36] text-white shadow-xl space-y-6">
+              <div class="space-y-1">
+                <p class="text-[11px] font-bold uppercase tracking-wider text-white/70">YOUR MONTHLY EMI</p>
+                <div class="text-4xl sm:text-5xl font-extrabold font-mono tracking-tight text-white">
+                  {{ formatInr(emiCalculation().monthlyEmi) }}
+                </div>
+                <p class="text-body-xs text-white/80">
+                  for {{ tenureMonths() }} months @ {{ selectedOffer().interestRate }}% p.a.
+                </p>
+              </div>
+
+              <!-- Breakdown Rows -->
+              <div class="p-4 rounded-2xl bg-white/10 border border-white/15 space-y-3 text-body-sm">
+                <div class="flex items-center justify-between">
+                  <span class="text-white/80">Principal Loan Amount</span>
+                  <span class="font-bold font-mono text-[#F5BF45]">{{ formatInr(appliedAmount()) }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-white/80">Total Interest Payable</span>
+                  <span class="font-bold font-mono text-[#F5BF45]">{{ formatInr(emiCalculation().totalInterest) }}</span>
+                </div>
+                <div class="flex items-center justify-between pt-2 border-t border-white/15">
+                  <span class="text-white font-semibold">Total Amount Payable</span>
+                  <span class="font-extrabold font-mono text-white text-body-md">{{ formatInr(emiCalculation().totalPayable) }}</span>
+                </div>
+              </div>
+
+              <!-- Disbursal Account Info -->
+              <div class="flex items-center gap-3 text-body-xs text-white/80">
+                <span class="text-base">🏦</span>
+                <span>Disbursal into <strong>Primary Savings A/C •••• 4521</strong></span>
+              </div>
             </div>
-            <div class="p-3 rounded-2xl bg-bg-surface border border-border-default text-center">
-              <p class="text-[10px] text-secondary">First EMI</p>
-              <p class="text-body-xs font-bold text-primary mt-0.5">08 Jul 2026</p>
-            </div>
-            <div class="p-3 rounded-2xl bg-bg-surface border border-border-default text-center">
-              <p class="text-[10px] text-secondary">Processing</p>
-              <p class="text-body-xs font-bold text-primary mt-0.5">Instant</p>
-            </div>
+
           </div>
 
-          <!-- Primary CTA Button -->
-          <button type="button" (click)="goToVerifyDocs()"
-            class="w-full py-4 px-6 rounded-2xl bg-[#0B1E36] hover:bg-[#0B1E36]/90 text-white font-bold text-body-md shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer">
-            <span>Verify Documents</span>
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="m9 18 6-6-6-6" />
-            </svg>
-          </button>
         </div>
         }
 
         <!-- ────────────────── STEP 2: DOCUMENT VERIFICATION ────────────────── -->
         @if (preApprovedStep() === 'verify_docs') {
-        <div class="space-y-5 animate-fade-in max-w-lg mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fade-in">
 
-          <!-- Top Navigation & Stepper Bar -->
-          <div class="flex items-center justify-between">
-            <button type="button" (click)="preApprovedStep.set('customise')"
-              class="w-9 h-9 rounded-xl bg-bg-muted hover:bg-bg-surface border border-border-default flex items-center justify-center text-primary cursor-pointer">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="m15 18-6-6 6-6" />
-              </svg>
-            </button>
-            <h2 class="text-body-lg font-bold text-primary">Document Verification</h2>
-            <!-- 4-Dot Progress Stepper -->
-            <div class="flex items-center gap-1.5">
-              <div class="w-2 h-2 rounded-full bg-amber-500"></div>
-              <div class="w-4 h-2 rounded-full bg-amber-500"></div>
-              <div class="w-2 h-2 rounded-full bg-border-default"></div>
-              <div class="w-2 h-2 rounded-full bg-border-default"></div>
-            </div>
-          </div>
+          <!-- Left Verified Documents Column (7 of 12 cols) -->
+          <div class="lg:col-span-7 space-y-6">
 
-          <!-- Green Pre-Verified Banner -->
-          <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-start gap-3">
-            <div class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">
-              ✓
-            </div>
-            <div>
-              <p class="text-body-sm font-bold text-emerald-900">Pre-Verified</p>
-              <p class="text-body-xs text-emerald-800">
-                All documents are auto-fetched from your existing bank records.
-              </p>
-            </div>
-          </div>
-
-          <!-- Verified Documents Card -->
-          <div class="p-5 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-3">
-            <p class="text-[11px] font-bold uppercase tracking-wider text-muted">VERIFIED DOCUMENTS</p>
-
-            <div class="divide-y divide-border-default/60">
-              @for (doc of verifiedDocs; track doc.title) {
-              <div class="flex items-center justify-between py-3">
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-lg bg-bg-muted flex items-center justify-center text-secondary">
-                    📄
-                  </div>
-                  <div>
-                    <p class="text-body-sm font-semibold text-primary">{{ doc.title }}</p>
-                    <p class="text-body-xs text-secondary">{{ doc.subtitle }}</p>
-                  </div>
-                </div>
-                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-label-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                  ✓ {{ doc.status }}
-                </span>
+            <!-- Green Pre-Verified Banner -->
+            <div class="p-5 rounded-3xl bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-start gap-4 shadow-xs">
+              <div class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 font-bold">
+                ✓
               </div>
-              }
+              <div class="space-y-0.5">
+                <h4 class="text-body-md font-bold text-emerald-950">Pre-Verified by Core Banking</h4>
+                <p class="text-body-xs text-emerald-800 leading-relaxed">
+                  All mandatory KYC documents and income statements have already been authenticated from your existing bank records. No physical document upload is required.
+                </p>
+              </div>
             </div>
+
+            <!-- Verified Documents Card -->
+            <div class="p-6 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-4">
+              <h3 class="text-heading-sm font-bold text-primary">Verified Banking Records</h3>
+
+              <div class="divide-y divide-border-default/60">
+                @for (doc of verifiedDocs; track doc.title) {
+                <div class="flex items-center justify-between py-3.5">
+                  <div class="flex items-center gap-3.5">
+                    <div class="w-10 h-10 rounded-xl bg-bg-muted flex items-center justify-center text-lg text-secondary">
+                      📄
+                    </div>
+                    <div>
+                      <p class="text-body-sm font-bold text-primary">{{ doc.title }}</p>
+                      <p class="text-body-xs text-secondary">{{ doc.subtitle }}</p>
+                    </div>
+                  </div>
+                  <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-label-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    ✓ {{ doc.status }}
+                  </span>
+                </div>
+                }
+              </div>
+            </div>
+
+            <!-- Navigation Actions -->
+            <div class="flex items-center justify-between gap-4 pt-2">
+              <button type="button" (click)="preApprovedStep.set('customise')"
+                class="px-6 py-3.5 rounded-2xl border border-border-default bg-bg-surface hover:bg-bg-muted text-secondary font-bold text-body-sm transition-all cursor-pointer flex items-center gap-2">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="m15 18-6-6 6-6" />
+                </svg>
+                <span>Back to Customise</span>
+              </button>
+
+              <button type="button" (click)="goToTerms()"
+                class="px-8 py-3.5 rounded-2xl bg-[#0B1E36] hover:bg-[#0B1E36]/90 text-white font-bold text-body-md shadow-md transition-all flex items-center gap-2 cursor-pointer">
+                <span>Proceed to Terms</span>
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
+              </button>
+            </div>
+
           </div>
 
-          <!-- Credit Assessment Card -->
-          <div class="p-5 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="text-label-xs font-bold uppercase text-muted">CREDIT ASSESSMENT</span>
-              <span class="text-body-sm font-bold font-mono text-primary">782 / 900</span>
+          <!-- Right Bureau Score Column (5 of 12 cols) -->
+          <div class="lg:col-span-5 space-y-6">
+
+            <!-- Credit Assessment Card -->
+            <div class="p-6 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-4">
+              <div class="flex items-center justify-between">
+                <span class="text-label-xs font-bold uppercase text-muted">BUREAU CREDIT ASSESSMENT</span>
+                <span class="text-heading-md font-extrabold font-mono text-primary">782 / 900</span>
+              </div>
+
+              <!-- Progress Bar -->
+              <div class="w-full h-3 rounded-full bg-bg-muted overflow-hidden">
+                <div class="h-full bg-emerald-500 rounded-full" style="width: 86.8%"></div>
+              </div>
+
+              <div class="flex items-center justify-between text-body-xs font-semibold">
+                <span class="text-emerald-700">EXCELLENT SCORE</span>
+                <span class="text-secondary">Top 5% Tier</span>
+              </div>
+
+              <div class="pt-2 text-body-xs text-secondary leading-relaxed border-t border-border-default/60">
+                Your strong credit score qualifies you for the lowest preferential interest rate of {{ selectedOffer().interestRate }}% p.a. with zero collateral.
+              </div>
             </div>
-            <!-- Progress Bar -->
-            <div class="w-full h-2.5 rounded-full bg-bg-muted overflow-hidden">
-              <div class="h-full bg-emerald-500 rounded-full" style="width: 86.8%"></div>
+
+            <!-- Mini Summary Box -->
+            <div class="p-5 rounded-3xl bg-[#0B1E36] text-white shadow-md space-y-3">
+              <p class="text-[11px] font-bold uppercase text-white/70">APPLICATION OVERVIEW</p>
+              <div class="flex items-center justify-between text-body-sm">
+                <span class="text-white/80">Sanction Limit</span>
+                <strong class="font-mono text-[#F5BF45]">{{ formatInr(appliedAmount()) }}</strong>
+              </div>
+              <div class="flex items-center justify-between text-body-sm">
+                <span class="text-white/80">Monthly EMI</span>
+                <strong class="font-mono text-white">{{ formatInr(emiCalculation().monthlyEmi) }}</strong>
+              </div>
+              <div class="flex items-center justify-between text-body-sm">
+                <span class="text-white/80">Tenure</span>
+                <strong class="text-white">{{ tenureMonths() }} Months</strong>
+              </div>
             </div>
-            <p class="text-[11px] font-bold text-emerald-700 uppercase">EXCELLENT</p>
+
           </div>
 
-          <!-- Primary CTA Button -->
-          <button type="button" (click)="goToTerms()"
-            class="w-full py-4 px-6 rounded-2xl bg-[#0B1E36] hover:bg-[#0B1E36]/90 text-white font-bold text-body-md shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer">
-            <span>Proceed to Terms</span>
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="m9 18 6-6-6-6" />
-            </svg>
-          </button>
         </div>
         }
 
         <!-- ────────────────── STEP 3: TERMS & CONDITIONS ────────────────── -->
         @if (preApprovedStep() === 'terms') {
-        <div class="space-y-5 animate-fade-in max-w-lg mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fade-in">
 
-          <!-- Top Navigation & Stepper Bar -->
-          <div class="flex items-center justify-between">
-            <button type="button" (click)="preApprovedStep.set('verify_docs')"
-              class="w-9 h-9 rounded-xl bg-bg-muted hover:bg-bg-surface border border-border-default flex items-center justify-center text-primary cursor-pointer">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="m15 18-6-6 6-6" />
-              </svg>
-            </button>
-            <h2 class="text-body-lg font-bold text-primary">Terms &amp; Conditions</h2>
-            <!-- 4-Dot Progress Stepper -->
-            <div class="flex items-center gap-1.5">
-              <div class="w-2 h-2 rounded-full bg-amber-500"></div>
-              <div class="w-2 h-2 rounded-full bg-amber-500"></div>
-              <div class="w-4 h-2 rounded-full bg-amber-500"></div>
-              <div class="w-2 h-2 rounded-full bg-border-default"></div>
-            </div>
-          </div>
+          <!-- Left Loan Agreement Box (8 of 12 cols) -->
+          <div class="lg:col-span-8 space-y-6">
 
-          <!-- Agreement Scrollable Box -->
-          <div class="p-5 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-4 max-h-80 overflow-y-auto">
-            <h3 class="text-body-md font-bold text-primary">SSPL Bank Personal Loan Agreement</h3>
-
-            <div class="space-y-3 text-body-xs text-secondary leading-relaxed">
-              <div>
-                <p class="font-bold text-primary">1. Loan Amount &amp; Disbursement</p>
-                <p>
-                  The sanctioned loan amount of {{ formatInr(appliedAmount()) }} shall be credited to your registered Savings Account (•••• 4521) within 24 hours of approval.
-                </p>
+            <!-- Agreement Box -->
+            <div class="p-6 sm:p-8 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-5">
+              <div class="flex items-center justify-between border-b border-border-default/60 pb-3">
+                <h3 class="text-heading-sm font-bold text-primary">SSPL Bank Personal Loan Agreement</h3>
+                <span class="text-label-xs font-mono font-bold text-muted">DOC-PL-2026-9481</span>
               </div>
 
-              <div>
-                <p class="font-bold text-primary">2. Interest Rate</p>
-                <p>
-                  The loan carries a flat interest rate of {{ selectedOffer().interestRate }}% per annum. The applicable rate is subject to revision as per RBI guidelines.
-                </p>
-              </div>
+              <div class="space-y-4 text-body-sm text-secondary leading-relaxed max-h-96 overflow-y-auto pr-2">
+                <div class="p-4 rounded-2xl bg-bg-muted/50 border border-border-default/60">
+                  <p class="font-bold text-primary">1. Loan Sanction &amp; Instant Disbursement</p>
+                  <p class="mt-1">
+                    The sanctioned loan amount of {{ formatInr(appliedAmount()) }} shall be credited directly to your registered Primary Savings Account (•••• 4521) immediately upon confirmation.
+                  </p>
+                </div>
 
-              <div>
-                <p class="font-bold text-primary">3. EMI &amp; Repayment</p>
-                <p>
-                  A total of {{ tenureMonths() }} equated monthly instalments of {{ formatInr(emiCalculation().monthlyEmi) }} each shall be due on the 8th of every month, commencing 08 Jul 2026. EMIs shall be recovered via auto-debit from your account.
-                </p>
-              </div>
+                <div class="p-4 rounded-2xl bg-bg-muted/50 border border-border-default/60">
+                  <p class="font-bold text-primary">2. Applicable Interest Rate &amp; Benchmark</p>
+                  <p class="mt-1">
+                    The loan carries a flat fixed interest rate of {{ selectedOffer().interestRate }}% per annum throughout the tenure. The applicable rate is subject to statutory revision as per RBI master guidelines.
+                  </p>
+                </div>
 
-              <div>
-                <p class="font-bold text-primary">4. Prepayment &amp; Foreclosure</p>
-                <p>
-                  Foreclosure is permitted after 6 completed EMIs with zero penalty. Part-prepayment allowed via Net Banking anytime.
-                </p>
+                <div class="p-4 rounded-2xl bg-bg-muted/50 border border-border-default/60">
+                  <p class="font-bold text-primary">3. Repayment Mandate &amp; Auto-Debit</p>
+                  <p class="mt-1">
+                    A total of {{ tenureMonths() }} equated monthly instalments of {{ formatInr(emiCalculation().monthlyEmi) }} each shall be due on the 8th of every month commencing 08 Jul 2026 via e-NACH auto-debit.
+                  </p>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-bg-muted/50 border border-border-default/60">
+                  <p class="font-bold text-primary">4. Foreclosure &amp; Pre-payment Terms</p>
+                  <p class="mt-1">
+                    Zero foreclosure penalty after 6 successfully completed EMIs. Part-prepayment is permitted anytime through Net Banking.
+                  </p>
+                </div>
               </div>
             </div>
+
+            <!-- Navigation Actions -->
+            <div class="flex items-center justify-between gap-4 pt-2">
+              <button type="button" (click)="preApprovedStep.set('verify_docs')"
+                class="px-6 py-3.5 rounded-2xl border border-border-default bg-bg-surface hover:bg-bg-muted text-secondary font-bold text-body-sm transition-all cursor-pointer flex items-center gap-2">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="m15 18-6-6 6-6" />
+                </svg>
+                <span>Back to Documents</span>
+              </button>
+
+              <button type="button" (click)="acceptTermsAndProceed()"
+                [disabled]="!termsAgreed()"
+                class="px-8 py-3.5 rounded-2xl font-bold text-body-md shadow-md transition-all flex items-center gap-2 cursor-pointer"
+                [class.bg-[#0B1E36]]="termsAgreed()"
+                [class.hover:bg-[#0B1E36]/90]="termsAgreed()"
+                [class.text-white]="termsAgreed()"
+                [class.bg-gray-300]="!termsAgreed()"
+                [class.text-gray-500]="!termsAgreed()"
+                [class.cursor-not-allowed]="!termsAgreed()">
+                <span>Accept &amp; Proceed</span>
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
+              </button>
+            </div>
+
           </div>
 
-          <!-- Consent Checkbox Card -->
-          <div class="p-4 rounded-2xl bg-bg-surface border border-border-default shadow-xs">
-            <label class="flex items-start gap-3 cursor-pointer select-none">
-              <input type="checkbox" [(ngModel)]="termsAgreed"
-                class="mt-1 w-4 h-4 rounded text-amber-500 focus:ring-amber-400 cursor-pointer accent-amber-500" />
-              <span class="text-body-xs text-secondary leading-normal">
-                I have read, understood, and agree to the <strong class="text-amber-600 font-bold">Terms &amp; Conditions</strong> and the <strong class="text-amber-600 font-bold">MITC</strong> of SSPL Bank {{ selectedOffer().title }}.
-              </span>
-            </label>
+          <!-- Right Consent Card (4 of 12 cols) -->
+          <div class="lg:col-span-4 space-y-6">
+
+            <div class="p-6 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-4">
+              <h4 class="text-body-md font-bold text-primary">Customer Consent &amp; MITC</h4>
+
+              <!-- Checkbox 1 -->
+              <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-2">
+                <label class="flex items-start gap-3 cursor-pointer select-none">
+                  <input type="checkbox" [(ngModel)]="termsAgreed"
+                    class="mt-1 w-4 h-4 rounded text-amber-500 focus:ring-amber-400 cursor-pointer accent-amber-500" />
+                  <span class="text-body-xs text-secondary leading-normal">
+                    I have read, understood, and agree to the <strong class="text-amber-600 font-bold">Terms &amp; Conditions</strong> and the <strong class="text-amber-600 font-bold">Key Fact Statement (KFS)</strong> of SSPL Bank {{ selectedOffer().title }}.
+                  </span>
+                </label>
+              </div>
+
+              <!-- Checkbox 2 -->
+              <div class="p-4 rounded-2xl bg-bg-muted/60 border border-border-default/80">
+                <div class="flex items-start gap-3 text-body-xs text-secondary">
+                  <span class="text-emerald-600 font-bold">✓</span>
+                  <span>e-NACH Auto-Debit mandate initialized on Primary Savings A/C •••• 4521.</span>
+                </div>
+              </div>
+            </div>
+
           </div>
 
-          <!-- Primary CTA Button -->
-          <button type="button" (click)="acceptTermsAndProceed()"
-            [disabled]="!termsAgreed()"
-            class="w-full py-4 px-6 rounded-2xl font-bold text-body-md shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
-            [class.bg-[#0B1E36]]="termsAgreed()"
-            [class.hover:bg-[#0B1E36]/90]="termsAgreed()"
-            [class.text-white]="termsAgreed()"
-            [class.bg-gray-300]="!termsAgreed()"
-            [class.text-gray-500]="!termsAgreed()"
-            [class.cursor-not-allowed]="!termsAgreed()">
-            <span>Accept &amp; Proceed</span>
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="m9 18 6-6-6-6" />
-            </svg>
-          </button>
         </div>
         }
 
         <!-- ────────────────── STEP 4: CONFIRM & DISBURSE ────────────────── -->
         @if (preApprovedStep() === 'confirm') {
-        <div class="space-y-5 animate-fade-in max-w-lg mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fade-in">
 
-          <!-- Top Navigation & Stepper Bar -->
-          <div class="flex items-center justify-between">
-            <button type="button" (click)="preApprovedStep.set('terms')"
-              class="w-9 h-9 rounded-xl bg-bg-muted hover:bg-bg-surface border border-border-default flex items-center justify-center text-primary cursor-pointer">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="m15 18-6-6 6-6" />
-              </svg>
-            </button>
-            <h2 class="text-body-lg font-bold text-primary">Confirm &amp; Disburse</h2>
-            <!-- 4-Dot Progress Stepper -->
-            <div class="flex items-center gap-1.5">
-              <div class="w-2 h-2 rounded-full bg-amber-500"></div>
-              <div class="w-2 h-2 rounded-full bg-amber-500"></div>
-              <div class="w-2 h-2 rounded-full bg-amber-500"></div>
-              <div class="w-4 h-2 rounded-full bg-amber-500"></div>
-            </div>
-          </div>
+          <!-- Left Summary Column (8 of 12 cols) -->
+          <div class="lg:col-span-8 space-y-6">
 
-          <!-- Header Amount Display -->
-          <div class="text-center py-2 space-y-1">
-            <p class="text-[11px] font-bold uppercase tracking-wider text-muted">LOAN AMOUNT</p>
-            <h2 class="text-4xl font-extrabold text-primary font-mono tracking-tight">
-              {{ formatInr(appliedAmount()) }}
-            </h2>
-          </div>
+            <div class="p-6 sm:p-8 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-6">
+              <div class="border-b border-border-default/60 pb-4">
+                <p class="text-label-xs font-bold uppercase text-muted">LOAN SANCTION SUMMARY</p>
+                <h2 class="text-4xl sm:text-5xl font-extrabold text-primary font-mono tracking-tight mt-1">
+                  {{ formatInr(appliedAmount()) }}
+                </h2>
+              </div>
 
-          <!-- LOAN SUMMARY Card -->
-          <div class="p-5 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-3">
-            <p class="text-[11px] font-bold uppercase tracking-wider text-muted">LOAN SUMMARY</p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-body-sm">
+                <div class="p-3.5 rounded-2xl bg-bg-muted/50 border border-border-default/60 flex items-center justify-between">
+                  <span class="text-secondary">Sanction Amount</span>
+                  <span class="font-bold font-mono text-primary">{{ formatInr(appliedAmount()) }}</span>
+                </div>
+                <div class="p-3.5 rounded-2xl bg-bg-muted/50 border border-border-default/60 flex items-center justify-between">
+                  <span class="text-secondary">Interest Rate</span>
+                  <span class="font-bold font-mono text-primary">{{ selectedOffer().interestRate }}% p.a. (Flat)</span>
+                </div>
+                <div class="p-3.5 rounded-2xl bg-bg-muted/50 border border-border-default/60 flex items-center justify-between">
+                  <span class="text-secondary">Repayment Tenure</span>
+                  <span class="font-bold text-primary">{{ tenureMonths() }} Months</span>
+                </div>
+                <div class="p-3.5 rounded-2xl bg-bg-muted/50 border border-border-default/60 flex items-center justify-between">
+                  <span class="text-secondary">Monthly EMI</span>
+                  <span class="font-bold font-mono text-primary">{{ formatInr(emiCalculation().monthlyEmi) }}</span>
+                </div>
+                <div class="p-3.5 rounded-2xl bg-bg-muted/50 border border-border-default/60 flex items-center justify-between">
+                  <span class="text-secondary">Total Interest</span>
+                  <span class="font-bold font-mono text-primary">{{ formatInr(emiCalculation().totalInterest) }}</span>
+                </div>
+                <div class="p-3.5 rounded-2xl bg-bg-muted/50 border border-border-default/60 flex items-center justify-between">
+                  <span class="text-secondary">Processing Fee</span>
+                  <span class="font-bold text-status-success">₹0.00 (Waived)</span>
+                </div>
+                <div class="p-3.5 rounded-2xl bg-bg-muted/50 border border-border-default/60 flex items-center justify-between">
+                  <span class="text-secondary">Total Amount Payable</span>
+                  <span class="font-bold font-mono text-primary">{{ formatInr(emiCalculation().totalPayable) }}</span>
+                </div>
+                <div class="p-3.5 rounded-2xl bg-bg-muted/50 border border-border-default/60 flex items-center justify-between">
+                  <span class="text-secondary">Disbursement Account</span>
+                  <span class="font-bold text-primary">SB •••• 4521</span>
+                </div>
+              </div>
 
-            <div class="divide-y divide-border-default/60 text-body-sm">
-              <div class="flex items-center justify-between py-2">
-                <span class="text-secondary">Loan Amount</span>
-                <span class="font-bold font-mono text-primary">{{ formatInr(appliedAmount()) }}</span>
-              </div>
-              <div class="flex items-center justify-between py-2">
-                <span class="text-secondary">Interest Rate</span>
-                <span class="font-bold font-mono text-primary">{{ selectedOffer().interestRate }}% p.a. (Flat)</span>
-              </div>
-              <div class="flex items-center justify-between py-2">
-                <span class="text-secondary">Tenure</span>
-                <span class="font-bold text-primary">{{ tenureMonths() }} Months</span>
-              </div>
-              <div class="flex items-center justify-between py-2">
-                <span class="text-secondary">Monthly EMI</span>
-                <span class="font-bold font-mono text-primary">{{ formatInr(emiCalculation().monthlyEmi) }}</span>
-              </div>
-              <div class="flex items-center justify-between py-2">
-                <span class="text-secondary">Total Interest</span>
-                <span class="font-bold font-mono text-primary">{{ formatInr(emiCalculation().totalInterest) }}</span>
-              </div>
-              <div class="flex items-center justify-between py-2">
-                <span class="text-secondary">Processing Fee</span>
-                <span class="font-bold text-status-success">₹0.00 (Waived)</span>
-              </div>
-              <div class="flex items-center justify-between py-2">
-                <span class="text-secondary">Total Payable</span>
-                <span class="font-bold font-mono text-primary">{{ formatInr(emiCalculation().totalPayable) }}</span>
-              </div>
-              <div class="flex items-center justify-between py-2">
-                <span class="text-secondary">Disbursement A/C</span>
-                <span class="font-bold text-primary">SB •••• 4521</span>
+              <!-- Notice Alert -->
+              <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex items-start gap-3 text-body-xs">
+                <span class="text-lg shrink-0">ℹ</span>
+                <p>Funds will be credited directly to your primary savings account immediately upon confirmation.</p>
               </div>
             </div>
+
+            <!-- Navigation Actions -->
+            <div class="flex items-center justify-between gap-4 pt-2">
+              <button type="button" (click)="preApprovedStep.set('terms')"
+                class="px-6 py-3.5 rounded-2xl border border-border-default bg-bg-surface hover:bg-bg-muted text-secondary font-bold text-body-sm transition-all cursor-pointer flex items-center gap-2">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="m15 18-6-6 6-6" />
+                </svg>
+                <span>Review Terms</span>
+              </button>
+            </div>
+
           </div>
 
-          <!-- Notice Callout -->
-          <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex items-start gap-2.5 text-body-xs">
-            <span class="text-base shrink-0">ℹ</span>
-            <p>Amount will be credited instantly to your savings account upon confirmation.</p>
+          <!-- Right Action Box (4 of 12 cols) -->
+          <div class="lg:col-span-4 space-y-6">
+
+            <div class="p-6 rounded-3xl bg-[#0B1E36] text-white shadow-xl space-y-5">
+              <div class="space-y-1">
+                <p class="text-[11px] font-bold uppercase tracking-wider text-white/70">INSTANT DISBURSAL</p>
+                <h3 class="text-heading-sm font-bold text-white">Ready for Instant Credit</h3>
+                <p class="text-body-xs text-white/80">
+                  Zero waiting period. 100% automated core banking credit.
+                </p>
+              </div>
+
+              <button type="button" (click)="confirmAndDisburse()"
+                [disabled]="isDisbursing()"
+                class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#F5BF45] to-[#EAB308] hover:from-[#EAB308] hover:to-[#D97706] text-[#0B1E36] font-bold text-body-md shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70">
+                @if (isDisbursing()) {
+                  <span class="inline-block w-5 h-5 border-2 border-[#0B1E36] border-t-transparent rounded-full animate-spin"></span>
+                  <span>Disbursing Funds...</span>
+                } @else {
+                  <span>Confirm &amp; Disburse Now</span>
+                }
+              </button>
+            </div>
+
           </div>
 
-          <!-- Action Buttons -->
-          <div class="space-y-2.5">
-            <button type="button" (click)="confirmAndDisburse()"
-              [disabled]="isDisbursing()"
-              class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#F5BF45] to-[#EAB308] hover:from-[#EAB308] hover:to-[#D97706] text-[#0B1E36] font-bold text-body-md shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70">
-              @if (isDisbursing()) {
-                <span class="inline-block w-5 h-5 border-2 border-[#0B1E36] border-t-transparent rounded-full animate-spin"></span>
-                <span>Processing Instant Disbursal...</span>
-              } @else {
-                <span>Confirm &amp; Disburse Now</span>
-              }
-            </button>
-
-            <button type="button" (click)="preApprovedStep.set('terms')"
-              class="w-full py-3 px-6 rounded-2xl bg-bg-surface hover:bg-bg-muted border border-border-default text-primary font-semibold text-body-sm transition-all cursor-pointer">
-              Review Terms
-            </button>
-          </div>
         </div>
         }
 
         <!-- ────────────────── STEP 5: SUCCESS STATE ────────────────── -->
         @if (preApprovedStep() === 'success') {
-        <div class="p-8 rounded-3xl bg-bg-surface border border-border-default shadow-lg text-center space-y-5 animate-fade-in max-w-lg mx-auto">
-          <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mx-auto shadow-inner">
+        <div class="p-8 sm:p-12 rounded-3xl bg-bg-surface border border-border-default shadow-xl text-center space-y-6 animate-fade-in max-w-2xl mx-auto">
+          <div class="w-20 h-20 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-4xl mx-auto shadow-inner">
             ✓
           </div>
 
-          <div class="space-y-1">
-            <h2 class="text-heading-lg font-bold text-primary">Loan Disbursed Successfully!</h2>
-            <p class="text-body-sm text-secondary">
+          <div class="space-y-2">
+            <h2 class="text-heading-xl font-bold text-primary">Loan Disbursed Successfully!</h2>
+            <p class="text-body-md text-secondary">
               The sanctioned amount has been credited to your primary savings account.
             </p>
           </div>
 
-          <!-- Details Card -->
-          <div class="p-4 rounded-2xl bg-bg-muted/70 border border-border-default/80 text-left space-y-2.5 text-body-sm">
+          <!-- Sanction Details Card -->
+          <div class="p-6 rounded-2xl bg-bg-muted/70 border border-border-default/80 text-left space-y-3 text-body-sm">
             <div class="flex items-center justify-between">
               <span class="text-secondary">Amount Credited</span>
-              <span class="font-extrabold font-mono text-primary text-body-md">{{ formatInr(appliedAmount()) }}</span>
+              <span class="font-extrabold font-mono text-primary text-heading-sm">{{ formatInr(appliedAmount()) }}</span>
             </div>
             <div class="flex items-center justify-between">
-              <span class="text-secondary">Credited To</span>
-              <span class="font-semibold text-primary">SB •••• 4521</span>
+              <span class="text-secondary">Credited Account</span>
+              <span class="font-bold text-primary">SB •••• 4521</span>
             </div>
             <div class="flex items-center justify-between">
               <span class="text-secondary">Monthly EMI</span>
               <span class="font-bold font-mono text-primary">{{ formatInr(emiCalculation().monthlyEmi) }}</span>
             </div>
             <div class="flex items-center justify-between">
-              <span class="text-secondary">Tenure</span>
-              <span class="font-semibold text-primary">{{ tenureMonths() }} Months</span>
+              <span class="text-secondary">Repayment Tenure</span>
+              <span class="font-bold text-primary">{{ tenureMonths() }} Months</span>
             </div>
-            <div class="flex items-center justify-between">
-              <span class="text-secondary">Sanction Reference</span>
-              <span class="font-mono text-xs text-muted">{{ sanctionResponse()?.sanctionNumber || 'SSPL-LN-2026-94821' }}</span>
+            <div class="flex items-center justify-between pt-2 border-t border-border-default/60">
+              <span class="text-secondary">Sanction Reference ID</span>
+              <span class="font-mono text-xs font-bold text-primary">{{ sanctionResponse()?.sanctionNumber || 'SSPL-LN-2026-94821' }}</span>
             </div>
           </div>
 
-          <div class="space-y-2 pt-2">
+          <div class="flex items-center justify-center gap-4 pt-2">
             <button type="button" (click)="onNavChange('dashboard')"
-              class="w-full py-3.5 px-6 rounded-2xl bg-[#0B1E36] hover:bg-[#0B1E36]/90 text-white font-bold text-body-sm shadow-md transition-all cursor-pointer">
+              class="px-8 py-3.5 rounded-2xl bg-[#0B1E36] hover:bg-[#0B1E36]/90 text-white font-bold text-body-sm shadow-md transition-all cursor-pointer">
               Go to Dashboard
             </button>
             <button type="button" (click)="resetPreApprovedFlow()"
-              class="w-full py-3 px-6 rounded-2xl bg-bg-surface hover:bg-bg-muted border border-border-default text-secondary font-semibold text-body-sm transition-all cursor-pointer">
+              class="px-8 py-3.5 rounded-2xl bg-bg-surface hover:bg-bg-muted border border-border-default text-secondary font-semibold text-body-sm transition-all cursor-pointer">
               Done
             </button>
           </div>
@@ -679,214 +926,260 @@
       }
 
       <!-- ========================================================================================= -->
-      <!-- ── SECTION B: ENQUIRE DIFFERENT LOAN FLOW (Streamlined Minimal Design) ── -->
+      <!-- ── SECTION B: ENQUIRE DIFFERENT LOAN FLOW (Enterprise Web Experience) ── -->
       <!-- ========================================================================================= -->
       @if (activeViewMode() === 'custom_enquiry') {
 
         <!-- ────────────────── STEP 1: CONFIGURE LOAN REQUIREMENT ────────────────── -->
         @if (customStep() === 'configure') {
-        <div class="space-y-5 animate-fade-in max-w-lg mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fade-in">
 
-          <!-- Category Selector Chips Grid -->
-          <div class="space-y-2">
-            <label class="text-label-xs font-bold uppercase text-muted">Select Loan Product</label>
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              @for (cat of customCategories; track cat.id) {
-              <button type="button" (click)="selectCustomCategory(cat)"
-                class="p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1.5"
-                [class.bg-[#0B1E36]]="selectedCustomCategory().id === cat.id"
-                [class.text-white]="selectedCustomCategory().id === cat.id"
-                [class.border-[#0B1E36]]="selectedCustomCategory().id === cat.id"
-                [class.bg-bg-surface]="selectedCustomCategory().id !== cat.id"
-                [class.text-primary]="selectedCustomCategory().id !== cat.id"
-                [class.border-border-default]="selectedCustomCategory().id !== cat.id">
-                <span class="text-body-xs font-bold leading-tight">{{ cat.name }}</span>
-                <span class="text-[11px] opacity-80 font-mono">{{ cat.rate }}% p.a.</span>
-              </button>
-              }
-            </div>
-          </div>
+          <!-- Left Controls Column (7 of 12 cols) -->
+          <div class="lg:col-span-7 space-y-6">
 
-          <!-- Hero Estimated EMI Card -->
-          <div class="p-5 rounded-3xl bg-[#0B1E36] text-white shadow-xl space-y-3">
-            <div class="space-y-1">
-              <p class="text-[11px] font-bold uppercase tracking-wider text-white/70">ESTIMATED MONTHLY EMI</p>
-              <div class="text-3xl font-extrabold font-mono tracking-tight text-white">
-                {{ formatInr(customEmiCalculation().monthlyEmi) }}
-              </div>
-              <p class="text-body-xs text-white/80">
-                for {{ customTenureYears() }} Years @ {{ selectedCustomCategory().rate }}% p.a.
-              </p>
-            </div>
-            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-white/15">
-              <div>
-                <p class="text-[10px] text-white/70 uppercase">PRINCIPAL</p>
-                <p class="text-body-sm font-bold font-mono text-[#F5BF45]">{{ formatInr(customAmount()) }}</p>
-              </div>
-              <div>
-                <p class="text-[10px] text-white/70 uppercase">TOTAL PAYABLE</p>
-                <p class="text-body-sm font-bold font-mono text-[#F5BF45]">{{ formatInr(customEmiCalculation().totalPayable) }}</p>
+            <!-- Category Selector Grid -->
+            <div class="p-6 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-3">
+              <label class="text-label-xs font-bold uppercase text-muted">Select Loan Product</label>
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                @for (cat of customCategories; track cat.id) {
+                <button type="button" (click)="selectCustomCategory(cat)"
+                  class="p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2"
+                  [class.bg-[#0B1E36]]="selectedCustomCategory().id === cat.id"
+                  [class.text-white]="selectedCustomCategory().id === cat.id"
+                  [class.border-[#0B1E36]]="selectedCustomCategory().id === cat.id"
+                  [class.shadow-md]="selectedCustomCategory().id === cat.id"
+                  [class.bg-bg-surface]="selectedCustomCategory().id !== cat.id"
+                  [class.text-primary]="selectedCustomCategory().id !== cat.id"
+                  [class.border-border-default]="selectedCustomCategory().id !== cat.id">
+                  <span class="text-body-xs font-bold leading-tight">{{ cat.name }}</span>
+                  <span class="text-[11px] opacity-80 font-mono">{{ cat.rate }}% p.a.</span>
+                </button>
+                }
               </div>
             </div>
+
+            <!-- Required Amount Card -->
+            <div class="p-6 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-body-md font-bold text-primary">Required Capital</h3>
+                  <p class="text-body-xs text-secondary">Set your custom financing amount</p>
+                </div>
+                <div class="text-heading-lg font-extrabold font-mono text-primary">
+                  {{ formatInr(customAmount()) }}
+                </div>
+              </div>
+
+              <input type="range"
+                [min]="selectedCustomCategory().minAmount"
+                [max]="selectedCustomCategory().maxAmount"
+                step="50000"
+                [(ngModel)]="customAmount"
+                class="w-full h-2.5 rounded-full cursor-pointer accent-[#0B1E36]" />
+
+              <div class="flex items-center justify-between text-body-xs text-secondary font-mono">
+                <span>Min: {{ formatInr(selectedCustomCategory().minAmount) }}</span>
+                <span>Max: {{ formatInr(selectedCustomCategory().maxAmount) }}</span>
+              </div>
+            </div>
+
+            <!-- Tenure Selector Card -->
+            <div class="p-6 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-body-md font-bold text-primary">Preferred Tenure</h3>
+                  <p class="text-body-xs text-secondary">Select duration in years</p>
+                </div>
+                <div class="text-heading-md font-extrabold text-primary">
+                  {{ customTenureYears() }} Years
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2.5 overflow-x-auto pb-1 no-scrollbar">
+                @for (yr of selectedCustomCategory().tenureYearsList; track yr) {
+                <button type="button" (click)="customTenureYears.set(yr)"
+                  class="py-2.5 px-4 rounded-xl text-label-xs font-bold border transition-all cursor-pointer shrink-0"
+                  [class.bg-[#0B1E36]]="customTenureYears() === yr"
+                  [class.text-white]="customTenureYears() === yr"
+                  [class.border-[#0B1E36]]="customTenureYears() === yr"
+                  [class.bg-bg-muted]="customTenureYears() !== yr"
+                  [class.text-secondary]="customTenureYears() !== yr"
+                  [class.border-border-default]="customTenureYears() !== yr">
+                  {{ yr }} {{ yr === 1 ? 'Year' : 'Years' }}
+                </button>
+                }
+              </div>
+            </div>
+
+            <!-- Primary Action -->
+            <button type="button" (click)="proceedToApplicant()"
+              class="w-full py-4 px-6 rounded-2xl bg-[#0B1E36] hover:bg-[#0B1E36]/90 text-white font-bold text-body-md shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer">
+              <span>Proceed to Income Details</span>
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="m9 18 6-6-6-6" />
+              </svg>
+            </button>
+
           </div>
 
-          <!-- Required Loan Amount -->
-          <div class="p-5 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-3">
-            <div class="flex items-center justify-between">
-              <span class="text-body-sm font-semibold text-secondary">Required Amount</span>
-              <span class="text-heading-sm font-extrabold font-mono text-primary">{{ formatInr(customAmount()) }}</span>
+          <!-- Right Live Breakdown Column (5 of 12 cols) -->
+          <div class="lg:col-span-5 space-y-6">
+
+            <!-- Hero Estimated EMI Card -->
+            <div class="p-6 sm:p-7 rounded-3xl bg-[#0B1E36] text-white shadow-xl space-y-5">
+              <div class="space-y-1">
+                <p class="text-[11px] font-bold uppercase tracking-wider text-white/70">ESTIMATED MONTHLY EMI</p>
+                <div class="text-4xl font-extrabold font-mono tracking-tight text-white">
+                  {{ formatInr(customEmiCalculation().monthlyEmi) }}
+                </div>
+                <p class="text-body-xs text-white/80">
+                  for {{ customTenureYears() }} Years @ {{ selectedCustomCategory().rate }}% p.a.
+                </p>
+              </div>
+
+              <div class="p-4 rounded-2xl bg-white/10 border border-white/15 space-y-3 text-body-sm">
+                <div class="flex items-center justify-between">
+                  <span class="text-white/80">Principal Requirement</span>
+                  <span class="font-bold font-mono text-[#F5BF45]">{{ formatInr(customAmount()) }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-white/80">Total Interest</span>
+                  <span class="font-bold font-mono text-[#F5BF45]">{{ formatInr(customEmiCalculation().totalInterest) }}</span>
+                </div>
+                <div class="flex items-center justify-between pt-2 border-t border-white/15">
+                  <span class="text-white font-semibold">Total Estimated Payable</span>
+                  <span class="font-extrabold font-mono text-white text-body-md">{{ formatInr(customEmiCalculation().totalPayable) }}</span>
+                </div>
+              </div>
             </div>
 
-            <input type="range"
-              [min]="selectedCustomCategory().minAmount"
-              [max]="selectedCustomCategory().maxAmount"
-              step="50000"
-              [(ngModel)]="customAmount"
-              class="w-full h-2 rounded-full cursor-pointer accent-[#0B1E36]" />
-
-            <div class="flex items-center justify-between text-body-xs text-secondary">
-              <span>{{ formatInr(selectedCustomCategory().minAmount) }}</span>
-              <span>{{ formatInr(selectedCustomCategory().maxAmount) }}</span>
-            </div>
           </div>
 
-          <!-- Tenure in Years -->
-          <div class="p-5 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-3">
-            <div class="flex items-center justify-between">
-              <span class="text-body-sm font-semibold text-secondary">Tenure</span>
-              <span class="text-heading-sm font-extrabold text-primary">{{ customTenureYears() }} Years</span>
-            </div>
-
-            <div class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-              @for (yr of selectedCustomCategory().tenureYearsList; track yr) {
-              <button type="button" (click)="customTenureYears.set(yr)"
-                class="py-2 px-3.5 rounded-xl text-label-xs font-bold border transition-all cursor-pointer shrink-0"
-                [class.bg-[#0B1E36]]="customTenureYears() === yr"
-                [class.text-white]="customTenureYears() === yr"
-                [class.border-[#0B1E36]]="customTenureYears() === yr"
-                [class.bg-bg-muted]="customTenureYears() !== yr"
-                [class.text-secondary]="customTenureYears() !== yr"
-                [class.border-border-default]="customTenureYears() !== yr">
-                {{ yr }} {{ yr === 1 ? 'Year' : 'Years' }}
-              </button>
-              }
-            </div>
-          </div>
-
-          <!-- Primary CTA Button -->
-          <button type="button" (click)="proceedToApplicant()"
-            class="w-full py-4 px-6 rounded-2xl bg-[#0B1E36] hover:bg-[#0B1E36]/90 text-white font-bold text-body-md shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer">
-            <span>Proceed to Income Details</span>
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="m9 18 6-6-6-6" />
-            </svg>
-          </button>
         </div>
         }
 
         <!-- ────────────────── STEP 2: APPLICANT & INCOME DETAILS ────────────────── -->
         @if (customStep() === 'applicant') {
-        <div class="space-y-5 animate-fade-in max-w-lg mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fade-in">
 
-          <!-- Top Navigation -->
-          <div class="flex items-center justify-between">
-            <button type="button" (click)="customStep.set('configure')"
-              class="w-9 h-9 rounded-xl bg-bg-muted hover:bg-bg-surface border border-border-default flex items-center justify-center text-primary cursor-pointer">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="m15 18-6-6 6-6" />
-              </svg>
-            </button>
-            <h2 class="text-body-lg font-bold text-primary">Applicant Profile</h2>
-            <span class="text-label-xs font-bold text-secondary">Step 2 of 2</span>
-          </div>
+          <!-- Left Form Column (7 of 12 cols) -->
+          <div class="lg:col-span-7 space-y-6">
 
-          <!-- Employment Type Selector -->
-          <div class="p-5 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-3">
-            <label class="text-label-xs font-bold uppercase text-muted">Employment Type</label>
-            <div class="grid grid-cols-2 gap-2">
-              @for (emp of ['Salaried', 'Self Employed', 'Business', 'Professional']; track emp) {
-              <button type="button" (click)="customEmploymentType.set($any(emp))"
-                class="py-2.5 px-3 rounded-xl text-label-xs font-bold border transition-all cursor-pointer text-center"
-                [class.bg-[#0B1E36]]="customEmploymentType() === emp"
-                [class.text-white]="customEmploymentType() === emp"
-                [class.border-[#0B1E36]]="customEmploymentType() === emp"
-                [class.bg-bg-muted]="customEmploymentType() !== emp"
-                [class.text-secondary]="customEmploymentType() !== emp"
-                [class.border-border-default]="customEmploymentType() !== emp">
-                {{ emp }}
+            <!-- Employment Type Selector -->
+            <div class="p-6 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-3">
+              <label class="text-label-xs font-bold uppercase text-muted">Employment Type</label>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                @for (emp of ['Salaried', 'Self Employed', 'Business', 'Professional']; track emp) {
+                <button type="button" (click)="customEmploymentType.set($any(emp))"
+                  class="py-2.5 px-3 rounded-xl text-label-xs font-bold border transition-all cursor-pointer text-center"
+                  [class.bg-[#0B1E36]]="customEmploymentType() === emp"
+                  [class.text-white]="customEmploymentType() === emp"
+                  [class.border-[#0B1E36]]="customEmploymentType() === emp"
+                  [class.bg-bg-muted]="customEmploymentType() !== emp"
+                  [class.text-secondary]="customEmploymentType() !== emp"
+                  [class.border-border-default]="customEmploymentType() !== emp">
+                  {{ emp }}
+                </button>
+                }
+              </div>
+            </div>
+
+            <!-- Financial Profile -->
+            <div class="p-6 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-4">
+              <div class="space-y-1.5">
+                <label class="text-label-xs font-bold uppercase text-muted">Net Monthly Take-Home (₹)</label>
+                <input type="number" [(ngModel)]="customMonthlyIncome"
+                  class="w-full px-4 py-3.5 rounded-xl bg-bg-muted border border-border-default text-primary font-bold font-mono focus:border-brand-primary outline-none text-body-md" />
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="text-label-xs font-bold uppercase text-muted">Existing Monthly EMIs (₹)</label>
+                <input type="number" [(ngModel)]="customExistingEmi"
+                  class="w-full px-4 py-3.5 rounded-xl bg-bg-muted border border-border-default text-primary font-bold font-mono focus:border-brand-primary outline-none text-body-md" />
+              </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="flex items-center justify-between gap-4 pt-2">
+              <button type="button" (click)="customStep.set('configure')"
+                class="px-6 py-3.5 rounded-2xl border border-border-default bg-bg-surface hover:bg-bg-muted text-secondary font-bold text-body-sm transition-all cursor-pointer flex items-center gap-2">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="m15 18-6-6 6-6" />
+                </svg>
+                <span>Back to Amount</span>
               </button>
-              }
+
+              <button type="button" (click)="submitCustomEnquiry()"
+                [disabled]="isSubmittingCustom()"
+                class="px-8 py-3.5 rounded-2xl bg-[#0B1E36] hover:bg-[#0B1E36]/90 text-white font-bold text-body-md shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-70">
+                @if (isSubmittingCustom()) {
+                  <span class="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  <span>Registering Request...</span>
+                } @else {
+                  <span>Submit Loan Enquiry</span>
+                }
+              </button>
             </div>
+
           </div>
 
-          <!-- Monthly Income & Existing EMIs -->
-          <div class="p-5 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-4">
-            <div class="space-y-1.5">
-              <label class="text-label-xs font-bold uppercase text-muted">Net Monthly Take-Home (₹)</label>
-              <input type="number" [(ngModel)]="customMonthlyIncome"
-                class="w-full px-4 py-3 rounded-xl bg-bg-muted border border-border-default text-primary font-bold font-mono focus:border-brand-primary outline-none" />
+          <!-- Right Contact Profile Column (5 of 12 cols) -->
+          <div class="lg:col-span-5 space-y-6">
+
+            <!-- Profile Coordinates -->
+            <div class="p-6 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-4">
+              <h4 class="text-body-sm font-bold text-primary">Applicant Information</h4>
+
+              <div class="space-y-3 text-body-xs">
+                <div class="p-3 rounded-xl bg-bg-muted/60 border border-border-default/80 flex items-center justify-between">
+                  <span class="text-secondary">Full Name</span>
+                  <strong class="text-primary">{{ customerFullName() }}</strong>
+                </div>
+
+                <div class="p-3 rounded-xl bg-bg-muted/60 border border-border-default/80 flex items-center justify-between">
+                  <span class="text-secondary">Mobile Number</span>
+                  <strong class="text-primary">{{ customerMobile() }}</strong>
+                </div>
+
+                <div class="p-3 rounded-xl bg-bg-muted/60 border border-border-default/80 flex items-center justify-between">
+                  <span class="text-secondary">Email ID</span>
+                  <strong class="text-primary">{{ customerEmail() }}</strong>
+                </div>
+
+                <div class="p-3 rounded-xl bg-bg-muted/60 border border-border-default/80 flex items-center justify-between">
+                  <span class="text-secondary">Preferred Branch</span>
+                  <strong class="text-primary">Jalgaon Main Branch</strong>
+                </div>
+              </div>
             </div>
 
-            <div class="space-y-1.5">
-              <label class="text-label-xs font-bold uppercase text-muted">Existing Monthly EMIs (₹)</label>
-              <input type="number" [(ngModel)]="customExistingEmi"
-                class="w-full px-4 py-3 rounded-xl bg-bg-muted border border-border-default text-primary font-bold font-mono focus:border-brand-primary outline-none" />
-            </div>
           </div>
 
-          <!-- Auto-Filled Contact Verification -->
-          <div class="p-4 rounded-2xl bg-bg-muted/70 border border-border-default/80 text-body-xs space-y-2">
-            <p class="font-bold text-primary">Contact Coordinates (From Bank Profile)</p>
-            <div class="flex items-center justify-between text-secondary">
-              <span>Applicant Name:</span>
-              <strong class="text-primary">{{ customerFullName() }}</strong>
-            </div>
-            <div class="flex items-center justify-between text-secondary">
-              <span>Registered Mobile:</span>
-              <strong class="text-primary">{{ customerMobile() }}</strong>
-            </div>
-            <div class="flex items-center justify-between text-secondary">
-              <span>Preferred Branch:</span>
-              <strong class="text-primary">Jalgaon Main Branch</strong>
-            </div>
-          </div>
-
-          <!-- Primary CTA Button -->
-          <button type="button" (click)="submitCustomEnquiry()"
-            [disabled]="isSubmittingCustom()"
-            class="w-full py-4 px-6 rounded-2xl bg-[#0B1E36] hover:bg-[#0B1E36]/90 text-white font-bold text-body-md shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70">
-            @if (isSubmittingCustom()) {
-              <span class="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-              <span>Registering Loan Request...</span>
-            } @else {
-              <span>Submit Loan Enquiry</span>
-            }
-          </button>
         </div>
         }
 
         <!-- ────────────────── STEP 3: ENQUIRY SUCCESS STATE ────────────────── -->
         @if (customStep() === 'success') {
-        <div class="p-8 rounded-3xl bg-bg-surface border border-border-default shadow-lg text-center space-y-5 animate-fade-in max-w-lg mx-auto">
-          <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mx-auto shadow-inner">
+        <div class="p-8 sm:p-12 rounded-3xl bg-bg-surface border border-border-default shadow-xl text-center space-y-6 animate-fade-in max-w-2xl mx-auto">
+          <div class="w-20 h-20 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-4xl mx-auto shadow-inner">
             ✓
           </div>
 
-          <div class="space-y-1">
-            <h2 class="text-heading-lg font-bold text-primary">Loan Enquiry Submitted!</h2>
-            <p class="text-body-sm text-secondary">
-              Our Senior Relationship Officer will contact you within 2 business hours.
+          <div class="space-y-2">
+            <h2 class="text-heading-xl font-bold text-primary">Loan Enquiry Submitted!</h2>
+            <p class="text-body-md text-secondary">
+              Our Senior Loan Relationship Officer will contact you within 2 business hours.
             </p>
           </div>
 
           <!-- Summary Ticket -->
-          <div class="p-4 rounded-2xl bg-bg-muted/70 border border-border-default/80 text-left space-y-2.5 text-body-sm">
+          <div class="p-6 rounded-2xl bg-bg-muted/70 border border-border-default/80 text-left space-y-3 text-body-sm">
             <div class="flex items-center justify-between">
               <span class="text-secondary">Enquiry Reference</span>
               <span class="font-mono text-xs font-bold text-primary">{{ customEnquiryResult()?.ticketNumber || 'SSPL-ENQ-84920' }}</span>
             </div>
             <div class="flex items-center justify-between">
-              <span class="text-secondary">Product</span>
+              <span class="text-secondary">Product Selected</span>
               <span class="font-semibold text-primary">{{ selectedCustomCategory().name }}</span>
             </div>
             <div class="flex items-center justify-between">
@@ -899,14 +1192,13 @@
             </div>
           </div>
 
-
-          <div class="space-y-2 pt-2">
+          <div class="flex items-center justify-center gap-4 pt-2">
             <button type="button" (click)="onNavChange('dashboard')"
-              class="w-full py-3.5 px-6 rounded-2xl bg-[#0B1E36] hover:bg-[#0B1E36]/90 text-white font-bold text-body-sm shadow-md transition-all cursor-pointer">
+              class="px-8 py-3.5 rounded-2xl bg-[#0B1E36] hover:bg-[#0B1E36]/90 text-white font-bold text-body-sm shadow-md transition-all cursor-pointer">
               Return to Dashboard
             </button>
             <button type="button" (click)="resetCustomFlow()"
-              class="w-full py-3 px-6 rounded-2xl bg-bg-surface hover:bg-bg-muted border border-border-default text-secondary font-semibold text-body-sm transition-all cursor-pointer">
+              class="px-8 py-3.5 rounded-2xl bg-bg-surface hover:bg-bg-muted border border-border-default text-secondary font-semibold text-body-sm transition-all cursor-pointer">
               Enquire Another Product
             </button>
           </div>
