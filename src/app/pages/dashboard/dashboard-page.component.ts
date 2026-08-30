@@ -8,6 +8,7 @@ import { AccountListComponent } from './components/account-list/account-list.com
 import { RecentTransactionsComponent } from './components/recent-transactions/recent-transactions.component';
 import { ExportModalComponent } from './components/export-modal/export-modal.component';
 import { DashboardService, BankAccount } from '../../services/dashboard.service';
+import { LoanService } from '../../services/loan.service';
 
 @Component({
   selector: 'sspl-dashboard-page',
@@ -26,6 +27,7 @@ import { DashboardService, BankAccount } from '../../services/dashboard.service'
 })
 export class DashboardPageComponent implements OnInit {
   private dashboardService = inject(DashboardService);
+  private loanService = inject(LoanService);
   private router = inject(Router);
 
   // Active navigation tab
@@ -35,6 +37,22 @@ export class DashboardPageComponent implements OnInit {
   readonly selectedAccount = this.dashboardService.selectedAccount;
   readonly isExportModalOpen = signal<boolean>(false);
   readonly toastMessage = signal<{ type: 'success' | 'info' | 'error'; text: string } | null>(null);
+
+  // Active loans signal
+  readonly activeLoans = this.loanService.activeLoans;
+
+  formatInr(amount: number): string {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }).format(amount);
+  }
+
+  navigateToLoans(): void {
+    this.router.navigate(['/loans']);
+  }
+
 
   ngOnInit(): void {
     this.dashboardService.fetchDashboardData().subscribe();

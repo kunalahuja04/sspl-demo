@@ -4,6 +4,7 @@ import {
   LoanType,
   ExtendedLoanCategory,
   PreApprovedLoanOffer,
+  ActiveLoanItem,
   UserBankingHealthMetrics,
   LoanCalculationResult,
   LoanApplicationPayload,
@@ -11,7 +12,6 @@ import {
   CustomLoanEnquiryPayload,
   LoanEnquiryResponse,
 } from '../models';
-
 
 @Injectable({
   providedIn: 'root',
@@ -73,7 +73,8 @@ export class LoanService {
       creditScoreRequired: 720,
       bankingHealthScore: 95,
       relationshipTier: 'Verified Customer',
-      eligibilityReason: 'Instant limit calculated based on average monthly account balance of ₹1.8L+.',
+      eligibilityReason:
+        'Instant limit calculated based on average monthly account balance of ₹1.8L+.',
       features: [
         'No physical documentation required',
         'Funds credited in under 10 seconds',
@@ -106,7 +107,8 @@ export class LoanService {
       creditScoreRequired: 740,
       bankingHealthScore: 97,
       relationshipTier: 'Gold Customer',
-      eligibilityReason: 'Pre-approved based on prime credit score & long-standing banking relationship.',
+      eligibilityReason:
+        'Pre-approved based on prime credit score & long-standing banking relationship.',
       features: [
         'Covers 100% on-road price including insurance & road tax',
         'Tie-ups with over 5,000 dealerships nationwide',
@@ -139,7 +141,8 @@ export class LoanService {
       creditScoreRequired: 725,
       bankingHealthScore: 96,
       relationshipTier: 'Current A/C Partner',
-      eligibilityReason: 'Pre-sanctioned based on POS/UPI merchant turnover in Current A/C •••• 0002.',
+      eligibilityReason:
+        'Pre-sanctioned based on POS/UPI merchant turnover in Current A/C •••• 0002.',
       features: [
         'Zero collateral or guarantor needed',
         'High overdraft and term loan flexibility',
@@ -172,7 +175,8 @@ export class LoanService {
       creditScoreRequired: 650,
       bankingHealthScore: 92,
       relationshipTier: 'All Customers Eligible',
-      eligibilityReason: 'Instant approval against certified gold collateral stored in bank vaults.',
+      eligibilityReason:
+        'Instant approval against certified gold collateral stored in bank vaults.',
       features: [
         'Highest per-gram valuation as per live bullion rates',
         'Insured safety in bank lockers at zero extra cost',
@@ -219,9 +223,35 @@ export class LoanService {
     },
   ];
 
+  // ── Active Ongoing Loans Catalog ─────────────────────────────
+  private readonly initialActiveLoans: ActiveLoanItem[] = [
+    {
+      id: 'active-loan-01',
+      accountNumber: 'LN-SSPL-8492041',
+      loanType: 'personal',
+      title: 'Executive Personal Loan Facility',
+      sanctionedAmount: 500000,
+      remainingPrincipal: 342850,
+      paidPrincipal: 157150,
+      currentAdjustedRoi: 9.85,
+      benchmarkDetails: 'EBLR Benchmark (6.50% Repo + 3.35% Spread)',
+      monthlyEmi: 11480,
+      nextEmiDate: '08 Sep 2026',
+      nextEmiAmount: 11480,
+      tenureMonths: 48,
+      emisPaid: 14,
+      emisRemaining: 34,
+      disbursalDate: '12 Jun 2025',
+      disbursalAccount: 'Primary Savings A/C •••• 4521',
+      status: 'ACTIVE',
+      progressPercentage: 31.4,
+    },
+  ];
+
   // ── Reactive Signals ───────────────────────────────────────────
   readonly offers = signal<PreApprovedLoanOffer[]>(this.initialOffers);
   readonly selectedOffer = signal<PreApprovedLoanOffer>(this.initialOffers[0]);
+  readonly activeLoans = signal<ActiveLoanItem[]>(this.initialActiveLoans);
 
   // Banking Health Profile of Authenticated User
   readonly bankingHealthMetrics = signal<UserBankingHealthMetrics>({
@@ -363,6 +393,29 @@ export class LoanService {
       ],
     };
 
+    const newActiveLoan: ActiveLoanItem = {
+      id: `active-loan-${Date.now()}`,
+      accountNumber: sanctionNumber,
+      loanType: payload.loanType,
+      title: offer.title,
+      sanctionedAmount: payload.appliedAmount,
+      remainingPrincipal: payload.appliedAmount,
+      paidPrincipal: 0,
+      currentAdjustedRoi: payload.interestRate,
+      benchmarkDetails: 'Sanction Benchmark (Fixed Rate Guarantee)',
+      monthlyEmi: payload.monthlyEmi,
+      nextEmiDate: '08 Oct 2026',
+      nextEmiAmount: payload.monthlyEmi,
+      tenureMonths: payload.tenureMonths,
+      emisPaid: 0,
+      emisRemaining: payload.tenureMonths,
+      disbursalDate: 'Today',
+      disbursalAccount: payload.disbursalAccount || 'Primary Savings A/C •••• 4521',
+      status: 'ACTIVE',
+      progressPercentage: 0,
+    };
+    this.activeLoans.update((loans) => [newActiveLoan, ...loans]);
+
     return of(response).pipe(delay(800));
   }
 
@@ -459,4 +512,3 @@ export class LoanService {
     return this.formatCurrency(amount);
   }
 }
-

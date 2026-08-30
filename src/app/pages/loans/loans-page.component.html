@@ -12,21 +12,31 @@
 
     <main class="flex-1 p-4 md:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto w-full pb-16">
 
-      <!-- ── Toast Notification Banner ── -->
+      <!-- ── Prominent Solid Toast Notification Banner ── -->
       @if (toastMessage()) {
       <div
-        class="fixed top-5 right-5 z-50 animate-fade-in flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border text-body-sm font-semibold transition-all"
-        [class.bg-status-success-bg]="toastMessage()?.type === 'success'"
-        [class.text-status-success-text]="toastMessage()?.type === 'success'"
-        [class.border-status-success/30]="toastMessage()?.type === 'success'"
-        [class.bg-brand-primary]="toastMessage()?.type === 'info'" [class.text-white]="toastMessage()?.type === 'info'"
-        [class.border-brand-primary]="toastMessage()?.type === 'info'"
-        [class.bg-status-danger-bg]="toastMessage()?.type === 'error'"
-        [class.text-status-danger-text]="toastMessage()?.type === 'error'"
-        [class.border-status-danger/30]="toastMessage()?.type === 'error'">
-        <span>{{ toastMessage()?.text }}</span>
+        class="fixed top-6 left-1/2 -translate-x-1/2 z-50 px-6 py-4 rounded-2xl flex items-center justify-between gap-4 text-body-sm font-bold shadow-2xl border-2 transition-all animate-in fade-in slide-in-from-top-4 duration-300 max-w-lg w-[92vw]"
+        [class.bg-emerald-600]="toastMessage()?.type === 'success'"
+        [class.text-white]="toastMessage()?.type === 'success'"
+        [class.border-emerald-700]="toastMessage()?.type === 'success'"
+        [class.bg-[#0B1E36]]="toastMessage()?.type === 'info'"
+        [class.text-white]="toastMessage()?.type === 'info'"
+        [class.border-[#0B1E36]]="toastMessage()?.type === 'info'"
+        [class.bg-red-600]="toastMessage()?.type === 'error'"
+        [class.text-white]="toastMessage()?.type === 'error'"
+        [class.border-red-700]="toastMessage()?.type === 'error'">
+        <div class="flex items-center gap-3">
+          @if (toastMessage()?.type === 'error') {
+            <span class="text-2xl shrink-0">🚨</span>
+          } @else if (toastMessage()?.type === 'success') {
+            <span class="text-2xl shrink-0">✅</span>
+          } @else {
+            <span class="text-2xl shrink-0">ℹ️</span>
+          }
+          <span class="leading-snug">{{ toastMessage()?.text }}</span>
+        </div>
         <button type="button" (click)="toastMessage.set(null)"
-          class="text-current opacity-70 hover:opacity-100 cursor-pointer">✕</button>
+          class="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center cursor-pointer shrink-0 font-extrabold text-sm">✕</button>
       </div>
       }
 
@@ -81,6 +91,130 @@
           </button>
         </div>
       </div>
+
+      <!-- ── Ongoing Loans Section on TOP of Loans Page ── -->
+      @if (activeLoans().length > 0 && preApprovedStep() === 'overview') {
+      <div class="p-6 rounded-3xl bg-bg-surface border-2 border-border-default/80 shadow-md space-y-5 animate-fade-in">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-600/10 text-emerald-600 flex items-center justify-center font-extrabold text-lg">
+              ₹
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-heading-sm font-extrabold text-primary">Your Active Ongoing Loans</h3>
+                <span class="px-2.5 py-0.5 rounded-full text-label-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  {{ activeLoans().length }} Active Facility
+                </span>
+              </div>
+              <p class="text-body-xs text-secondary">
+                Real-time tracking of outstanding principal balance, repo-adjusted interest rates, and automated repayments.
+              </p>
+            </div>
+          </div>
+          <span class="text-label-xs font-mono font-bold text-muted uppercase">
+            Core Banking Linked
+          </span>
+        </div>
+
+        <!-- Ongoing Loans List -->
+        <div class="space-y-4">
+          @for (loan of activeLoans(); track loan.id) {
+          <div class="p-5 rounded-2xl bg-bg-muted/40 border border-border-default/80 hover:border-border-default transition-all space-y-4">
+            
+            <!-- Loan Header Row -->
+            <div class="flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-border-default/60">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-brand-primary text-white flex items-center justify-center font-bold text-sm">
+                  {{ loan.loanType === 'home' ? '🏠' : (loan.loanType === 'car' ? '🚗' : '👤') }}
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h4 class="text-body-md font-bold text-primary">{{ loan.title }}</h4>
+                    <span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-status-success-bg text-status-success-text border border-status-success/30">
+                      ● Active (Standard Asset)
+                    </span>
+                  </div>
+                  <p class="text-label-xs text-secondary font-mono">
+                    A/C: <span class="font-bold text-primary">{{ loan.accountNumber }}</span> · Disbursed on {{ loan.disbursalDate }} into {{ loan.disbursalAccount }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Action CTA -->
+              <div class="flex items-center gap-2">
+                <button type="button" (click)="showToast('info', 'Opening fast EMI advance payment gateway...')"
+                  class="px-4 py-2 rounded-xl bg-brand-primary hover:bg-brand-primary/90 text-white font-bold text-label-xs shadow-xs transition-colors cursor-pointer flex items-center gap-1.5">
+                  <span>Pay EMI / Part-Prepay</span>
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="m9 18 6-6-6-6" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- 4-Column High-Density Metrics Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+              
+              <!-- 1. Outstanding Principal -->
+              <div class="p-3.5 rounded-xl bg-bg-surface border border-border-default/70 space-y-1">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-secondary">REMAINING PRINCIPAL</span>
+                <p class="text-heading-md font-extrabold font-mono text-primary">{{ formatInr(loan.remainingPrincipal) }}</p>
+                <p class="text-label-xs text-secondary">of {{ formatInr(loan.sanctionedAmount) }} Sanctioned</p>
+              </div>
+
+              <!-- 2. Current Adjusted ROI -->
+              <div class="p-3.5 rounded-xl bg-bg-surface border border-border-default/70 space-y-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] font-bold uppercase tracking-wider text-secondary">ADJUSTED ROI</span>
+                  <span class="text-[10px] font-bold text-status-success bg-status-success-bg px-1.5 py-0.5 rounded">Repo-Linked</span>
+                </div>
+                <p class="text-heading-md font-extrabold font-mono text-emerald-700">{{ loan.currentAdjustedRoi }}% p.a.</p>
+                <p class="text-label-xs text-secondary truncate" [title]="loan.benchmarkDetails">{{ loan.benchmarkDetails }}</p>
+              </div>
+
+              <!-- 3. Next Monthly EMI -->
+              <div class="p-3.5 rounded-xl bg-bg-surface border border-border-default/70 space-y-1">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-secondary">MONTHLY AUTO-DEBIT EMI</span>
+                <p class="text-heading-md font-extrabold font-mono text-primary">{{ formatInr(loan.monthlyEmi) }}</p>
+                <p class="text-label-xs text-secondary">Due: <strong class="text-primary">{{ loan.nextEmiDate }}</strong> (e-NACH)</p>
+              </div>
+
+              <!-- 4. Repayment Progress -->
+              <div class="p-3.5 rounded-xl bg-bg-surface border border-border-default/70 space-y-1">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-secondary">TENURE PROGRESS</span>
+                <p class="text-heading-md font-extrabold font-mono text-primary">{{ loan.emisPaid }} / {{ loan.tenureMonths }} M</p>
+                <p class="text-label-xs text-secondary">{{ loan.emisRemaining }} EMIs Remaining</p>
+              </div>
+
+            </div>
+
+            <!-- Repayment Progress Bar -->
+            <div class="space-y-1.5 pt-1">
+              <div class="flex items-center justify-between text-body-xs font-semibold">
+                <span class="text-secondary">Principal Repayment Status</span>
+                <span class="text-primary font-bold font-mono">{{ loan.progressPercentage }}% Cleared</span>
+              </div>
+              <div class="w-full h-2.5 rounded-full bg-bg-muted overflow-hidden">
+                <div class="h-full bg-emerald-600 rounded-full transition-all duration-500" [style.width.%]="loan.progressPercentage || 5"></div>
+              </div>
+            </div>
+
+          </div>
+          }
+        </div>
+      </div>
+
+      <!-- Subtle Section Divider -->
+      <div class="flex items-center gap-4 py-1">
+        <div class="h-px bg-border-default flex-1"></div>
+        <span class="text-label-xs uppercase font-extrabold tracking-wider text-secondary px-3 py-1 rounded-full bg-bg-muted border border-border-default">
+          Apply For New Facility or Enquire Below ↓
+        </span>
+        <div class="h-px bg-border-default flex-1"></div>
+      </div>
+      }
+
 
       <!-- ========================================================================================= -->
       <!-- ── SECTION A: PRE-APPROVED LOAN FLOW (Enterprise Web Experience) ── -->
@@ -432,6 +566,19 @@
         <!-- Left Configurator Column (7 of 12 cols) -->
         <div class="lg:col-span-7 space-y-6">
 
+          <!-- Inline Validation Alert (Action Required) -->
+          @if (tenureValidationError()) {
+          <div class="p-4.5 rounded-2xl bg-red-50 border-2 border-red-600 text-red-950 flex items-start gap-3.5 shadow-lg animate-bounce">
+            <span class="text-2xl shrink-0">🚨</span>
+            <div class="space-y-0.5">
+              <p class="font-extrabold text-body-md text-red-950">Action Required: Repayment Tenure Not Selected</p>
+              <p class="text-body-xs font-medium text-red-900 leading-relaxed">
+                Please click and select any repayment tenure duration chip (<strong>12M</strong>, <strong>24M</strong>, <strong>36M</strong>, <strong>48M</strong>, or <strong>60M</strong>) below to calculate your monthly EMI and proceed to Document Verification.
+              </p>
+            </div>
+          </div>
+          }
+
           <!-- Amount Slider Card -->
           <div class="p-6 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-4">
             <div class="flex items-center justify-between">
@@ -466,10 +613,14 @@
           </div>
 
           <!-- Tenure Selector Card -->
-          <div class="p-6 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-4"
-            [class.border-amber-400]="!tenureMonths()"
-            [class.ring-2]="!tenureMonths()"
-            [class.ring-amber-400/20]="!tenureMonths()">
+          <div id="tenure-selection-card" class="p-6 rounded-3xl bg-bg-surface border shadow-xs space-y-4 transition-all"
+            [class.border-red-600]="tenureValidationError()"
+            [class.ring-4]="tenureValidationError()"
+            [class.ring-red-600/30]="tenureValidationError()"
+            [class.border-amber-400]="!tenureMonths() && !tenureValidationError()"
+            [class.ring-2]="!tenureMonths() && !tenureValidationError()"
+            [class.ring-amber-400/20]="!tenureMonths() && !tenureValidationError()"
+            [class.border-border-default]="!!tenureMonths()">
             <div class="flex items-center justify-between">
               <div>
                 <h3 class="text-body-md font-bold text-primary">Repayment Tenure</h3>
@@ -500,6 +651,7 @@
               }
             </div>
           </div>
+
 
           <!-- 3 Highlights Strip -->
           <div class="grid grid-cols-3 gap-3">

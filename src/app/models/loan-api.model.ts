@@ -30,6 +30,28 @@ export interface PreApprovedLoanOffer {
   amortizationHighlights: string[];
 }
 
+export interface ActiveLoanItem {
+  id: string;
+  accountNumber: string;
+  loanType: LoanType;
+  title: string;
+  sanctionedAmount: number;
+  remainingPrincipal: number;
+  paidPrincipal: number;
+  currentAdjustedRoi: number; // e.g. 9.85 for 9.85% p.a.
+  benchmarkDetails: string; // e.g. 'EBLR 6.50% + 3.35% (Repo rate adjusted)'
+  monthlyEmi: number;
+  nextEmiDate: string; // e.g. '08 Sep 2026'
+  nextEmiAmount: number;
+  tenureMonths: number;
+  emisPaid: number;
+  emisRemaining: number;
+  disbursalDate: string;
+  disbursalAccount: string;
+  status: 'ACTIVE' | 'CLOSED' | 'OVERDUE';
+  progressPercentage: number;
+}
+
 export interface UserBankingHealthMetrics {
   cibilScore: number;
   cibilMax: number;
@@ -95,7 +117,6 @@ export interface LoanSanctionResponse {
 }
 
 export type ExtendedLoanCategory =
-
   | 'home'
   | 'personal'
   | 'car'
@@ -113,7 +134,12 @@ export interface CustomLoanEnquiryPayload {
   tenureYears: number;
   tenureMonths: number;
   loanPurpose: string;
-  employmentType: 'SALARIED' | 'SELF_EMPLOYED_PROFESSIONAL' | 'SELF_EMPLOYED_BUSINESS' | 'NRI' | 'AGRICULTURIST';
+  employmentType:
+    | 'SALARIED'
+    | 'SELF_EMPLOYED_PROFESSIONAL'
+    | 'SELF_EMPLOYED_BUSINESS'
+    | 'NRI'
+    | 'AGRICULTURIST';
   monthlyIncome: number;
   existingMonthlyEmi: number;
   preferredBankCode: string;
@@ -142,4 +168,3 @@ export interface LoanEnquiryResponse {
   submittedAt: string;
   expectedCallbackTime: string;
 }
-

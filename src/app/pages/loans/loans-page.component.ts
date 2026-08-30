@@ -19,7 +19,13 @@ import {
   LoanEnquiryResponse,
 } from '../../models';
 
-export type PreApprovedStep = 'overview' | 'customise' | 'verify_docs' | 'terms' | 'confirm' | 'success';
+export type PreApprovedStep =
+  | 'overview'
+  | 'customise'
+  | 'verify_docs'
+  | 'terms'
+  | 'confirm'
+  | 'success';
 export type CustomEnquiryStep = 'configure' | 'applicant' | 'success';
 
 export interface VerifiedDocument {
@@ -65,6 +71,7 @@ export class LoansPageComponent implements OnInit {
   readonly currentUser = this.authService.currentUser;
   readonly customerProfile = this.profileService.profile;
   readonly bankingMetrics = this.loanService.bankingHealthMetrics;
+  readonly activeLoans = this.loanService.activeLoans;
 
   // View Mode: 'pre_approved' (Default pre-approved catalog) | 'custom_enquiry' (New / Different loan requirement)
   readonly activeViewMode = signal<'pre_approved' | 'custom_enquiry'>('pre_approved');
@@ -72,11 +79,14 @@ export class LoansPageComponent implements OnInit {
   // ── Pre-Approved Flow State ─────────────────────────────────────
   readonly preApprovedStep = signal<PreApprovedStep>('overview');
   readonly allOffers = this.loanService.offers;
-  readonly selectedOffer = signal<PreApprovedLoanOffer>(this.loanService.offers()[1] || this.loanService.offers()[0]);
+  readonly selectedOffer = signal<PreApprovedLoanOffer>(
+    this.loanService.offers()[1] || this.loanService.offers()[0],
+  );
 
   // Sliders & Customization
   readonly appliedAmount = signal<number>(300000);
   readonly tenureMonths = signal<number | null>(null);
+  readonly tenureValidationError = signal<boolean>(false);
   readonly termsAgreed = signal<boolean>(false);
   readonly isDisbursing = signal<boolean>(false);
   readonly sanctionResponse = signal<LoanSanctionResponse | null>(null);
@@ -85,8 +95,18 @@ export class LoansPageComponent implements OnInit {
   readonly verifiedDocs: VerifiedDocument[] = [
     { title: 'Identity Proof', subtitle: 'Aadhaar •••• 3821', status: 'Verified', icon: 'id' },
     { title: 'Address Proof', subtitle: 'Aadhaar (same)', status: 'Verified', icon: 'home' },
-    { title: 'Income Proof', subtitle: 'Salary Credits (Last 6M)', status: 'Verified', icon: 'income' },
-    { title: 'Bank Statement', subtitle: 'SSPL SB A/C •••• 4521', status: 'Verified', icon: 'bank' },
+    {
+      title: 'Income Proof',
+      subtitle: 'Salary Credits (Last 6M)',
+      status: 'Verified',
+      icon: 'income',
+    },
+    {
+      title: 'Bank Statement',
+      subtitle: 'SSPL SB A/C •••• 4521',
+      status: 'Verified',
+      icon: 'bank',
+    },
     { title: 'PAN Card', subtitle: 'ABCDE1234F', status: 'Verified', icon: 'card' },
   ];
 
@@ -145,7 +165,6 @@ export class LoansPageComponent implements OnInit {
     const roi = offer ? offer.interestRate : 10.5;
     return this.loanService.calculateEmi(principal, roi, tenure);
   });
-
 
   // ── Custom Enquiry State ─────────────────────────────────────────
   readonly customStep = signal<CustomEnquiryStep>('configure');
@@ -240,7 +259,9 @@ export class LoansPageComponent implements OnInit {
   readonly selectedCustomCategory = signal<CustomCategoryInfo>(this.customCategories[0]);
   readonly customAmount = signal<number>(300000);
   readonly customTenureYears = signal<number>(3);
-  readonly customEmploymentType = signal<'SALARIED' | 'SELF_EMPLOYED_PROFESSIONAL' | 'SELF_EMPLOYED_BUSINESS' | 'NRI' | 'AGRICULTURIST'>('SALARIED');
+  readonly customEmploymentType = signal<
+    'SALARIED' | 'SELF_EMPLOYED_PROFESSIONAL' | 'SELF_EMPLOYED_BUSINESS' | 'NRI' | 'AGRICULTURIST'
+  >('SALARIED');
   readonly customMonthlyIncome = signal<number>(85000);
   readonly customExistingEmi = signal<number>(10000);
   readonly isSubmittingCustom = signal<boolean>(false);
@@ -283,7 +304,8 @@ export class LoansPageComponent implements OnInit {
         }
       } else {
         this.activeNavId.set('loans');
-        const personalOffer = this.allOffers().find((o) => o.type === 'personal') || this.allOffers()[0];
+        const personalOffer =
+          this.allOffers().find((o) => o.type === 'personal') || this.allOffers()[0];
         if (personalOffer) {
           this.selectPreApprovedOffer(personalOffer);
         }
@@ -305,20 +327,31 @@ export class LoansPageComponent implements OnInit {
       this.tenureMonths.set(null);
     } else {
       this.tenureMonths.set(tenure);
+      this.tenureValidationError.set(false);
     }
   }
 
   startPreApprovedFlow(): void {
     this.tenureMonths.set(null); // Reset tenure to ensure user picks one
+    this.tenureValidationError.set(false);
     this.preApprovedStep.set('customise');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   goToVerifyDocs(): void {
     if (!this.tenureMonths() || this.tenureMonths()! <= 0) {
-      this.showToast('error', 'Please choose a repayment tenure chip before proceeding.');
+      this.tenureValidationError.set(true);
+      this.showToast(
+        'error',
+        'Action Required: Please select a repayment tenure duration chip (12M, 24M, 36M, 48M, or 60M) to proceed.',
+      );
+      const el = document.getElementById('tenure-selection-card');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
       return;
     }
+    this.tenureValidationError.set(false);
     this.preApprovedStep.set('verify_docs');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -354,7 +387,6 @@ export class LoansPageComponent implements OnInit {
       agreeNach: true,
       agreeCreditBureau: true,
     };
-
 
     this.loanService.submitLoanApplication(payload).subscribe({
       next: (res: LoanSanctionResponse) => {
