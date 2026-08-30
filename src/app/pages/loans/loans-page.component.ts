@@ -76,7 +76,7 @@ export class LoansPageComponent implements OnInit {
 
   // Sliders & Customization
   readonly appliedAmount = signal<number>(300000);
-  readonly tenureMonths = signal<number>(36);
+  readonly tenureMonths = signal<number | null>(null);
   readonly termsAgreed = signal<boolean>(false);
   readonly isDisbursing = signal<boolean>(false);
   readonly sanctionResponse = signal<LoanSanctionResponse | null>(null);
@@ -132,9 +132,20 @@ export class LoansPageComponent implements OnInit {
     const offer = this.selectedOffer();
     const principal = this.appliedAmount();
     const tenure = this.tenureMonths();
+    if (!tenure || tenure <= 0) {
+      return {
+        monthlyEmi: 0,
+        principalAmount: principal,
+        totalInterest: 0,
+        totalPayable: principal,
+        interestPercentage: 0,
+        principalPercentage: 100,
+      };
+    }
     const roi = offer ? offer.interestRate : 10.5;
     return this.loanService.calculateEmi(principal, roi, tenure);
   });
+
 
   // ── Custom Enquiry State ─────────────────────────────────────────
   readonly customStep = signal<CustomEnquiryStep>('configure');
@@ -285,16 +296,29 @@ export class LoansPageComponent implements OnInit {
     this.selectedOffer.set(offer);
     const defAmt = Math.min(offer.defaultAmount || 300000, offer.maxAmount);
     this.appliedAmount.set(defAmt);
-    this.tenureMonths.set(offer.defaultTenureMonths || 36);
+    this.tenureMonths.set(null); // Unset to force explicit user selection
     this.termsAgreed.set(false);
   }
 
+  selectTenure(tenure: number): void {
+    if (this.tenureMonths() === tenure) {
+      this.tenureMonths.set(null);
+    } else {
+      this.tenureMonths.set(tenure);
+    }
+  }
+
   startPreApprovedFlow(): void {
+    this.tenureMonths.set(null); // Reset tenure to ensure user picks one
     this.preApprovedStep.set('customise');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   goToVerifyDocs(): void {
+    if (!this.tenureMonths() || this.tenureMonths()! <= 0) {
+      this.showToast('error', 'Please choose a repayment tenure chip before proceeding.');
+      return;
+    }
     this.preApprovedStep.set('verify_docs');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -320,7 +344,7 @@ export class LoansPageComponent implements OnInit {
       loanId: this.selectedOffer().id,
       loanType: this.selectedOffer().type,
       appliedAmount: this.appliedAmount(),
-      tenureMonths: this.tenureMonths(),
+      tenureMonths: this.tenureMonths() || 36,
       disbursalAccount: 'Primary Savings A/C •••• 4521',
       interestRate: this.selectedOffer().interestRate,
       monthlyEmi: this.emiCalculation().monthlyEmi,
@@ -330,6 +354,7 @@ export class LoansPageComponent implements OnInit {
       agreeNach: true,
       agreeCreditBureau: true,
     };
+
 
     this.loanService.submitLoanApplication(payload).subscribe({
       next: (res: LoanSanctionResponse) => {
