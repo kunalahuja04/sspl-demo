@@ -9,7 +9,7 @@ export const environment = {
    * When true, requests are intercepted by `MockApiInterceptor` with simulated delay.
    * Toggle to false to route all HTTP calls to the live server via the TestBedGateway proxy.
    */
-  useMockApi: false,
+  useMockApi: true,
   /**
    * Simulated network delay in milliseconds for mock responses.
    */

@@ -13,39 +13,33 @@ import {
   ExtendedLoanCategory,
   PreApprovedLoanOffer,
   LoanCalculationResult,
+  LoanApplicationPayload,
   LoanSanctionResponse,
   CustomLoanEnquiryPayload,
   LoanEnquiryResponse,
 } from '../../models';
 
-interface CategoryTab {
-  id: string;
-  label: string;
-  type?: LoanType | 'all';
-  icon: string;
-}
+export type PreApprovedStep = 'overview' | 'customise' | 'verify_docs' | 'terms' | 'confirm' | 'success';
+export type CustomEnquiryStep = 'configure' | 'applicant' | 'success';
 
-export interface LoanDocumentItem {
-  id: string;
+export interface VerifiedDocument {
   title: string;
   subtitle: string;
-  fileName: string;
-  fileSize: string;
-  status: 'VERIFIED' | 'UPLOADED' | 'OPTIONAL';
-  iconType: 'id' | 'income' | 'bank' | 'address';
+  status: string;
+  icon: string;
 }
 
-export interface CustomLoanOption {
+export interface CustomCategoryInfo {
   id: ExtendedLoanCategory;
   name: string;
-  tagline: string;
+  rate: number;
   icon: string;
-  indicativeRate: number;
-  maxTenureYears: number;
-  maxAmountLimit: number;
   defaultAmount: number;
+  minAmount: number;
+  maxAmount: number;
   defaultTenureYears: number;
-  samplePurposes: string[];
+  maxTenureYears: number;
+  tenureYearsList: number[];
 }
 
 @Component({
@@ -72,16 +66,47 @@ export class LoansPageComponent implements OnInit {
   readonly customerProfile = this.profileService.profile;
   readonly bankingMetrics = this.loanService.bankingHealthMetrics;
 
+  // View Mode: 'pre_approved' (Default pre-approved catalog) | 'custom_enquiry' (New / Different loan requirement)
+  readonly activeViewMode = signal<'pre_approved' | 'custom_enquiry'>('pre_approved');
+
+  // ── Pre-Approved Flow State ─────────────────────────────────────
+  readonly preApprovedStep = signal<PreApprovedStep>('overview');
+  readonly allOffers = this.loanService.offers;
+  readonly selectedOffer = signal<PreApprovedLoanOffer>(this.loanService.offers()[1] || this.loanService.offers()[0]);
+
+  // Sliders & Customization
+  readonly appliedAmount = signal<number>(300000);
+  readonly tenureMonths = signal<number>(36);
+  readonly termsAgreed = signal<boolean>(false);
+  readonly isDisbursing = signal<boolean>(false);
+  readonly sanctionResponse = signal<LoanSanctionResponse | null>(null);
+
+  // Pre-approved Verified Documents List
+  readonly verifiedDocs: VerifiedDocument[] = [
+    { title: 'Identity Proof', subtitle: 'Aadhaar •••• 3821', status: 'Verified', icon: 'id' },
+    { title: 'Address Proof', subtitle: 'Aadhaar (same)', status: 'Verified', icon: 'home' },
+    { title: 'Income Proof', subtitle: 'Salary Credits (Last 6M)', status: 'Verified', icon: 'income' },
+    { title: 'Bank Statement', subtitle: 'SSPL SB A/C •••• 4521', status: 'Verified', icon: 'bank' },
+    { title: 'PAN Card', subtitle: 'ABCDE1234F', status: 'Verified', icon: 'card' },
+  ];
+
   // Dynamic Customer Profile Detail Getters
   readonly customerName = computed(() => {
     const profile = this.profileService.profile();
+    if (profile?.firstName) return profile.firstName;
+    if (profile?.fullName) return profile.fullName.split(' ')[0];
+    const user = this.authService.currentUser();
+    if (user?.name) return user.name.split(' ')[0];
+    return 'Rajesh';
+  });
+
+  readonly customerFullName = computed(() => {
+    const profile = this.profileService.profile();
     if (profile?.fullName) return profile.fullName;
     if (profile?.firstName && profile?.lastName) return `${profile.firstName} ${profile.lastName}`;
-    if (profile?.username) return profile.username;
     const user = this.authService.currentUser();
     if (user?.name) return user.name;
-    if (user?.username) return user.username;
-    return 'Valued Customer';
+    return 'Rajesh K. Sharma';
   });
 
   readonly customerMobile = computed(() => {
@@ -94,372 +119,139 @@ export class LoansPageComponent implements OnInit {
     return '+91 88840 45346';
   });
 
-  readonly customerMobileMasked = computed(() => {
-    const mob = this.profileService.profile()?.mobileNumber || '8884045346';
-    const clean = mob.replace(/\D/g, '');
-    const last4 = clean.length >= 4 ? clean.slice(-4) : '5346';
-    return `••• ${last4}`;
-  });
-
   readonly customerEmail = computed(() => {
     const profile = this.profileService.profile();
     if (profile?.username) {
       return `${profile.username.toLowerCase()}@ssplbank.internal`;
     }
-    const authUser = this.authService.currentUser();
-    if (authUser?.username) {
-      return `${authUser.username.toLowerCase()}@ssplbank.internal`;
-    }
-    return 'customer@ssplbank.internal';
+    return 'rajesh.sharma@ssplbank.internal';
   });
 
-  readonly customerId = computed(() => {
-    return (
-      this.profileService.profile()?.customerId ||
-      this.authService.currentUser()?.id ||
-      'SSPL-CUST-84920'
-    );
+  // Reactive Calculation for Pre-Approved Loan
+  readonly emiCalculation = computed<LoanCalculationResult>(() => {
+    const offer = this.selectedOffer();
+    const principal = this.appliedAmount();
+    const tenure = this.tenureMonths();
+    const roi = offer ? offer.interestRate : 10.5;
+    return this.loanService.calculateEmi(principal, roi, tenure);
   });
 
-  // View Mode: 'pre_approved' (Default pre-approved catalog) | 'custom_enquiry' (New / Different loan requirement)
-  readonly activeViewMode = signal<'pre_approved' | 'custom_enquiry'>('pre_approved');
+  // ── Custom Enquiry State ─────────────────────────────────────────
+  readonly customStep = signal<CustomEnquiryStep>('configure');
 
-  // Loan Offers from Service (Pre-approved)
-  readonly allOffers = this.loanService.offers;
-  readonly selectedOffer = this.loanService.selectedOffer;
-
-  // Filter category state for pre-approved tab
-  readonly activeCategory = signal<string>('all');
-
-  // Slider & Customization Interactive State for pre-approved
-  readonly appliedAmount = signal<number>(3500000);
-  readonly tenureMonths = signal<number>(180);
-  readonly amountInput = signal<number>(3500000);
-
-  // ── Multi-Step Application Modal State ─────────────────────────
-  readonly isApplicationModalOpen = signal<boolean>(false);
-  readonly modalStep = signal<1 | 2 | 3 | 4 | 5>(1);
-  readonly selectedDisbursalAccount = signal<string>('Primary Savings A/C •••• 0001');
-
-  // Dummy Documents Collection
-  readonly dummyDocuments = signal<LoanDocumentItem[]>([
-    {
-      id: 'pan',
-      title: 'PAN Card / Tax Identity',
-      subtitle: 'Auto-verified with NSDL Income Tax Database',
-      fileName: 'PAN_CARD_VERIFIED_ABCDE1234F.pdf',
-      fileSize: '420 KB',
-      status: 'VERIFIED',
-      iconType: 'id',
-    },
-    {
-      id: 'salary',
-      title: 'Income Proof / Salary Slips (Last 3 Mo)',
-      subtitle: 'Employer: Infosys Technologies Ltd (Verified)',
-      fileName: 'Salary_Slips_Q1_2026.pdf',
-      fileSize: '1.8 MB',
-      status: 'UPLOADED',
-      iconType: 'income',
-    },
-    {
-      id: 'bank-stmt',
-      title: 'Bank Statement (6 Months)',
-      subtitle: 'Auto-fetched & stamped from SSPL Core Banking',
-      fileName: 'Bank_Statement_JJBL_6M.pdf',
-      fileSize: '3.2 MB',
-      status: 'VERIFIED',
-      iconType: 'bank',
-    },
-    {
-      id: 'address',
-      title: 'Aadhaar e-KYC / Address Proof',
-      subtitle: 'Digitally verified with UIDAI biometric vault',
-      fileName: 'Aadhaar_eKYC_XML_9102.xml',
-      fileSize: '210 KB',
-      status: 'VERIFIED',
-      iconType: 'address',
-    },
-  ]);
-
-  // KFS Consent Checkboxes
-  readonly agreeKfs = signal<boolean>(true);
-  readonly agreeNach = signal<boolean>(true);
-  readonly agreeCreditBureau = signal<boolean>(true);
-  readonly allConsentsGiven = computed(
-    () => this.agreeKfs() && this.agreeNach() && this.agreeCreditBureau(),
-  );
-
-  // OTP & Submission State
-  readonly enteredOtp = signal<string>('784920');
-  readonly otpCountdown = signal<number>(30);
-  readonly isSubmitting = signal<boolean>(false);
-  readonly sanctionResult = signal<LoanSanctionResponse | null>(null);
-  readonly toastMessage = signal<{ type: 'success' | 'info' | 'error'; text: string } | null>(null);
-
-  private otpTimerInterval: any = null;
-
-  // ── Custom Loan Enquiry State ──────────────────────────────────
-  readonly customLoanOptions: CustomLoanOption[] = [
-    {
-      id: 'home',
-      name: 'Home Loan',
-      tagline: 'Purchase, Construction, Resale or Plot Loan',
-      icon: 'home',
-      indicativeRate: 8.4,
-      maxTenureYears: 30,
-      maxAmountLimit: 150000000,
-      defaultAmount: 6500000,
-      defaultTenureYears: 20,
-      samplePurposes: [
-        'Purchase of Under-Construction / Ready Apartment',
-        'Self-Construction on Owned Residential Plot',
-        'Home Renovation & Structural Extension',
-        'Plot Purchase + Future Construction',
-      ],
-    },
-    {
-      id: 'lap',
-      name: 'Loan Against Property (LAP)',
-      tagline: 'Mortgage loan for personal or business needs',
-      icon: 'building',
-      indicativeRate: 9.15,
-      maxTenureYears: 15,
-      maxAmountLimit: 100000000,
-      defaultAmount: 5000000,
-      defaultTenureYears: 12,
-      samplePurposes: [
-        'Business Working Capital Expansion',
-        'Debt Consolidation & Mortgage Refinance',
-        'Higher Overseas Education Funding',
-        'Commercial Real Estate Investment',
-      ],
-    },
+  readonly customCategories: CustomCategoryInfo[] = [
     {
       id: 'personal',
       name: 'Personal Loan',
-      tagline: 'Multi-purpose unsecured credit facility',
+      rate: 10.5,
       icon: 'user',
-      indicativeRate: 10.25,
-      maxTenureYears: 7,
-      maxAmountLimit: 4000000,
-      defaultAmount: 1200000,
-      defaultTenureYears: 4,
-      samplePurposes: [
-        'Medical Emergencies & Health Care Expenses',
-        'Wedding & Family Milestone Celebrations',
-        'International Travel & Vacation Funding',
-        'Home Furnishing & High-Value Gadgets',
-      ],
+      defaultAmount: 300000,
+      minAmount: 50000,
+      maxAmount: 2500000,
+      defaultTenureYears: 3,
+      maxTenureYears: 5,
+      tenureYearsList: [1, 2, 3, 4, 5],
     },
     {
-      id: 'business',
-      name: 'Business & MSME Loan',
-      tagline: 'Term loans & working capital for enterprises',
-      icon: 'briefcase',
-      indicativeRate: 11.5,
-      maxTenureYears: 10,
-      maxAmountLimit: 250000000,
-      defaultAmount: 8500000,
-      defaultTenureYears: 5,
-      samplePurposes: [
-        'Working Capital & Inventory Purchase',
-        'Plant & Industrial Machinery Acquisition',
-        'Business Branch & Franchise Expansion',
-        'GST & Supply Chain Invoice Discounting',
-      ],
+      id: 'home',
+      name: 'Home Loan',
+      rate: 8.4,
+      icon: 'home',
+      defaultAmount: 4500000,
+      minAmount: 500000,
+      maxAmount: 15000000,
+      defaultTenureYears: 20,
+      maxTenureYears: 30,
+      tenureYearsList: [5, 10, 15, 20, 25, 30],
     },
     {
       id: 'car',
       name: 'Car / Auto Loan',
-      tagline: 'New, Pre-Owned or Electric Vehicle Finance',
+      rate: 8.75,
       icon: 'car',
-      indicativeRate: 8.75,
-      maxTenureYears: 8,
-      maxAmountLimit: 15000000,
-      defaultAmount: 1800000,
+      defaultAmount: 1200000,
+      minAmount: 100000,
+      maxAmount: 5000000,
       defaultTenureYears: 5,
-      samplePurposes: [
-        'Purchase of New Sedan / SUV',
-        'Electric Vehicle (EV) Financing',
-        'Certified Pre-Owned Luxury Car',
-        'Two-Wheeler / Superbike Loan',
-      ],
+      maxTenureYears: 7,
+      tenureYearsList: [1, 3, 5, 7],
+    },
+    {
+      id: 'business',
+      name: 'Business / MSME',
+      rate: 11.25,
+      icon: 'briefcase',
+      defaultAmount: 2500000,
+      minAmount: 200000,
+      maxAmount: 10000000,
+      defaultTenureYears: 4,
+      maxTenureYears: 8,
+      tenureYearsList: [1, 2, 3, 4, 5, 7],
+    },
+    {
+      id: 'lap',
+      name: 'Property Mortgage (LAP)',
+      rate: 9.2,
+      icon: 'building',
+      defaultAmount: 5000000,
+      minAmount: 500000,
+      maxAmount: 20000000,
+      defaultTenureYears: 10,
+      maxTenureYears: 15,
+      tenureYearsList: [3, 5, 10, 15],
     },
     {
       id: 'education',
       name: 'Education Loan',
-      tagline: 'Domestic & overseas higher studies',
+      rate: 8.95,
       icon: 'education',
-      indicativeRate: 8.95,
-      maxTenureYears: 15,
-      maxAmountLimit: 15000000,
-      defaultAmount: 3500000,
-      defaultTenureYears: 8,
-      samplePurposes: [
-        'STEM Master’s Degree in USA / UK / Europe',
-        'Executive MBA / Post-Graduate in India',
-        'Aviation & Commercial Pilot License Training',
-        'Medical / Healthcare Degree Abroad',
-      ],
-    },
-    {
-      id: 'commercial_vehicle',
-      name: 'Commercial Vehicle Loan',
-      tagline: 'Trucks, Buses, Tippers & Heavy Fleet',
-      icon: 'truck',
-      indicativeRate: 9.5,
-      maxTenureYears: 6,
-      maxAmountLimit: 50000000,
-      defaultAmount: 4200000,
-      defaultTenureYears: 4,
-      samplePurposes: [
-        'Heavy Commercial Truck / Tipper Fleet',
-        'Inter-City Bus & Passenger Transit',
-        'Construction & Excavator Equipment',
-        'Light Commercial Goods Carrier (LCV)',
-      ],
+      defaultAmount: 2000000,
+      minAmount: 100000,
+      maxAmount: 7500000,
+      defaultTenureYears: 7,
+      maxTenureYears: 10,
+      tenureYearsList: [3, 5, 7, 10],
     },
     {
       id: 'gold',
-      name: 'Gold Loan (Overdraft)',
-      tagline: 'Instant credit against 22K+ gold jewellery',
+      name: 'Gold Loan',
+      rate: 7.9,
       icon: 'gold',
-      indicativeRate: 8.2,
+      defaultAmount: 500000,
+      minAmount: 25000,
+      maxAmount: 2500000,
+      defaultTenureYears: 1,
       maxTenureYears: 3,
-      maxAmountLimit: 10000000,
-      defaultAmount: 1500000,
-      defaultTenureYears: 2,
-      samplePurposes: [
-        'Emergency Agricultural Working Capital',
-        'Short-Term Cash Flow & Liquidity',
-        'Immediate Business Inventory Booking',
-        'Personal Family Contingencies',
-      ],
-    },
-    {
-      id: 'agriculture',
-      name: 'Kisan & Agri Loan',
-      tagline: 'Crop finance, tractors & dairy mechanization',
-      icon: 'wheat',
-      indicativeRate: 7.0,
-      maxTenureYears: 7,
-      maxAmountLimit: 5000000,
-      defaultAmount: 1200000,
-      defaultTenureYears: 5,
-      samplePurposes: [
-        'Crop Production & Seasonal Inputs (KCC)',
-        'Tractor & Farm Harvester Mechanization',
-        'Dairy, Poultry & Animal Husbandry Units',
-        'Solar Irrigation Pump & Drip Irrigation',
-      ],
+      tenureYearsList: [1, 2, 3],
     },
   ];
 
-  // Custom Enquiry Form Fields
-  readonly enquiryCategory = signal<ExtendedLoanCategory>('home');
-  readonly enquiryCustomTitle = signal<string>('Home Loan (Purchase / Construction)');
-  readonly enquiryPurpose = signal<string>('Purchase of Under-Construction / Ready Apartment');
-  readonly enquiryAmount = signal<number>(6500000);
-  readonly enquiryAmountInput = signal<number>(6500000);
-  readonly enquiryTenureYears = signal<number>(20);
-  readonly enquiryEmploymentType = signal<
-    'SALARIED' | 'SELF_EMPLOYED_PROFESSIONAL' | 'SELF_EMPLOYED_BUSINESS' | 'NRI' | 'AGRICULTURIST'
-  >('SALARIED');
-  readonly enquiryMonthlyIncome = signal<number>(160000);
-  readonly enquiryExistingEmi = signal<number>(15000);
-  readonly enquiryPreferredBranch = signal<string>('Jalgaon Main Branch');
-  readonly enquiryRemarks = signal<string>('');
-  readonly enquiryApplicantName = signal<string>('');
-  readonly enquiryApplicantPhone = signal<string>('');
-  readonly enquiryApplicantEmail = signal<string>('');
+  readonly selectedCustomCategory = signal<CustomCategoryInfo>(this.customCategories[0]);
+  readonly customAmount = signal<number>(300000);
+  readonly customTenureYears = signal<number>(3);
+  readonly customEmploymentType = signal<'SALARIED' | 'SELF_EMPLOYED_PROFESSIONAL' | 'SELF_EMPLOYED_BUSINESS' | 'NRI' | 'AGRICULTURIST'>('SALARIED');
+  readonly customMonthlyIncome = signal<number>(85000);
+  readonly customExistingEmi = signal<number>(10000);
+  readonly isSubmittingCustom = signal<boolean>(false);
+  readonly customEnquiryResult = signal<LoanEnquiryResponse | null>(null);
 
-  // Custom Enquiry Submission & Result State
-  readonly isEnquiryModalOpen = signal<boolean>(false);
-  readonly isSubmittingEnquiry = signal<boolean>(false);
-  readonly enquiryResult = signal<LoanEnquiryResponse | null>(null);
+  // Toast Notification
+  readonly toastMessage = signal<{ type: 'success' | 'info' | 'error'; text: string } | null>(null);
 
-  // Category Filter Tabs (for pre-approved view)
-  readonly categoryTabs: CategoryTab[] = [
-    { id: 'all', label: 'All Pre-Approved Offers', type: 'all', icon: 'sparkle' },
-    { id: 'home', label: 'Home Loans', type: 'home', icon: 'home' },
-    { id: 'personal', label: 'Personal Loans', type: 'personal', icon: 'user' },
-    { id: 'car', label: 'Car / Auto Loans', type: 'car', icon: 'car' },
-    { id: 'business', label: 'Business Loans', type: 'business', icon: 'briefcase' },
-    { id: 'gold', label: 'Gold Loans', type: 'gold', icon: 'gold' },
-    { id: 'education', label: 'Education Loans', type: 'education', icon: 'education' },
-  ];
-
-  // Available Disbursal Accounts
-  readonly disbursalAccounts = [
-    {
-      id: 'acc_01',
-      name: 'Primary Savings A/C •••• 0001',
-      branch: 'Jalgaon Main Branch',
-      balance: '₹72,000.75',
-    },
-    {
-      id: 'acc_02',
-      name: 'Business Current A/C •••• 0002',
-      branch: 'Pune Camp Branch',
-      balance: '₹3,24,460.00',
-    },
-  ];
-
-  // Filtered Pre-Approved Offers based on active tab
-  readonly filteredOffers = computed(() => {
-    const cat = this.activeCategory();
-    const offers = this.allOffers();
-    if (cat === 'all') return offers;
-    return offers.filter((o) => o.type === cat);
-  });
-
-  // Reactive live EMI and amortization breakdown for pre-approved customizer
-  readonly calculationResult = computed<LoanCalculationResult>(() => {
-    const offer = this.selectedOffer();
-    const principal = this.appliedAmount();
-    const tenure = this.tenureMonths();
-    const roi = offer ? offer.interestRate : 8.4;
-    return this.loanService.calculateEmi(principal, roi, tenure);
-  });
-
-  // Selected Custom Option object
-  readonly selectedCustomOption = computed<CustomLoanOption>(() => {
-    const cat = this.enquiryCategory();
-    return this.customLoanOptions.find((c) => c.id === cat) || this.customLoanOptions[0];
-  });
-
-  // Reactive live EMI for Custom Enquiry
-  readonly enquiryCalculatedResult = computed<LoanCalculationResult>(() => {
-    const opt = this.selectedCustomOption();
-    const principal = this.enquiryAmount();
-    const tenureMonths = this.enquiryTenureYears() * 12;
-    return this.loanService.calculateEmi(principal, opt.indicativeRate, tenureMonths);
-  });
-
-  // FOIR & Eligibility Estimator for Custom Enquiry
-  readonly maxEligibleMonthlyEmi = computed<number>(() => {
-    const income = this.enquiryMonthlyIncome();
-    const existing = this.enquiryExistingEmi();
-    // FOIR 55% threshold
-    const maxCapacity = income * 0.55;
-    return Math.max(0, Math.round(maxCapacity - existing));
-  });
-
-  readonly isEmiWithinFoir = computed<boolean>(() => {
-    return this.enquiryCalculatedResult().monthlyEmi <= this.maxEligibleMonthlyEmi();
+  // Computed EMI for Custom Loan Enquiry
+  readonly customEmiCalculation = computed<LoanCalculationResult>(() => {
+    const cat = this.selectedCustomCategory();
+    const principal = this.customAmount();
+    const tenureMonths = this.customTenureYears() * 12;
+    return this.loanService.calculateEmi(principal, cat.rate, tenureMonths);
   });
 
   ngOnInit(): void {
-    // Sync profile details if already cached or fetch from customer profile API
     if (!this.profileService.profile()) {
-      this.profileService.fetchProfile().subscribe(() => {
-        this.syncProfileToEnquiry();
-      });
-    } else {
-      this.syncProfileToEnquiry();
+      this.profileService.fetchProfile().subscribe();
     }
 
-    // Read route query parameters to pre-select loan type if provided (e.g. /loans?type=home)
+    // Handle route query params (e.g. /loans?type=personal or /loans?mode=enquire)
     this.route.queryParams.subscribe((params) => {
       const type = params['type'] as LoanType | undefined;
       const mode = params['mode'] as string | undefined;
@@ -469,369 +261,199 @@ export class LoansPageComponent implements OnInit {
       }
 
       if (type) {
-        this.activeCategory.set(type);
         this.activeNavId.set(`loans-${type}`);
-        this.loanService.selectOfferByType(type);
-        const current = this.loanService.selectedOffer();
-        this.appliedAmount.set(current.defaultAmount);
-        this.amountInput.set(current.defaultAmount);
-        this.tenureMonths.set(current.defaultTenureMonths);
-
-        // Also sync enquiry category
-        this.onEnquiryCategorySelect(type as ExtendedLoanCategory);
+        const foundOffer = this.allOffers().find((o) => o.type === type);
+        if (foundOffer) {
+          this.selectPreApprovedOffer(foundOffer);
+        }
+        const foundCustom = this.customCategories.find((c) => c.id === type);
+        if (foundCustom) {
+          this.selectCustomCategory(foundCustom);
+        }
       } else {
-        this.activeCategory.set('all');
         this.activeNavId.set('loans');
-        const current = this.loanService.selectedOffer();
-        this.appliedAmount.set(current.defaultAmount);
-        this.amountInput.set(current.defaultAmount);
-        this.tenureMonths.set(current.defaultTenureMonths);
+        const personalOffer = this.allOffers().find((o) => o.type === 'personal') || this.allOffers()[0];
+        if (personalOffer) {
+          this.selectPreApprovedOffer(personalOffer);
+        }
       }
     });
   }
 
-  private syncProfileToEnquiry(): void {
-    if (!this.enquiryApplicantName() || this.enquiryApplicantName() === 'Valued Customer') {
-      this.enquiryApplicantName.set(this.customerName());
+  // ── Pre-Approved Flow Handlers ──────────────────────────────────
+  selectPreApprovedOffer(offer: PreApprovedLoanOffer): void {
+    this.selectedOffer.set(offer);
+    const defAmt = Math.min(offer.defaultAmount || 300000, offer.maxAmount);
+    this.appliedAmount.set(defAmt);
+    this.tenureMonths.set(offer.defaultTenureMonths || 36);
+    this.termsAgreed.set(false);
+  }
+
+  startPreApprovedFlow(): void {
+    this.preApprovedStep.set('customise');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  goToVerifyDocs(): void {
+    this.preApprovedStep.set('verify_docs');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  goToTerms(): void {
+    this.preApprovedStep.set('terms');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  acceptTermsAndProceed(): void {
+    if (!this.termsAgreed()) {
+      this.showToast('info', 'Please agree to the loan terms and conditions to proceed.');
+      return;
     }
-    if (!this.enquiryApplicantPhone()) {
-      this.enquiryApplicantPhone.set(this.customerMobile());
+    this.preApprovedStep.set('confirm');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  confirmAndDisburse(): void {
+    this.isDisbursing.set(true);
+
+    const payload: LoanApplicationPayload = {
+      loanId: this.selectedOffer().id,
+      loanType: this.selectedOffer().type,
+      appliedAmount: this.appliedAmount(),
+      tenureMonths: this.tenureMonths(),
+      disbursalAccount: 'Primary Savings A/C •••• 4521',
+      interestRate: this.selectedOffer().interestRate,
+      monthlyEmi: this.emiCalculation().monthlyEmi,
+      customerId: this.customerProfile()?.customerId || 'SSPL-CUST-84920',
+      documentsVerified: true,
+      agreeKfs: true,
+      agreeNach: true,
+      agreeCreditBureau: true,
+    };
+
+    this.loanService.submitLoanApplication(payload).subscribe({
+      next: (res: LoanSanctionResponse) => {
+        this.isDisbursing.set(false);
+        this.sanctionResponse.set(res);
+        this.preApprovedStep.set('success');
+        this.showToast('success', 'Loan amount sanctioned and disbursed successfully!');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      },
+      error: () => {
+        this.isDisbursing.set(false);
+        this.showToast('error', 'Disbursal request failed. Please try again.');
+      },
+    });
+  }
+
+  resetPreApprovedFlow(): void {
+    this.preApprovedStep.set('overview');
+    this.termsAgreed.set(false);
+    this.sanctionResponse.set(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Custom Loan Enquiry Handlers ────────────────────────────────
+  selectCustomCategory(category: CustomCategoryInfo): void {
+    this.selectedCustomCategory.set(category);
+    this.customAmount.set(category.defaultAmount);
+    this.customTenureYears.set(category.defaultTenureYears);
+  }
+
+  proceedToApplicant(): void {
+    this.customStep.set('applicant');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  submitCustomEnquiry(): void {
+    this.isSubmittingCustom.set(true);
+
+    const payload: CustomLoanEnquiryPayload = {
+      loanCategory: this.selectedCustomCategory().id,
+      customLoanTitle: this.selectedCustomCategory().name,
+      requiredAmount: this.customAmount(),
+      tenureYears: this.customTenureYears(),
+      tenureMonths: this.customTenureYears() * 12,
+      loanPurpose: `${this.selectedCustomCategory().name} requirement`,
+      employmentType: this.customEmploymentType(),
+      monthlyIncome: this.customMonthlyIncome(),
+      existingMonthlyEmi: this.customExistingEmi(),
+      preferredBankCode: 'BANK0004',
+      preferredBranch: 'Jalgaon Main Branch',
+      applicantName: this.customerFullName(),
+      applicantMobile: this.customerMobile(),
+      applicantEmail: this.customerEmail(),
+      specialRemarks: 'Fast-track online application enquiry',
+    };
+
+    this.loanService.submitCustomLoanEnquiry(payload).subscribe({
+      next: (res: LoanEnquiryResponse) => {
+        this.isSubmittingCustom.set(false);
+        this.customEnquiryResult.set(res);
+        this.customStep.set('success');
+        this.showToast('success', 'Loan enquiry registered! Dedicated loan manager assigned.');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      },
+      error: () => {
+        this.isSubmittingCustom.set(false);
+        this.showToast('error', 'Failed to submit loan enquiry. Please retry.');
+      },
+    });
+  }
+
+  resetCustomFlow(): void {
+    this.customStep.set('configure');
+    this.customEnquiryResult.set(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── General Navigation Handlers ────────────────────────────────
+  switchViewMode(mode: 'pre_approved' | 'custom_enquiry'): void {
+    this.activeViewMode.set(mode);
+    if (mode === 'pre_approved') {
+      this.preApprovedStep.set('overview');
+    } else {
+      this.customStep.set('configure');
     }
-    if (
-      !this.enquiryApplicantEmail() ||
-      this.enquiryApplicantEmail() === 'customer@ssplbank.internal'
-    ) {
-      this.enquiryApplicantEmail.set(this.customerEmail());
-    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   onNavChange(navId: string): void {
     if (navId.startsWith('loans-')) {
       const type = navId.replace('loans-', '');
-      this.selectCategory(type);
+      this.activeNavId.set(navId);
+      const foundOffer = this.allOffers().find((o) => o.type === type);
+      if (foundOffer) {
+        this.activeViewMode.set('pre_approved');
+        this.selectPreApprovedOffer(foundOffer);
+        this.preApprovedStep.set('overview');
+      } else {
+        const foundCustom = this.customCategories.find((c) => c.id === type);
+        if (foundCustom) {
+          this.activeViewMode.set('custom_enquiry');
+          this.selectCustomCategory(foundCustom);
+          this.customStep.set('configure');
+        }
+      }
     } else if (navId === 'loans') {
-      this.selectCategory('all');
-    } else if (navId === 'dashboard' || navId === 'my-accounts') {
+      this.activeNavId.set('loans');
+      this.activeViewMode.set('pre_approved');
+      this.preApprovedStep.set('overview');
+    } else if (navId === 'dashboard') {
       this.router.navigate(['/dashboard']);
-    } else if (navId === 'profile') {
-      this.router.navigate(['/profile']);
     } else if (navId === 'balance-enquiry') {
       this.router.navigate(['/balance-enquiry']);
+    } else if (navId === 'profile') {
+      this.router.navigate(['/profile']);
     }
   }
 
-  switchViewMode(mode: 'pre_approved' | 'custom_enquiry'): void {
-    this.activeViewMode.set(mode);
-    if (mode === 'custom_enquiry') {
-      this.showToast('info', 'Switched to Custom Loan Enquiry & Requirement Form.');
-      setTimeout(() => {
-        const el = document.getElementById('custom-enquiry-form');
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 50);
-    } else {
-      this.showToast('info', 'Viewing Pre-Approved Instant Offers.');
-    }
-  }
-
-  selectCategory(categoryId: string): void {
-    this.activeCategory.set(categoryId);
-    if (categoryId === 'all') {
-      this.activeNavId.set('loans');
-      this.router.navigate([], { relativeTo: this.route, queryParams: {} });
-    } else {
-      this.activeNavId.set(`loans-${categoryId}`);
-      this.router.navigate([], { relativeTo: this.route, queryParams: { type: categoryId } });
-      this.loanService.selectOfferByType(categoryId as LoanType);
-      const offer = this.loanService.selectedOffer();
-      this.appliedAmount.set(offer.defaultAmount);
-      this.amountInput.set(offer.defaultAmount);
-      this.tenureMonths.set(offer.defaultTenureMonths);
-      this.onEnquiryCategorySelect(categoryId as ExtendedLoanCategory);
-    }
-  }
-
-  /**
-   * Selects an offer card and automatically scrolls down to the customizer section
-   */
-  selectOffer(offer: PreApprovedLoanOffer, scroll: boolean = true): void {
-    this.loanService.selectOffer(offer);
-    this.appliedAmount.set(offer.defaultAmount);
-    this.amountInput.set(offer.defaultAmount);
-    this.tenureMonths.set(offer.defaultTenureMonths);
-    this.showToast('info', `Selected ${offer.title} with ROI ${offer.interestRate}% p.a.`);
-    if (scroll) {
-      this.scrollToCustomizer();
-    }
-  }
-
-  /**
-   * Smoothly scrolls the viewport to the interactive loan customizer section
-   */
-  scrollToCustomizer(): void {
-    setTimeout(() => {
-      const el = document.getElementById('loan-customizer');
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 60);
-  }
-
-  onAmountSliderChange(event: Event): void {
-    const value = Number((event.target as HTMLInputElement).value);
-    this.appliedAmount.set(value);
-    this.amountInput.set(value);
-  }
-
-  onAmountInputChange(event: Event): void {
-    const rawVal = Number((event.target as HTMLInputElement).value);
-    const offer = this.selectedOffer();
-    if (!isNaN(rawVal)) {
-      const clamped = Math.max(offer.minAmount, Math.min(offer.maxAmount, rawVal));
-      this.appliedAmount.set(clamped);
-      this.amountInput.set(clamped);
-    }
-  }
-
-  addAmount(delta: number): void {
-    const offer = this.selectedOffer();
-    const current = this.appliedAmount();
-    const nextVal = Math.min(offer.maxAmount, current + delta);
-    this.appliedAmount.set(nextVal);
-    this.amountInput.set(nextVal);
-  }
-
-  setMaxAmount(): void {
-    const offer = this.selectedOffer();
-    this.appliedAmount.set(offer.maxAmount);
-    this.amountInput.set(offer.maxAmount);
-  }
-
-  onTenureSliderChange(event: Event): void {
-    const value = Number((event.target as HTMLInputElement).value);
-    this.tenureMonths.set(value);
-  }
-
-  setTenure(months: number): void {
-    this.tenureMonths.set(months);
-  }
-
-  // ── Custom Enquiry Interactions ────────────────────────────────
-
-  onEnquiryCategorySelect(cat: ExtendedLoanCategory): void {
-    this.enquiryCategory.set(cat);
-    const opt = this.customLoanOptions.find((c) => c.id === cat) || this.customLoanOptions[0];
-    this.enquiryCustomTitle.set(opt.name);
-    this.enquiryAmount.set(opt.defaultAmount);
-    this.enquiryAmountInput.set(opt.defaultAmount);
-    this.enquiryTenureYears.set(opt.defaultTenureYears);
-    if (opt.samplePurposes.length > 0) {
-      this.enquiryPurpose.set(opt.samplePurposes[0]);
-    }
-  }
-
-  onEnquiryAmountChange(event: Event): void {
-    const rawVal = Number((event.target as HTMLInputElement).value);
-    if (!isNaN(rawVal) && rawVal > 0) {
-      this.enquiryAmount.set(rawVal);
-      this.enquiryAmountInput.set(rawVal);
-    }
-  }
-
-  setEnquiryAmountPreset(amt: number): void {
-    this.enquiryAmount.set(amt);
-    this.enquiryAmountInput.set(amt);
-  }
-
-  setEnquiryTenureYears(years: number): void {
-    this.enquiryTenureYears.set(years);
-  }
-
-  setEmploymentType(emp: any): void {
-    this.enquiryEmploymentType.set(emp);
-  }
-
-  submitCustomLoanEnquiry(): void {
-    const opt = this.selectedCustomOption();
-    if (this.enquiryAmount() <= 0) {
-      this.showToast('error', 'Please enter a valid loan requirement amount.');
-      return;
-    }
-
-    this.isSubmittingEnquiry.set(true);
-
-    const payload: CustomLoanEnquiryPayload = {
-      loanCategory: this.enquiryCategory(),
-      customLoanTitle: opt.name,
-      requiredAmount: this.enquiryAmount(),
-      tenureYears: this.enquiryTenureYears(),
-      tenureMonths: this.enquiryTenureYears() * 12,
-      loanPurpose: this.enquiryPurpose(),
-      employmentType: this.enquiryEmploymentType(),
-      monthlyIncome: this.enquiryMonthlyIncome(),
-      existingMonthlyEmi: this.enquiryExistingEmi(),
-      preferredBankCode: this.selectedBank()?.bankCode || 'JJBL',
-      preferredBranch: this.enquiryPreferredBranch(),
-      applicantName: this.enquiryApplicantName(),
-      applicantMobile: this.enquiryApplicantPhone(),
-      applicantEmail: this.enquiryApplicantEmail(),
-      specialRemarks: this.enquiryRemarks(),
-    };
-
-    this.loanService.submitCustomLoanEnquiry(payload).subscribe({
-      next: (response) => {
-        this.isSubmittingEnquiry.set(false);
-        this.enquiryResult.set(response);
-        this.isEnquiryModalOpen.set(true);
-        this.showToast(
-          'success',
-          'Custom loan enquiry registered! A dedicated loan specialist has been assigned.',
-        );
-      },
-      error: () => {
-        this.isSubmittingEnquiry.set(false);
-        this.showToast('error', 'Failed to submit loan enquiry. Please try again.');
-      },
-    });
-  }
-
-  closeEnquiryModal(): void {
-    this.isEnquiryModalOpen.set(false);
-    this.enquiryResult.set(null);
-  }
-
-  downloadEnquirySlip(): void {
-    this.showToast('info', 'Downloading Official Loan Enquiry Acknowledgment Slip (PDF)...');
-  }
-
-  // ── Multi-Step Application Modal Workflow ──────────────────────
-
-  openApplicationModal(): void {
-    this.modalStep.set(1);
-    this.sanctionResult.set(null);
-    this.enteredOtp.set('784920'); // pre-filled demo code for effortless UX
-    this.agreeKfs.set(true);
-    this.agreeNach.set(true);
-    this.agreeCreditBureau.set(true);
-    this.isApplicationModalOpen.set(true);
-  }
-
-  closeApplicationModal(): void {
-    this.isApplicationModalOpen.set(false);
-    this.modalStep.set(1);
-    if (this.otpTimerInterval) {
-      clearInterval(this.otpTimerInterval);
-    }
-  }
-
-  nextStep(): void {
-    const current = this.modalStep();
-    if (current === 1) {
-      this.modalStep.set(2); // Move to Documents Upload
-    } else if (current === 2) {
-      this.modalStep.set(3); // Move to KFS & Consent
-    } else if (current === 3) {
-      if (!this.allConsentsGiven()) {
-        this.showToast('error', 'Please accept all regulatory KFS terms and mandates to continue.');
-        return;
-      }
-      this.modalStep.set(4); // Move to e-Sign OTP
-      this.startOtpTimer();
-    }
-  }
-
-  prevStep(): void {
-    const current = this.modalStep();
-    if (current > 1) {
-      this.modalStep.set((current - 1) as 1 | 2 | 3 | 4 | 5);
-    }
-  }
-
-  private startOtpTimer(): void {
-    this.otpCountdown.set(30);
-    if (this.otpTimerInterval) clearInterval(this.otpTimerInterval);
-    this.otpTimerInterval = setInterval(() => {
-      if (this.otpCountdown() > 0) {
-        this.otpCountdown.update((c) => c - 1);
-      } else {
-        clearInterval(this.otpTimerInterval);
-      }
-    }, 1000);
-  }
-
-  resendOtp(): void {
-    this.startOtpTimer();
-    this.showToast(
-      'info',
-      `New high-security OTP sent to registered mobile ${this.customerMobile()}`,
-    );
-  }
-
-  simulateUpload(docId: string): void {
-    this.showToast('info', 'Uploading and verifying document via automated OCR engine…');
-    setTimeout(() => {
-      this.dummyDocuments.update((docs) =>
-        docs.map((d) => (d.id === docId ? { ...d, status: 'VERIFIED' } : d)),
-      );
-      this.showToast('success', 'Document verified successfully.');
-    }, 800);
-  }
-
-  submitApplication(): void {
-    this.isSubmitting.set(true);
-    const offer = this.selectedOffer();
-    const calc = this.calculationResult();
-
-    this.loanService
-      .submitLoanApplication({
-        loanId: offer.id,
-        loanType: offer.type,
-        appliedAmount: this.appliedAmount(),
-        tenureMonths: this.tenureMonths(),
-        monthlyEmi: calc.monthlyEmi,
-        interestRate: offer.interestRate,
-        disbursalAccount: this.selectedDisbursalAccount(),
-        customerId: this.customerId(),
-        otpCode: this.enteredOtp(),
-        agreeKfs: this.agreeKfs(),
-        agreeNach: this.agreeNach(),
-        agreeCreditBureau: this.agreeCreditBureau(),
-        documentsVerified: true,
-      })
-      .subscribe({
-        next: (response) => {
-          this.isSubmitting.set(false);
-          this.sanctionResult.set(response);
-          this.modalStep.set(5); // Move to Step 5: Under Review Tracker
-          this.showToast(
-            'success',
-            'Application submitted successfully! Currently under underwriting review.',
-          );
-        },
-        error: () => {
-          this.isSubmitting.set(false);
-          this.showToast('error', 'Loan application submission failed. Please try again.');
-        },
-      });
-  }
-
-  downloadKfsPdf(): void {
-    this.showToast('info', 'Downloading Official Key Fact Statement (KFS.pdf)...');
-  }
-
-  formatCurrency(amount: number): string {
-    return this.loanService.formatCurrency(amount);
-  }
-
-  formatCompact(amount: number): string {
-    return this.loanService.formatCompactAmount(amount);
-  }
-
-  formatTenureLabel(months: number): string {
-    if (months % 12 === 0) {
-      const years = months / 12;
-      return `${years} Year${years > 1 ? 's' : ''} (${months} Mo)`;
-    }
-    return `${months} Months`;
+  formatInr(amount: number): string {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }).format(amount);
   }
 
   showToast(type: 'success' | 'info' | 'error', text: string): void {
@@ -840,6 +462,6 @@ export class LoansPageComponent implements OnInit {
       if (this.toastMessage()?.text === text) {
         this.toastMessage.set(null);
       }
-    }, 4000);
+    }, 4500);
   }
 }
