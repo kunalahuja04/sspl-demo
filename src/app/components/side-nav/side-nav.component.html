@@ -83,9 +83,10 @@
             <circle cx="12" cy="7" r="4" />
           </svg>
           } @else if (item.icon === 'loans') {
-          <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          <!-- Rupee Icon (₹) -->
+          <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
             stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            <path d="M6 3h12M6 8h12M6 13l8.5 8M6 13h3a4 4 0 0 0 0-8H6" />
           </svg>
           } @else if (item.icon === 'transfer') {
           <svg class="w-4.5 h-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -127,61 +128,12 @@
           }
           <span class="truncate">{{ item.label }}</span>
         </div>
-
-        <!-- Accordion Chevron Arrow (if accordion item) -->
-        @if (item.isAccordion) {
-        <svg
-          class="w-4 h-4 shrink-0 transition-transform duration-200 text-white/50 group-hover:text-white"
-          [class.rotate-180]="isLoansExpanded()"
-          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-          stroke-linejoin="round">
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-        }
       </button>
-
-      <!-- Accordion Children Submenu (Loans sub-options) -->
-      @if (item.isAccordion && item.children && isLoansExpanded()) {
-      <div
-        class="ml-5 pl-3 mt-1 space-y-1 border-l-2 border-white/15 animate-in fade-in slide-in-from-top-1 duration-150">
-        @for (subItem of item.children; track subItem.id) {
-        <button
-          type="button"
-          (click)="onSelectSubItem(subItem, $event)"
-          class="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md text-label-sm font-medium transition-all cursor-pointer text-left"
-          [class.bg-brand-accent/20]="activeNavId() === subItem.id || activeNavId() === subItem.loanType"
-          [class.text-brand-accent]="activeNavId() === subItem.id || activeNavId() === subItem.loanType"
-          [class.font-bold]="activeNavId() === subItem.id || activeNavId() === subItem.loanType"
-          [class.text-white/65]="activeNavId() !== subItem.id && activeNavId() !== subItem.loanType"
-          [class.hover:text-white]="activeNavId() !== subItem.id && activeNavId() !== subItem.loanType"
-          [class.hover:bg-white/5]="activeNavId() !== subItem.id && activeNavId() !== subItem.loanType">
-
-          <div class="flex items-center gap-2 min-w-0">
-            <!-- Bullet dot or sub-icon -->
-            <span
-              class="w-1.5 h-1.5 rounded-full shrink-0"
-              [class.bg-brand-accent]="activeNavId() === subItem.id || activeNavId() === subItem.loanType"
-              [class.bg-white/30]="activeNavId() !== subItem.id && activeNavId() !== subItem.loanType"></span>
-            <span class="truncate">{{ subItem.label }}</span>
-          </div>
-
-          <!-- Optional badge e.g. 'Pre-approved', '8.40%' -->
-          @if (subItem.badge) {
-          <span
-            class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-brand-accent/20 text-brand-accent border border-brand-accent/30 shrink-0">
-            {{ subItem.badge }}
-          </span>
-          }
-        </button>
-        }
-      </div>
-      }
     </div>
     }
   </nav>
 
-
-  <!-- 4. Fixed Bottom Section (Settings, Help & Support, Logout) -->
+  <!-- 3. Fixed Bottom Section (Settings, Help & Support, Logout) -->
   <div class="p-3 border-t border-white/10 space-y-1 shrink-0 bg-brand-primary mt-auto">
     <!-- Settings -->
     <button
