@@ -1,7 +1,9 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, takeUntil, switchMap } from 'rxjs/operators';
 import { SideNavComponent } from '../../components/side-nav/side-nav.component';
 import { DashboardHeaderComponent } from '../dashboard/components/dashboard-header/dashboard-header.component';
 import { LoanService } from '../../services/loan.service';
@@ -18,6 +20,9 @@ import {
   CustomLoanEnquiryPayload,
   LoanEnquiryResponse,
   LoanProductCode,
+  LoanApplicationSummary,
+  LoanJourneyState,
+  LoanQuoteCalculation,
 } from '../../models';
 
 export type PreApprovedStep =
@@ -56,7 +61,7 @@ export interface CustomCategoryInfo {
   templateUrl: './loans-page.component.html',
   styleUrl: './loans-page.component.scss',
 })
-export class LoansPageComponent implements OnInit {
+export class LoansPageComponent implements OnInit, OnDestroy {
   private loanService = inject(LoanService);
   private bankService = inject(BankService);
   private authService = inject(AuthService);
@@ -73,9 +78,31 @@ export class LoansPageComponent implements OnInit {
   readonly customerProfile = this.profileService.profile;
   readonly bankingMetrics = this.loanService.bankingHealthMetrics;
   readonly activeLoans = this.loanService.activeLoans;
+  // Draft applications from list/loan/applications
+  readonly draftApplications = this.loanService.draftApplications;
+  // Loading states
+  readonly isPageLoading = this.loanService.isPageLoading;
+  readonly isQuoteLoading = this.loanService.isQuoteLoading;
+  // Live quote from calculate/loan/quote API
+  readonly liveQuote = this.loanService.liveQuote;
 
   // View Mode: 'pre_approved' (Default pre-approved catalog) | 'custom_enquiry' (New / Different loan requirement)
   readonly activeViewMode = signal<'pre_approved' | 'custom_enquiry'>('pre_approved');
+
+  // ── Draft Resume Dialog State ────────────────────────────────────
+  /** Whether to show the "Continue where you left off" modal. */
+  readonly showDraftDialog = signal<boolean>(false);
+  /** The draft being offered to resume. */
+  readonly activeDraft = signal<LoanApplicationSummary | null>(null);
+  /** Journey state returned by initLoanJourney (carries applicationAlreadyExists). */
+  readonly journeyState = signal<LoanJourneyState | null>(null);
+  /** Suppress the dialog for the current page session after user dismisses. */
+  private draftDialogDismissed = false;
+
+  // ── RxJS cleanup ─────────────────────────────────────────────────
+  private readonly destroy$ = new Subject<void>();
+  /** Debounce subject wiring slider/tenure changes to the quote API. */
+  private readonly quoteParams$ = new Subject<{ amount: number; tenure: number | null }>();
 
   // ── Pre-Approved Flow State ─────────────────────────────────────
   readonly preApprovedStep = signal<PreApprovedStep>('overview');
@@ -149,7 +176,22 @@ export class LoansPageComponent implements OnInit {
   });
 
   // Reactive Calculation for Pre-Approved Loan
+  // Falls back to local calculation when liveQuote is not yet available.
   readonly emiCalculation = computed<LoanCalculationResult>(() => {
+    const q = this.liveQuote();
+    if (q && q.requestedTenureMonths > 0) {
+      const total = Math.round(q.estimatedEmi * q.requestedTenureMonths);
+      const interest = Math.max(0, total - q.requestedAmount);
+      const principalPct = Math.round((q.requestedAmount / total) * 100);
+      return {
+        monthlyEmi: Math.round(q.estimatedEmi),
+        principalAmount: q.requestedAmount,
+        totalInterest: interest,
+        totalPayable: total,
+        interestPercentage: 100 - principalPct,
+        principalPercentage: principalPct,
+      };
+    }
     const offer = this.selectedOffer();
     const principal = this.appliedAmount();
     const tenure = this.tenureMonths();
@@ -165,6 +207,26 @@ export class LoansPageComponent implements OnInit {
     }
     const roi = offer ? offer.interestRate : 10.5;
     return this.loanService.calculateEmi(principal, roi, tenure);
+  });
+
+  // Effective interest rate — from live quote if available, else from selected offer
+  readonly effectiveRate = computed(() => {
+    const q = this.liveQuote();
+    if (q && q.indicativeInterestRate > 0) return q.indicativeInterestRate;
+    return this.selectedOffer()?.interestRate ?? 10.5;
+  });
+
+  // Processing fee — from live quote or static offer default
+  readonly processingFeeDisplay = computed(() => {
+    const q = this.liveQuote();
+    if (q) return q.processingFee === 0 ? '₹0.00 (Waived)' : this.formatInr(q.processingFee);
+    return this.selectedOffer()?.processingFee ?? '₹0.00 (Waived)';
+  });
+
+  // Final facility amount from live quote
+  readonly finalFacilityAmount = computed(() => {
+    const q = this.liveQuote();
+    return q ? q.finalFacilityAmount : this.appliedAmount();
   });
 
   // ── Custom Enquiry State ─────────────────────────────────────────
@@ -287,8 +349,38 @@ export class LoansPageComponent implements OnInit {
     // Fetch real loan products from API (refreshes offers catalog)
     this.loanService.fetchLoanProducts().subscribe();
 
-    // Load existing loan applications to hydrate activeLoans signal
-    this.loanService.listLoanApplications().subscribe();
+    // Load existing loan applications to hydrate activeLoans + draftApplications signals
+    this.loanService.listLoanApplications().subscribe((apps) => {
+      const drafts = apps.filter((a) => a.applicationStatus === 'DRAFT');
+      if (drafts.length > 0 && !this.draftDialogDismissed) {
+        // Show the continue-dialog after a brief delay so the page renders first
+        setTimeout(() => {
+          this.activeDraft.set(drafts[0]);
+          this.showDraftDialog.set(true);
+        }, 1200);
+      }
+    });
+
+    // Wire debounced quote recalculation: slider/tenure changes → API call with 800ms debounce
+    this.quoteParams$
+      .pipe(
+        debounceTime(800),
+        distinctUntilChanged(
+          (a, b) => a.amount === b.amount && a.tenure === b.tenure,
+        ),
+        switchMap(({ amount, tenure }) => {
+          if (!tenure || tenure <= 0 || amount <= 0) return [];
+          const offer = this.selectedOffer();
+          return this.loanService.recalculateQuote(
+            'DRAFT-SESSION-REF',
+            offer.productCode as LoanProductCode,
+            amount,
+            tenure,
+          );
+        }),
+        takeUntil(this.destroy$),
+      )
+      .subscribe();
 
     // Handle route query params (e.g. /loans?type=personal or /loans?mode=enquire)
     this.route.queryParams.subscribe((params) => {
@@ -320,23 +412,50 @@ export class LoansPageComponent implements OnInit {
     });
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   // ── Pre-Approved Flow Handlers ──────────────────────────────────
   selectPreApprovedOffer(offer: PreApprovedLoanOffer): void {
     this.selectedOffer.set(offer);
     const defAmt = Math.min(offer.defaultAmount || 300000, offer.maxAmount);
     this.appliedAmount.set(defAmt);
-    this.tenureMonths.set(null); // Unset to force explicit user selection
+    this.tenureMonths.set(null);
     this.termsAgreed.set(false);
+    this.loanService.liveQuote.set(null); // reset live quote when offer changes
   }
 
   selectTenure(tenure: number): void {
     if (this.tenureMonths() === tenure) {
       this.tenureMonths.set(null);
+      this.loanService.liveQuote.set(null);
     } else {
       this.tenureMonths.set(tenure);
       this.tenureValidationError.set(false);
+      // Trigger debounced quote recalculation immediately on chip select
+      this.quoteParams$.next({ amount: this.appliedAmount(), tenure });
     }
   }
+
+  /** Called by the range slider's (input) event to debounce quote recalculation. */
+  onAmountChange(event: Event): void {
+    const val = Number((event.target as HTMLInputElement).value);
+    this.appliedAmount.set(val);
+    if (this.tenureMonths()) {
+      this.quoteParams$.next({ amount: val, tenure: this.tenureMonths() });
+    }
+  }
+
+  /** Called by Quick Select preset buttons. */
+  setAmountPreset(amount: number): void {
+    this.appliedAmount.set(amount);
+    if (this.tenureMonths()) {
+      this.quoteParams$.next({ amount, tenure: this.tenureMonths() });
+    }
+  }
+
 
   startPreApprovedFlow(): void {
     this.tenureMonths.set(null); // Reset tenure to ensure user picks one
@@ -344,6 +463,83 @@ export class LoansPageComponent implements OnInit {
     this.preApprovedStep.set('customise');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
+
+  // ─── Draft Resume Dialog Handlers ─────────────────────────────────────────
+
+  /**
+   * User clicked "Continue Application" in the draft dialog.
+   * Restores the wizard state from the draft and navigates to the correct step.
+   */
+  resumeDraftApplication(): void {
+    const draft = this.activeDraft();
+    if (!draft) return;
+
+    this.showDraftDialog.set(false);
+    this.draftDialogDismissed = true;
+
+    // Find and select the matching offer
+    const matchedOffer = this.allOffers().find(
+      (o) => o.productCode === draft.productCode,
+    );
+    if (matchedOffer) {
+      this.selectedOffer.set(matchedOffer);
+      this.appliedAmount.set(draft.requestedAmount);
+      this.tenureMonths.set(draft.requestedTenureMonths);
+      this.loanService.liveQuote.set(null); // will be recalculated
+    }
+
+    // Navigate to the correct wizard step based on currentSection
+    const stepMap: Record<string, PreApprovedStep> = {
+      PERSONAL_DETAILS: 'customise',
+      LOAN_REQUIREMENT: 'verify_docs',
+      REVIEW: 'terms',
+      SUBMITTED: 'confirm',
+    };
+    const resumeStep: PreApprovedStep = stepMap[draft.currentSection] ?? 'customise';
+    this.preApprovedStep.set(resumeStep);
+    this.activeViewMode.set('pre_approved');
+    this.showToast('info', `Resuming your ${draft.productName} application from ${this.getDraftSectionLabel(draft.currentSection)}.`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Immediately trigger a quote recalculation for the restored values
+    if (draft.requestedTenureMonths > 0 && draft.requestedAmount > 0) {
+      this.loanService.recalculateQuote(
+        draft.applicationReference,
+        draft.productCode,
+        draft.requestedAmount,
+        draft.requestedTenureMonths,
+      ).subscribe();
+    }
+  }
+
+  /** Dismisses the draft dialog without resuming and suppresses it for the session. */
+  dismissDraftDialog(): void {
+    this.showDraftDialog.set(false);
+    this.draftDialogDismissed = true;
+  }
+
+  /** Converts a backend `currentSection` value to a human-readable step label. */
+  getDraftSectionLabel(section: string): string {
+    const map: Record<string, string> = {
+      PERSONAL_DETAILS: 'Step 1 · Loan Configuration',
+      LOAN_REQUIREMENT: 'Step 2 · Document Verification',
+      REVIEW: 'Step 3 · Terms & Consent',
+      SUBMITTED: 'Step 4 · Confirm & Disburse',
+    };
+    return map[section] ?? 'the beginning';
+  }
+
+  /** Returns a relative time string like "45 min ago" or "2 hrs ago". */
+  getRelativeTime(epochMs: number): string {
+    const diffMs = Date.now() - epochMs;
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 60) return `${mins} min ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs} hr${hrs > 1 ? 's' : ''} ago`;
+    return `${Math.floor(hrs / 24)} day${Math.floor(hrs / 24) > 1 ? 's' : ''} ago`;
+  }
+
+
 
   goToVerifyDocs(): void {
     if (!this.tenureMonths() || this.tenureMonths()! <= 0) {

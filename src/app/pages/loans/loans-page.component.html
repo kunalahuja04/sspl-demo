@@ -1,4 +1,4 @@
-<div class="h-screen w-full bg-bg-canvas flex font-body antialiased text-primary overflow-hidden">
+  <div class="h-screen w-full bg-bg-canvas flex font-body antialiased text-primary overflow-hidden">
 
   <!-- Left Sidebar Navigation -->
   <sspl-side-nav [activeNavId]="activeNavId()" (navChange)="onNavChange($event)">
@@ -12,6 +12,109 @@
 
     <main class="flex-1 p-4 md:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto w-full pb-16">
 
+      <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+      <!-- ── DRAFT RESUME DIALOG ("Continue where you left off") ──────────── -->
+      <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+      @if (showDraftDialog() && activeDraft()) {
+      <div
+        class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 bg-[#0B1E36]/70 backdrop-blur-sm animate-in fade-in duration-200"
+        (click)="$event.target === $event.currentTarget && dismissDraftDialog()">
+
+        <div
+          class="relative w-full max-w-lg bg-bg-surface border border-border-default rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-6 duration-300">
+
+          <!-- Gradient accent top stripe -->
+          <div class="h-1.5 bg-gradient-to-r from-amber-400 via-orange-500 to-[#0B1E36]"></div>
+
+          <!-- Header -->
+          <div class="p-6 pb-4 flex items-start gap-4">
+            <div
+              class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 text-xl font-bold">
+              ✏️
+            </div>
+            <div>
+              <h2 class="text-heading-md font-bold text-primary leading-tight">Continue where you left off</h2>
+              <p class="text-body-xs text-secondary mt-0.5">
+                You have an unfinished application saved from <strong>{{ getRelativeTime(activeDraft()!.updatedAt)
+                  }}</strong>
+              </p>
+            </div>
+            <button type="button" (click)="dismissDraftDialog()"
+              class="ml-auto w-8 h-8 rounded-full bg-bg-muted hover:bg-bg-canvas border border-border-default flex items-center justify-center text-secondary cursor-pointer shrink-0 transition-colors">
+              ✕
+            </button>
+          </div>
+
+          <!-- Draft Details Card -->
+          <div class="mx-6 mb-5 p-4 rounded-2xl bg-bg-muted border border-border-default space-y-3">
+            <!-- Product & Amount Row -->
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <span class="text-2xl">
+                  {{ activeDraft()!.productCode === 'HOME_LOAN' ? '🏠' : activeDraft()!.productCode ===
+                  'VEHICLE_LOAN' ? '🚗' : activeDraft()!.productCode === 'BUSINESS_LOAN' ? '🏢' : '💼' }}
+                </span>
+                <div>
+                  <p class="font-bold text-body-sm text-primary">{{ activeDraft()!.productName }}</p>
+                  <p class="text-label-xs text-muted font-mono">Ref: {{ activeDraft()!.applicationReference }}</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <p class="font-extrabold font-mono text-primary text-body-md">{{ formatInr(activeDraft()!.requestedAmount) }}</p>
+                <p class="text-label-xs text-secondary">{{ activeDraft()!.requestedTenureMonths }} Months Tenure</p>
+              </div>
+            </div>
+
+            <!-- Progress bar showing which step was reached -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between">
+                <p class="text-label-xs font-bold text-muted uppercase">Stopped at</p>
+                <span
+                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                  {{ getDraftSectionLabel(activeDraft()!.currentSection) }}
+                </span>
+              </div>
+              <div class="h-2 rounded-full bg-bg-canvas border border-border-default overflow-hidden">
+                @switch (activeDraft()!.currentSection) {
+                  @case ('PERSONAL_DETAILS') {
+                    <div class="h-full w-1/4 bg-amber-400 rounded-full"></div>
+                  }
+                  @case ('LOAN_REQUIREMENT') {
+                    <div class="h-full w-2/4 bg-amber-400 rounded-full"></div>
+                  }
+                  @case ('REVIEW') {
+                    <div class="h-full w-3/4 bg-amber-400 rounded-full"></div>
+                  }
+                  @default {
+                    <div class="h-full w-full bg-emerald-500 rounded-full"></div>
+                  }
+                }
+              </div>
+            </div>
+
+            <!-- EMI preview -->
+            <div class="flex items-center gap-2 text-body-xs text-secondary">
+              <span class="text-muted">Est. Monthly EMI:</span>
+              <span class="font-bold font-mono text-primary">{{ formatInr(activeDraft()!.estimatedEmi) }}</span>
+              <span class="ml-auto text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">DRAFT</span>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="px-6 pb-6 flex items-center gap-3">
+            <button type="button" (click)="dismissDraftDialog()"
+              class="flex-1 py-3 rounded-2xl border border-border-default bg-bg-surface hover:bg-bg-muted text-secondary font-semibold text-body-sm transition-all cursor-pointer">
+              Start Fresh
+            </button>
+            <button type="button" (click)="resumeDraftApplication()"
+              class="flex-1 py-3.5 rounded-2xl bg-[#0B1E36] hover:bg-[#0B1E36]/90 text-white font-bold text-body-sm shadow-md transition-all cursor-pointer flex items-center justify-center gap-2">
+              <span>▶ Continue Application</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      }
+
       <!-- ── Prominent Solid Toast Notification Banner ── -->
       @if (toastMessage()) {
       <div
@@ -19,19 +122,16 @@
         [class.bg-emerald-600]="toastMessage()?.type === 'success'"
         [class.text-white]="toastMessage()?.type === 'success'"
         [class.border-emerald-700]="toastMessage()?.type === 'success'"
-        [class.bg-[#0B1E36]]="toastMessage()?.type === 'info'"
-        [class.text-white]="toastMessage()?.type === 'info'"
-        [class.border-[#0B1E36]]="toastMessage()?.type === 'info'"
-        [class.bg-red-600]="toastMessage()?.type === 'error'"
-        [class.text-white]="toastMessage()?.type === 'error'"
-        [class.border-red-700]="toastMessage()?.type === 'error'">
+        [class.bg-[#0B1E36]]="toastMessage()?.type === 'info'" [class.text-white]="toastMessage()?.type === 'info'"
+        [class.border-[#0B1E36]]="toastMessage()?.type === 'info'" [class.bg-red-600]="toastMessage()?.type === 'error'"
+        [class.text-white]="toastMessage()?.type === 'error'" [class.border-red-700]="toastMessage()?.type === 'error'">
         <div class="flex items-center gap-3">
           @if (toastMessage()?.type === 'error') {
-            <span class="text-2xl shrink-0">🚨</span>
+          <span class="text-2xl shrink-0">🚨</span>
           } @else if (toastMessage()?.type === 'success') {
-            <span class="text-2xl shrink-0">✅</span>
+          <span class="text-2xl shrink-0">✅</span>
           } @else {
-            <span class="text-2xl shrink-0">ℹ️</span>
+          <span class="text-2xl shrink-0">ℹ️</span>
           }
           <span class="leading-snug">{{ toastMessage()?.text }}</span>
         </div>
@@ -449,13 +549,15 @@
             @for (loan of activeLoans(); track loan.id) {
             <div class="py-3 flex items-center justify-between gap-4 flex-wrap">
               <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-brand-primary/10 text-brand-primary flex items-center justify-center font-bold text-xs">
+                <div
+                  class="w-9 h-9 rounded-xl bg-brand-primary/10 text-brand-primary flex items-center justify-center font-bold text-xs">
                   {{ loan.loanType === 'home' ? '🏠' : (loan.loanType === 'car' ? '🚗' : '₹') }}
                 </div>
                 <div>
                   <div class="flex items-center gap-2">
                     <p class="text-body-sm font-bold text-primary">{{ loan.title }}</p>
-                    <span class="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span
+                      class="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
                       Standard
                     </span>
                   </div>
@@ -481,7 +583,8 @@
                 </div>
                 <div>
                   <p class="text-muted text-[10px] font-bold uppercase">Progress</p>
-                  <p class="font-semibold text-secondary">{{ loan.emisPaid }}/{{ loan.tenureMonths }}M ({{ loan.progressPercentage }}%)</p>
+                  <p class="font-semibold text-secondary">{{ loan.emisPaid }}/{{ loan.tenureMonths }}M ({{
+                    loan.progressPercentage }}%)</p>
                 </div>
                 <button type="button" (click)="showToast('info', 'Opening fast EMI advance payment gateway...')"
                   class="px-3 py-1.5 rounded-lg bg-[#0B1E36] hover:bg-[#0B1E36]/90 text-white font-bold text-label-xs transition-colors cursor-pointer shadow-xs">
@@ -506,12 +609,15 @@
 
           <!-- Inline Validation Alert (Action Required) -->
           @if (tenureValidationError()) {
-          <div class="p-4.5 rounded-2xl bg-red-50 border-2 border-red-600 text-red-950 flex items-start gap-3.5 shadow-lg animate-bounce">
+          <div
+            class="p-4.5 rounded-2xl bg-red-50 border-2 border-red-600 text-red-950 flex items-start gap-3.5 shadow-lg animate-bounce">
             <span class="text-2xl shrink-0">🚨</span>
             <div class="space-y-0.5">
               <p class="font-extrabold text-body-md text-red-950">Action Required: Repayment Tenure Not Selected</p>
               <p class="text-body-xs font-medium text-red-900 leading-relaxed">
-                Please click and select any repayment tenure duration chip (<strong>12M</strong>, <strong>24M</strong>, <strong>36M</strong>, <strong>48M</strong>, or <strong>60M</strong>) below to calculate your monthly EMI and proceed to Document Verification.
+                Please click and select any repayment tenure duration chip (<strong>12M</strong>, <strong>24M</strong>,
+                <strong>36M</strong>, <strong>48M</strong>, or <strong>60M</strong>) below to calculate your monthly EMI
+                and proceed to Document Verification.
               </p>
             </div>
           </div>
@@ -530,7 +636,7 @@
             </div>
 
             <input type="range" [min]="selectedOffer().minAmount" [max]="selectedOffer().maxAmount" step="10000"
-              [(ngModel)]="appliedAmount" class="w-full h-2.5 rounded-full cursor-pointer accent-[#0B1E36]" />
+              [value]="appliedAmount()" (input)="onAmountChange($event)" class="w-full h-2.5 rounded-full cursor-pointer accent-[#0B1E36]" />
 
             <div class="flex items-center justify-between text-body-xs text-secondary font-mono">
               <span>Min: {{ formatInr(selectedOffer().minAmount) }}</span>
@@ -541,19 +647,20 @@
             <div class="flex items-center gap-2 pt-1 flex-wrap">
               <span class="text-label-xs text-muted uppercase font-bold">Quick Select:</span>
               @for (preset of [100000, 200000, 300000, 500000]; track preset) {
-              @if (preset <= selectedOffer().maxAmount) { <button type="button" (click)="appliedAmount.set(preset)"
+              @if (preset <= selectedOffer().maxAmount) { <button type="button" (click)="setAmountPreset(preset)"
                 class="px-3 py-1 rounded-lg text-label-xs font-semibold border border-border-default bg-bg-muted hover:bg-bg-surface transition-colors cursor-pointer">
                 {{ formatInr(preset) }}
                 </button>
                 }
                 }
             </div>
+
           </div>
 
           <!-- Tenure Selector Card -->
-          <div id="tenure-selection-card" class="p-6 rounded-3xl bg-bg-surface border shadow-xs space-y-4 transition-all"
-            [class.border-red-600]="tenureValidationError()"
-            [class.ring-4]="tenureValidationError()"
+          <div id="tenure-selection-card"
+            class="p-6 rounded-3xl bg-bg-surface border shadow-xs space-y-4 transition-all"
+            [class.border-red-600]="tenureValidationError()" [class.ring-4]="tenureValidationError()"
             [class.ring-red-600/30]="tenureValidationError()"
             [class.border-amber-400]="!tenureMonths() && !tenureValidationError()"
             [class.ring-2]="!tenureMonths() && !tenureValidationError()"
@@ -565,13 +672,14 @@
                 <p class="text-body-xs text-secondary">Select comfortable duration for repayment</p>
               </div>
               @if (tenureMonths()) {
-                <div class="text-heading-md font-extrabold text-primary">
-                  {{ tenureMonths() }} Months
-                </div>
+              <div class="text-heading-md font-extrabold text-primary">
+                {{ tenureMonths() }} Months
+              </div>
               } @else {
-                <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-label-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">
-                  <span>⚠️</span> Select Tenure Chip
-                </span>
+              <span
+                class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-label-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">
+                <span>⚠️</span> Select Tenure Chip
+              </span>
               }
             </div>
 
@@ -595,7 +703,7 @@
           <div class="grid grid-cols-3 gap-3">
             <div class="p-4 rounded-2xl bg-bg-surface border border-border-default text-center">
               <p class="text-label-xs text-secondary uppercase font-bold">Interest Rate</p>
-              <p class="text-body-md font-bold text-primary mt-1 font-mono">{{ selectedOffer().interestRate }}% p.a.</p>
+              <p class="text-body-md font-bold text-primary mt-1 font-mono">{{ effectiveRate() | number:'1.2-2' }}% p.a.</p>
             </div>
             <div class="p-4 rounded-2xl bg-bg-surface border border-border-default text-center">
               <p class="text-label-xs text-secondary uppercase font-bold">First EMI Date</p>
@@ -603,7 +711,7 @@
             </div>
             <div class="p-4 rounded-2xl bg-bg-surface border border-border-default text-center">
               <p class="text-label-xs text-secondary uppercase font-bold">Processing Fee</p>
-              <p class="text-body-md font-bold text-status-success mt-1">₹0.00 (Waived)</p>
+              <p class="text-body-md font-bold text-status-success mt-1">{{ processingFeeDisplay() }}</p>
             </div>
           </div>
 
@@ -617,17 +725,12 @@
               <span>Back to Overview</span>
             </button>
 
-            <button type="button" (click)="goToVerifyDocs()"
-              [disabled]="!tenureMonths()"
+            <button type="button" (click)="goToVerifyDocs()" [disabled]="!tenureMonths()"
               class="px-8 py-3.5 rounded-2xl font-bold text-body-md shadow-md transition-all flex items-center gap-2"
-              [class.bg-[#0B1E36]]="!!tenureMonths()"
-              [class.hover:bg-[#0B1E36]/90]="!!tenureMonths()"
-              [class.text-white]="!!tenureMonths()"
-              [class.cursor-pointer]="!!tenureMonths()"
-              [class.bg-gray-300]="!tenureMonths()"
-              [class.text-gray-500]="!tenureMonths()"
-              [class.cursor-not-allowed]="!tenureMonths()"
-              [class.opacity-60]="!tenureMonths()">
+              [class.bg-[#0B1E36]]="!!tenureMonths()" [class.hover:bg-[#0B1E36]/90]="!!tenureMonths()"
+              [class.text-white]="!!tenureMonths()" [class.cursor-pointer]="!!tenureMonths()"
+              [class.bg-gray-300]="!tenureMonths()" [class.text-gray-500]="!tenureMonths()"
+              [class.cursor-not-allowed]="!tenureMonths()" [class.opacity-60]="!tenureMonths()">
               <span>Verify Documents</span>
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="m9 18 6-6-6-6" />
@@ -641,23 +744,36 @@
         <div class="lg:col-span-5 space-y-6">
 
           <!-- Hero Dark Navy Monthly EMI Card -->
-          <div class="p-6 sm:p-7 rounded-3xl bg-[#0B1E36] text-white shadow-xl space-y-6">
+          <div class="relative p-6 sm:p-7 rounded-3xl bg-[#0B1E36] text-white shadow-xl space-y-6 overflow-hidden">
+
+            <!-- Quote loading skeleton overlay -->
+            @if (isQuoteLoading()) {
+            <div class="absolute inset-0 z-10 bg-[#0B1E36]/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3 rounded-3xl">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-amber-400 animate-bounce [animation-delay:-0.3s]"></span>
+                <span class="w-2 h-2 rounded-full bg-amber-400 animate-bounce [animation-delay:-0.15s]"></span>
+                <span class="w-2 h-2 rounded-full bg-amber-400 animate-bounce"></span>
+              </div>
+              <p class="text-body-xs text-white/70 font-semibold">Recalculating from API…</p>
+            </div>
+            }
+
             <div class="space-y-1">
               <p class="text-[11px] font-bold uppercase tracking-wider text-white/70">YOUR MONTHLY EMI</p>
               @if (tenureMonths()) {
-                <div class="text-4xl sm:text-5xl font-extrabold font-mono tracking-tight text-white">
-                  {{ formatInr(emiCalculation().monthlyEmi) }}
-                </div>
-                <p class="text-body-xs text-white/80">
-                  for {{ tenureMonths() }} months @ {{ selectedOffer().interestRate }}% p.a.
-                </p>
+              <div class="text-4xl sm:text-5xl font-extrabold font-mono tracking-tight text-white">
+                {{ formatInr(emiCalculation().monthlyEmi) }}
+              </div>
+              <p class="text-body-xs text-white/80">
+                for {{ tenureMonths() }} months @ {{ effectiveRate() | number:'1.2-2' }}% p.a.
+              </p>
               } @else {
-                <div class="text-3xl sm:text-4xl font-extrabold font-mono tracking-tight text-white/60">
-                  --
-                </div>
-                <p class="text-body-xs text-[#F5BF45] font-semibold">
-                  Select a repayment tenure chip on the left to calculate your EMI
-                </p>
+              <div class="text-3xl sm:text-4xl font-extrabold font-mono tracking-tight text-white/60">
+                --
+              </div>
+              <p class="text-body-xs text-[#F5BF45] font-semibold">
+                Select a repayment tenure chip on the left to calculate your EMI
+              </p>
               }
             </div>
 
@@ -672,6 +788,12 @@
                 <span class="text-white/80">Total Interest Payable</span>
                 <span class="font-bold font-mono text-[#F5BF45]">{{ formatInr(emiCalculation().totalInterest) }}</span>
               </div>
+              @if (liveQuote()) {
+              <div class="flex items-center justify-between">
+                <span class="text-white/80">Final Facility Amount</span>
+                <span class="font-bold font-mono text-emerald-400">{{ formatInr(finalFacilityAmount()) }}</span>
+              </div>
+              }
               <div class="flex items-center justify-between pt-2 border-t border-white/15">
                 <span class="text-white font-semibold">Total Amount Payable</span>
                 <span class="font-extrabold font-mono text-white text-body-md">{{

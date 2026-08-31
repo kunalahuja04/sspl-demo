@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, delay, map, switchMap } from 'rxjs';
+import { Observable, of, delay, map, switchMap, catchError } from 'rxjs';
 import { ApiRequestBuilderService } from '../core/services/api-request-builder.service';
 import { ApiResponse } from '../models/api-envelope.model';
 import {
@@ -70,6 +70,76 @@ export class LoanService {
   /** Active ongoing loans — hydrated from `listLoanApplications()`. */
   readonly activeLoans = signal<ActiveLoanItem[]>([]);
 
+  /** DRAFT loan applications — available to resume. */
+  readonly draftApplications = signal<LoanApplicationSummary[]>([]);
+
+  /** True while page-level data is loading (products + application list). */
+  readonly isPageLoading = signal<boolean>(true);
+
+  /** True while a quote recalculation API call is in-flight. */
+  readonly isQuoteLoading = signal<boolean>(false);
+
+  /** Last successful quote from the backend (replaces local EMI computation). */
+  readonly liveQuote = signal<LoanQuoteCalculation | null>(null);
+
+  /** Mock application reference for a pre-existing DRAFT — drives the continue-dialog. */
+  private readonly MOCK_DRAFT_REF = 'LOAN-2026-00000182';
+
+  // ── Mock data: simulates what the backend returns for this demo customer ──
+  private readonly MOCK_APPLICATIONS: LoanApplicationSummary[] = [
+    {
+      applicationReference: this.MOCK_DRAFT_REF,
+      productCode: 'PERSONAL_LOAN',
+      productName: 'Personal Loan',
+      requestedAmount: 1400000,
+      requestedTenureMonths: 36,
+      estimatedEmi: 46166.41,
+      applicationStatus: 'DRAFT',
+      statusDisplayName: 'Draft',
+      currentSection: 'LOAN_REQUIREMENT',
+      maskedCreditAccount: 'XXXXXXXX0002',
+      lastUpdatedChannel: 'WEB',
+      sourceChannel: 'WEB',
+      createdAt: Date.now() - 2 * 60 * 60 * 1000, // 2 hours ago
+      submittedAt: 0,
+      updatedAt: Date.now() - 45 * 60 * 1000,     // 45 minutes ago
+    },
+    {
+      applicationReference: 'LOAN-2026-00000161',
+      productCode: 'HOME_LOAN',
+      productName: 'Home Loan',
+      requestedAmount: 35000000,
+      requestedTenureMonths: 84,
+      estimatedEmi: 554276.99,
+      applicationStatus: 'SUBMITTED',
+      statusDisplayName: 'Submitted',
+      currentSection: 'SUBMITTED',
+      maskedCreditAccount: 'XXXXXXXX0002',
+      lastUpdatedChannel: 'MOBILE',
+      sourceChannel: 'MOBILE',
+      createdAt: Date.now() - 8 * 60 * 60 * 1000,
+      submittedAt: Date.now() - 7 * 60 * 60 * 1000,
+      updatedAt: Date.now() - 7 * 60 * 60 * 1000,
+    },
+    {
+      applicationReference: 'LOAN-2026-00000141',
+      productCode: 'BUSINESS_LOAN',
+      productName: 'Business Loan',
+      requestedAmount: 1500000,
+      requestedTenureMonths: 36,
+      estimatedEmi: 49821.46,
+      applicationStatus: 'SUBMITTED',
+      statusDisplayName: 'Submitted',
+      currentSection: 'SUBMITTED',
+      maskedCreditAccount: 'XXXXXXXX0002',
+      lastUpdatedChannel: 'WEB',
+      sourceChannel: 'WEB',
+      createdAt: Date.now() - 5 * 24 * 60 * 60 * 1000,
+      submittedAt: Date.now() - 5 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000,
+      updatedAt: Date.now() - 5 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000,
+    },
+  ];
+
   /** Banking health profile of the authenticated user (static/enriched). */
   readonly bankingHealthMetrics = signal<UserBankingHealthMetrics>({
     cibilScore: 792,
@@ -125,9 +195,30 @@ export class LoanService {
     const req = this.reqBuilder.buildRequest<LoanJourneyRequest>({
       loanJourneyRequest: { productCode },
     });
+    // Use mock when backend unavailable — check if a DRAFT exists for this productCode
+    const existingDraft = this.MOCK_APPLICATIONS.find(
+      (a) => a.productCode === productCode && a.applicationStatus === 'DRAFT',
+    );
+    const mockJourney: LoanJourneyState = {
+      requestedProductCode: productCode,
+      productMismatch: false,
+      applicationAlreadyExists: !!existingDraft,
+      currentSection: (existingDraft?.currentSection as LoanJourneyState['currentSection']) ?? 'PERSONAL_DETAILS',
+      applicationReference: existingDraft?.applicationReference ?? null,
+      applicationProductCode: existingDraft ? productCode : null,
+      applicationProductName: existingDraft?.productName ?? null,
+      applicationStatus: existingDraft ? 'DRAFT' : null,
+      lastCompletedSection: existingDraft ? 'PERSONAL_DETAILS' : null,
+      lastUpdatedChannel: existingDraft?.lastUpdatedChannel ?? null,
+      sourceChannel: existingDraft?.sourceChannel ?? null,
+      updatedAt: existingDraft?.updatedAt ?? null,
+    };
     return this.http
       .post<ApiResponse<LoanJourneyResponseBody>>(`${LOAN_API_BASE}/banking/loan/journey`, req)
-      .pipe(map((res) => res.body!.loanJourneyResponse));
+      .pipe(
+        map((res) => res.body!.loanJourneyResponse),
+        catchError(() => of(mockJourney).pipe(delay(600))),
+      );
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -164,11 +255,57 @@ export class LoanService {
     const req = this.reqBuilder.buildRequest<LoanQuoteRequest>({
       loanQuoteRequest: payload,
     });
+    // Mock calculation matching real backend formula with simulated API latency
+    const r = this.getProductRate(payload.productCode) / 12 / 100;
+    const n = payload.requestedTenureMonths;
+    const P = payload.requestedAmount;
+    const pow = Math.pow(1 + r, n);
+    const emi = P > 0 && n > 0 ? Math.round(P * (r * pow) / (pow - 1) * 100) / 100 : 0;
+    const processingFee = Math.round(P * 0.01);
+    const finalFacility = P - processingFee;
+    const mockQuote: LoanQuoteCalculation = {
+      quoteReference: `QUOTE-${Date.now().toString().slice(-10)}`,
+      productCode: payload.productCode,
+      productName: this.productCodeToName(payload.productCode),
+      requestedAmount: P,
+      finalFacilityAmount: finalFacility,
+      processingFee,
+      indicativeInterestRate: r * 12 * 100,
+      requestedTenureMonths: n,
+      estimatedEmi: emi,
+      quoteValidUntil: Date.now() + 30 * 60 * 1000,
+    };
     return this.http
-      .post<
-        ApiResponse<LoanQuoteResponseBody>
-      >(`${LOAN_API_BASE}/banking/calculate/loan/quote`, req)
-      .pipe(map((res) => res.body!.loanQuoteCalculationResponse));
+      .post<ApiResponse<LoanQuoteResponseBody>>(`${LOAN_API_BASE}/banking/calculate/loan/quote`, req)
+      .pipe(
+        map((res) => res.body!.loanQuoteCalculationResponse),
+        catchError(() => of(mockQuote).pipe(delay(700))),
+      );
+  }
+
+  /**
+   * Convenience wrapper: triggers isQuoteLoading, calls calculateLoanQuote,
+   * updates liveQuote signal. Used by the UI for real-time slider recalculation.
+   */
+  recalculateQuote(
+    applicationReference: string,
+    productCode: LoanProductCode,
+    requestedAmount: number,
+    requestedTenureMonths: number,
+  ): Observable<LoanQuoteCalculation> {
+    this.isQuoteLoading.set(true);
+    return this.calculateLoanQuote({
+      applicationReference,
+      productCode,
+      requestedAmount,
+      requestedTenureMonths,
+    }).pipe(
+      map((quote) => {
+        this.liveQuote.set(quote);
+        this.isQuoteLoading.set(false);
+        return quote;
+      }),
+    );
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -294,20 +431,35 @@ export class LoanService {
    */
   listLoanApplications(): Observable<LoanApplicationSummary[]> {
     const req = this.reqBuilder.buildRequest<ListLoanApplicationsRequest>({});
+    const mockResponse = of(this.MOCK_APPLICATIONS).pipe(
+      delay(900),
+      map((apps) => {
+        this.draftApplications.set(apps.filter((a) => a.applicationStatus === 'DRAFT'));
+        const activeItems: ActiveLoanItem[] = apps
+          .filter((a) => a.applicationStatus === 'SUBMITTED')
+          .map((a) => this.applicationSummaryToActiveLoan(a));
+        this.activeLoans.set(activeItems);
+        this.isPageLoading.set(false);
+        return apps;
+      }),
+    );
     return this.http
-      .post<
-        ApiResponse<ListLoanApplicationsResponseBody>
-      >(`${LOAN_API_BASE}/banking/list/loan/applications`, req)
+      .post<ApiResponse<ListLoanApplicationsResponseBody>>(
+        `${LOAN_API_BASE}/banking/list/loan/applications`,
+        req,
+      )
       .pipe(
         map((res) => {
           const apps = res.body?.loanApplicationListResponse?.applications ?? [];
-          // Hydrate active loans from submitted applications
+          this.draftApplications.set(apps.filter((a) => a.applicationStatus === 'DRAFT'));
           const activeItems: ActiveLoanItem[] = apps
             .filter((a) => a.applicationStatus === 'SUBMITTED')
             .map((a) => this.applicationSummaryToActiveLoan(a));
           this.activeLoans.set(activeItems);
+          this.isPageLoading.set(false);
           return apps;
         }),
+        catchError(() => mockResponse),
       );
   }
 
@@ -464,6 +616,29 @@ export class LoanService {
     };
     return map[category] ?? 9.0;
   }
+
+  /** Returns the indicative annual interest rate for a product code. */
+  private getProductRate(code: LoanProductCode): number {
+    const map: Record<LoanProductCode, number> = {
+      PERSONAL_LOAN: 11.5,
+      HOME_LOAN: 8.5,
+      VEHICLE_LOAN: 9.25,
+      BUSINESS_LOAN: 12.0,
+    };
+    return map[code] ?? 10.0;
+  }
+
+  private productCodeToName(code: LoanProductCode): string {
+    const map: Record<LoanProductCode, string> = {
+      PERSONAL_LOAN: 'Personal Loan',
+      HOME_LOAN: 'Home Loan',
+      VEHICLE_LOAN: 'Vehicle Loan',
+      BUSINESS_LOAN: 'Business Loan',
+    };
+    return map[code] ?? code;
+  }
+
+
 
   /**
    * Custom loan enquiry flow (non-banking-MS, internal ticket system).
