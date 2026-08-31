@@ -17,6 +17,7 @@ import {
   LoanSanctionResponse,
   CustomLoanEnquiryPayload,
   LoanEnquiryResponse,
+  LoanProductCode,
 } from '../../models';
 
 export type PreApprovedStep =
@@ -283,6 +284,12 @@ export class LoansPageComponent implements OnInit {
       this.profileService.fetchProfile().subscribe();
     }
 
+    // Fetch real loan products from API (refreshes offers catalog)
+    this.loanService.fetchLoanProducts().subscribe();
+
+    // Load existing loan applications to hydrate activeLoans signal
+    this.loanService.listLoanApplications().subscribe();
+
     // Handle route query params (e.g. /loans?type=personal or /loans?mode=enquire)
     this.route.queryParams.subscribe((params) => {
       const type = params['type'] as LoanType | undefined;
@@ -373,19 +380,29 @@ export class LoansPageComponent implements OnInit {
   confirmAndDisburse(): void {
     this.isDisbursing.set(true);
 
+    const offer = this.selectedOffer();
+    const profile = this.customerProfile();
+
     const payload: LoanApplicationPayload = {
-      loanId: this.selectedOffer().id,
-      loanType: this.selectedOffer().type,
-      appliedAmount: this.appliedAmount(),
-      tenureMonths: this.tenureMonths() || 36,
-      disbursalAccount: 'Primary Savings A/C •••• 4521',
-      interestRate: this.selectedOffer().interestRate,
-      monthlyEmi: this.emiCalculation().monthlyEmi,
-      customerId: this.customerProfile()?.customerId || 'SSPL-CUST-84920',
-      documentsVerified: true,
-      agreeKfs: true,
-      agreeNach: true,
-      agreeCreditBureau: true,
+      productCode: offer.productCode as LoanProductCode,
+      applicationReference: null, // new application
+      // Personal details section
+      fullName: this.customerFullName(),
+      mobileNumber: profile?.mobileNumber ?? '9999999999',
+      fatherName: 'N/A', // not captured in UI; backend accepts any string
+      emailId: this.customerEmail(),
+      addressLine: 'Jalgaon, Maharashtra',
+      postalCode: '425001',
+      dateOfBirth: '1990-01-01', // placeholder — extend profile model to capture DOB if needed
+      // Loan requirement section
+      requestedAmount: this.appliedAmount(),
+      requestedTenureMonths: this.tenureMonths() ?? 36,
+      loanPurpose: `${offer.title} requirement`,
+      // Submission fields
+      creditAccountReference: 'ACC-COSM-1002', // first eligible account; can be made dynamic
+      communicationEmail: this.customerEmail(),
+      termsAccepted: true,
+      termsVersion: 'LOAN_TERMS_V1',
     };
 
     this.loanService.submitLoanApplication(payload).subscribe({
@@ -393,12 +410,14 @@ export class LoansPageComponent implements OnInit {
         this.isDisbursing.set(false);
         this.sanctionResponse.set(res);
         this.preApprovedStep.set('success');
-        this.showToast('success', 'Loan amount sanctioned and disbursed successfully!');
+        this.showToast('success', 'Loan application submitted successfully!');
         window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Refresh active loans list
+        this.loanService.listLoanApplications().subscribe();
       },
       error: () => {
         this.isDisbursing.set(false);
-        this.showToast('error', 'Disbursal request failed. Please try again.');
+        this.showToast('error', 'Submission failed. Please retry.');
       },
     });
   }
