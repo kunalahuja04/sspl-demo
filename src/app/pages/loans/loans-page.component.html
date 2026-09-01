@@ -119,13 +119,12 @@
       <!-- ── Prominent Solid Toast Notification Banner ── -->
       @if (toastMessage()) {
       <div
-        class="fixed top-6 left-1/2 -translate-x-1/2 z-50 px-6 py-4 rounded-2xl flex items-center justify-between gap-4 text-body-sm font-bold shadow-2xl border-2 transition-all animate-in fade-in slide-in-from-top-4 duration-300 max-w-lg w-[92vw]"
-        [class.bg-emerald-600]="toastMessage()?.type === 'success'"
-        [class.text-white]="toastMessage()?.type === 'success'"
-        [class.border-emerald-700]="toastMessage()?.type === 'success'"
-        [class.bg-[#0B1E36]]="toastMessage()?.type === 'info'" [class.text-white]="toastMessage()?.type === 'info'"
-        [class.border-[#0B1E36]]="toastMessage()?.type === 'info'" [class.bg-red-600]="toastMessage()?.type === 'error'"
-        [class.text-white]="toastMessage()?.type === 'error'" [class.border-red-700]="toastMessage()?.type === 'error'">
+        class="fixed top-6 left-1/2 -translate-x-1/2 z-50 px-6 py-4 rounded-2xl flex items-center justify-between gap-4 text-body-sm font-bold text-white shadow-2xl border-2 transition-all animate-in fade-in slide-in-from-top-4 duration-300 max-w-lg w-[92vw]"
+        [ngClass]="{
+          'bg-emerald-600 border-emerald-700': toastMessage()?.type === 'success',
+          'bg-[#0B1E36]  border-[#1a3a5c]':   toastMessage()?.type === 'info',
+          'bg-red-600    border-red-700':       toastMessage()?.type === 'error'
+        }">
         <div class="flex items-center gap-3">
           @if (toastMessage()?.type === 'error') {
           <span class="text-2xl shrink-0">🚨</span>
@@ -134,12 +133,13 @@
           } @else {
           <span class="text-2xl shrink-0">ℹ️</span>
           }
-          <span class="leading-snug">{{ toastMessage()?.text }}</span>
+          <span class="leading-snug text-white">{{ toastMessage()?.text }}</span>
         </div>
         <button type="button" (click)="toastMessage.set(null)"
           class="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center cursor-pointer shrink-0 font-extrabold text-sm">✕</button>
       </div>
       }
+
 
       <!-- ── 1. Page Header & View Mode Switcher ── -->
       <div class="flex items-center justify-between gap-4 flex-wrap pb-2 border-b border-border-default/60">
