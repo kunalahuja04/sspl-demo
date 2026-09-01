@@ -1,4 +1,4 @@
-  <div class="h-screen w-full bg-bg-canvas flex font-body antialiased text-primary overflow-hidden">
+<div class="h-screen w-full bg-bg-canvas flex font-body antialiased text-primary overflow-hidden">
 
   <!-- Left Sidebar Navigation -->
   <sspl-side-nav [activeNavId]="activeNavId()" (navChange)="onNavChange($event)">
@@ -35,8 +35,7 @@
             <div>
               <h2 class="text-heading-md font-bold text-primary leading-tight">Continue where you left off</h2>
               <p class="text-body-xs text-secondary mt-0.5">
-                You have an unfinished application saved from <strong>{{ getRelativeTime(activeDraft()!.updatedAt)
-                  }}</strong>
+                You have an unfinished application.
               </p>
             </div>
             <button type="button" (click)="dismissDraftDialog()"
@@ -60,7 +59,8 @@
                 </div>
               </div>
               <div class="text-right">
-                <p class="font-extrabold font-mono text-primary text-body-md">{{ formatInr(activeDraft()!.requestedAmount) }}</p>
+                <p class="font-extrabold font-mono text-primary text-body-md">{{
+                  formatInr(activeDraft()!.requestedAmount) }}</p>
                 <p class="text-label-xs text-secondary">{{ activeDraft()!.requestedTenureMonths }} Months Tenure</p>
               </div>
             </div>
@@ -76,18 +76,18 @@
               </div>
               <div class="h-2 rounded-full bg-bg-canvas border border-border-default overflow-hidden">
                 @switch (activeDraft()!.currentSection) {
-                  @case ('PERSONAL_DETAILS') {
-                    <div class="h-full w-1/4 bg-amber-400 rounded-full"></div>
-                  }
-                  @case ('LOAN_REQUIREMENT') {
-                    <div class="h-full w-2/4 bg-amber-400 rounded-full"></div>
-                  }
-                  @case ('REVIEW') {
-                    <div class="h-full w-3/4 bg-amber-400 rounded-full"></div>
-                  }
-                  @default {
-                    <div class="h-full w-full bg-emerald-500 rounded-full"></div>
-                  }
+                @case ('PERSONAL_DETAILS') {
+                <div class="h-full w-1/4 bg-amber-400 rounded-full"></div>
+                }
+                @case ('LOAN_REQUIREMENT') {
+                <div class="h-full w-2/4 bg-amber-400 rounded-full"></div>
+                }
+                @case ('REVIEW') {
+                <div class="h-full w-3/4 bg-amber-400 rounded-full"></div>
+                }
+                @default {
+                <div class="h-full w-full bg-emerald-500 rounded-full"></div>
+                }
                 }
               </div>
             </div>
@@ -96,7 +96,8 @@
             <div class="flex items-center gap-2 text-body-xs text-secondary">
               <span class="text-muted">Est. Monthly EMI:</span>
               <span class="font-bold font-mono text-primary">{{ formatInr(activeDraft()!.estimatedEmi) }}</span>
-              <span class="ml-auto text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">DRAFT</span>
+              <span
+                class="ml-auto text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">DRAFT</span>
             </div>
           </div>
 
@@ -636,7 +637,8 @@
             </div>
 
             <input type="range" [min]="selectedOffer().minAmount" [max]="selectedOffer().maxAmount" step="10000"
-              [value]="appliedAmount()" (input)="onAmountChange($event)" class="w-full h-2.5 rounded-full cursor-pointer accent-[#0B1E36]" />
+              [value]="appliedAmount()" (input)="onAmountChange($event)"
+              class="w-full h-2.5 rounded-full cursor-pointer accent-[#0B1E36]" />
 
             <div class="flex items-center justify-between text-body-xs text-secondary font-mono">
               <span>Min: {{ formatInr(selectedOffer().minAmount) }}</span>
@@ -703,7 +705,8 @@
           <div class="grid grid-cols-3 gap-3">
             <div class="p-4 rounded-2xl bg-bg-surface border border-border-default text-center">
               <p class="text-label-xs text-secondary uppercase font-bold">Interest Rate</p>
-              <p class="text-body-md font-bold text-primary mt-1 font-mono">{{ effectiveRate() | number:'1.2-2' }}% p.a.</p>
+              <p class="text-body-md font-bold text-primary mt-1 font-mono">{{ effectiveRate() | number:'1.2-2' }}% p.a.
+              </p>
             </div>
             <div class="p-4 rounded-2xl bg-bg-surface border border-border-default text-center">
               <p class="text-label-xs text-secondary uppercase font-bold">First EMI Date</p>
@@ -748,7 +751,8 @@
 
             <!-- Quote loading skeleton overlay -->
             @if (isQuoteLoading()) {
-            <div class="absolute inset-0 z-10 bg-[#0B1E36]/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3 rounded-3xl">
+            <div
+              class="absolute inset-0 z-10 bg-[#0B1E36]/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3 rounded-3xl">
               <div class="flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full bg-amber-400 animate-bounce [animation-delay:-0.3s]"></span>
                 <span class="w-2 h-2 rounded-full bg-amber-400 animate-bounce [animation-delay:-0.15s]"></span>

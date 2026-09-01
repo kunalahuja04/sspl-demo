@@ -365,9 +365,7 @@ export class LoansPageComponent implements OnInit, OnDestroy {
     this.quoteParams$
       .pipe(
         debounceTime(800),
-        distinctUntilChanged(
-          (a, b) => a.amount === b.amount && a.tenure === b.tenure,
-        ),
+        distinctUntilChanged((a, b) => a.amount === b.amount && a.tenure === b.tenure),
         switchMap(({ amount, tenure }) => {
           if (!tenure || tenure <= 0 || amount <= 0) return [];
           const offer = this.selectedOffer();
@@ -456,7 +454,6 @@ export class LoansPageComponent implements OnInit, OnDestroy {
     }
   }
 
-
   startPreApprovedFlow(): void {
     this.tenureMonths.set(null); // Reset tenure to ensure user picks one
     this.tenureValidationError.set(false);
@@ -478,9 +475,7 @@ export class LoansPageComponent implements OnInit, OnDestroy {
     this.draftDialogDismissed = true;
 
     // Find and select the matching offer
-    const matchedOffer = this.allOffers().find(
-      (o) => o.productCode === draft.productCode,
-    );
+    const matchedOffer = this.allOffers().find((o) => o.productCode === draft.productCode);
     if (matchedOffer) {
       this.selectedOffer.set(matchedOffer);
       this.appliedAmount.set(draft.requestedAmount);
@@ -498,17 +493,22 @@ export class LoansPageComponent implements OnInit, OnDestroy {
     const resumeStep: PreApprovedStep = stepMap[draft.currentSection] ?? 'customise';
     this.preApprovedStep.set(resumeStep);
     this.activeViewMode.set('pre_approved');
-    this.showToast('info', `Resuming your ${draft.productName} application from ${this.getDraftSectionLabel(draft.currentSection)}.`);
+    this.showToast(
+      'info',
+      `Resuming your ${draft.productName} application from ${this.getDraftSectionLabel(draft.currentSection)}.`,
+    );
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     // Immediately trigger a quote recalculation for the restored values
     if (draft.requestedTenureMonths > 0 && draft.requestedAmount > 0) {
-      this.loanService.recalculateQuote(
-        draft.applicationReference,
-        draft.productCode,
-        draft.requestedAmount,
-        draft.requestedTenureMonths,
-      ).subscribe();
+      this.loanService
+        .recalculateQuote(
+          draft.applicationReference,
+          draft.productCode,
+          draft.requestedAmount,
+          draft.requestedTenureMonths,
+        )
+        .subscribe();
     }
   }
 
@@ -528,18 +528,6 @@ export class LoansPageComponent implements OnInit, OnDestroy {
     };
     return map[section] ?? 'the beginning';
   }
-
-  /** Returns a relative time string like "45 min ago" or "2 hrs ago". */
-  getRelativeTime(epochMs: number): string {
-    const diffMs = Date.now() - epochMs;
-    const mins = Math.floor(diffMs / 60000);
-    if (mins < 60) return `${mins} min ago`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs} hr${hrs > 1 ? 's' : ''} ago`;
-    return `${Math.floor(hrs / 24)} day${Math.floor(hrs / 24) > 1 ? 's' : ''} ago`;
-  }
-
-
 
   goToVerifyDocs(): void {
     if (!this.tenureMonths() || this.tenureMonths()! <= 0) {

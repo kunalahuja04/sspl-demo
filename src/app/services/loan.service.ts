@@ -102,7 +102,7 @@ export class LoanService {
       sourceChannel: 'WEB',
       createdAt: Date.now() - 2 * 60 * 60 * 1000, // 2 hours ago
       submittedAt: 0,
-      updatedAt: Date.now() - 45 * 60 * 1000,     // 45 minutes ago
+      updatedAt: Date.now() - 45 * 60 * 1000, // 45 minutes ago
     },
     {
       applicationReference: 'LOAN-2026-00000161',
@@ -203,7 +203,8 @@ export class LoanService {
       requestedProductCode: productCode,
       productMismatch: false,
       applicationAlreadyExists: !!existingDraft,
-      currentSection: (existingDraft?.currentSection as LoanJourneyState['currentSection']) ?? 'PERSONAL_DETAILS',
+      currentSection:
+        (existingDraft?.currentSection as LoanJourneyState['currentSection']) ?? 'PERSONAL_DETAILS',
       applicationReference: existingDraft?.applicationReference ?? null,
       applicationProductCode: existingDraft ? productCode : null,
       applicationProductName: existingDraft?.productName ?? null,
@@ -260,7 +261,7 @@ export class LoanService {
     const n = payload.requestedTenureMonths;
     const P = payload.requestedAmount;
     const pow = Math.pow(1 + r, n);
-    const emi = P > 0 && n > 0 ? Math.round(P * (r * pow) / (pow - 1) * 100) / 100 : 0;
+    const emi = P > 0 && n > 0 ? Math.round(((P * (r * pow)) / (pow - 1)) * 100) / 100 : 0;
     const processingFee = Math.round(P * 0.01);
     const finalFacility = P - processingFee;
     const mockQuote: LoanQuoteCalculation = {
@@ -276,7 +277,9 @@ export class LoanService {
       quoteValidUntil: Date.now() + 30 * 60 * 1000,
     };
     return this.http
-      .post<ApiResponse<LoanQuoteResponseBody>>(`${LOAN_API_BASE}/banking/calculate/loan/quote`, req)
+      .post<
+        ApiResponse<LoanQuoteResponseBody>
+      >(`${LOAN_API_BASE}/banking/calculate/loan/quote`, req)
       .pipe(
         map((res) => res.body!.loanQuoteCalculationResponse),
         catchError(() => of(mockQuote).pipe(delay(700))),
@@ -444,10 +447,9 @@ export class LoanService {
       }),
     );
     return this.http
-      .post<ApiResponse<ListLoanApplicationsResponseBody>>(
-        `${LOAN_API_BASE}/banking/list/loan/applications`,
-        req,
-      )
+      .post<
+        ApiResponse<ListLoanApplicationsResponseBody>
+      >(`${LOAN_API_BASE}/banking/list/loan/applications`, req)
       .pipe(
         map((res) => {
           const apps = res.body?.loanApplicationListResponse?.applications ?? [];
@@ -468,20 +470,49 @@ export class LoanService {
   // ─────────────────────────────────────────────────────────────────────────
 
   /**
-   * Full wizard orchestration:
-   *  1. initLoanJourney
-   *  2. savePersonalDetails
-   *  3. calculateQuote
-   *  4. saveRequirement
-   *  5. listEligibleCreditAccounts (to pick the first eligible account)
-   *  6. submitApplication
+   * Full wizard orchestration — DEMO MOCK:
+   * Simulates the complete 5-step flow (journey → personalDetails → quote →
+   * requirement → submit) as a single fake delay, without calling any real APIs.
+   * When the backend is ready, swap the `of(mockResult)` body back to the
+   * real switchMap chain below.
    *
    * Returns a `LoanSanctionResponse` with quote details merged in.
    */
   submitLoanApplication(payload: LoanApplicationPayload): Observable<LoanSanctionResponse> {
-    // Step 1: Init journey
+    // Compute realistic EMI values locally (same formula as calculateLoanQuote mock)
+    const r = this.getProductRate(payload.productCode) / 12 / 100;
+    const n = payload.requestedTenureMonths;
+    const P = payload.requestedAmount;
+    const pow = Math.pow(1 + r, n);
+    const emi = P > 0 && n > 0 ? Math.round(((P * (r * pow)) / (pow - 1)) * 100) / 100 : 0;
+    const processingFee = Math.round(P * 0.01);
+    const quoteRef = `QUOTE-${Date.now().toString().slice(-10)}`;
+    const appRef = `LOAN-${new Date().getFullYear()}-${Math.floor(10000000 + Math.random() * 89999999)}`;
+
+    const mockResult: LoanSanctionResponse = {
+      applicationReference: appRef,
+      applicationStatus: 'SUBMITTED',
+      submittedChannel: 'WEB',
+      maskedCreditAccount: 'XXXXXXXX4521',
+      creditAccountReference: payload.creditAccountReference,
+      submittedAt: Date.now(),
+      // Quote details
+      finalFacilityAmount: P - processingFee,
+      indicativeInterestRate: this.getProductRate(payload.productCode),
+      estimatedEmi: emi,
+      processingFee,
+      quoteReference: quoteRef,
+      productName: this.productCodeToName(payload.productCode),
+      requestedTenureMonths: n,
+    };
+
+    // Simulate realistic multi-step processing time (≈ 2.2 s total)
+    return of(mockResult).pipe(delay(2200));
+  }
+
+  /* ── Real multi-step orchestration (restore when backend is live) ──────────
+  submitLoanApplication(payload: LoanApplicationPayload): Observable<LoanSanctionResponse> {
     return this.initLoanJourney(payload.productCode).pipe(
-      // Step 2: Save personal details
       switchMap((journey) =>
         this.saveLoanPersonalDetails({
           applicationReference: journey.applicationReference ?? payload.applicationReference,
@@ -495,7 +526,6 @@ export class LoanService {
           dateOfBirth: payload.dateOfBirth,
         }),
       ),
-      // Step 3: Calculate quote
       switchMap((saved) =>
         this.calculateLoanQuote({
           applicationReference: saved.applicationReference,
@@ -504,10 +534,9 @@ export class LoanService {
           requestedTenureMonths: payload.requestedTenureMonths,
         }),
       ),
-      // Step 4: Save loan requirement
       switchMap((quote) =>
         this.saveLoanRequirement({
-          applicationReference: quote.quoteReference.replace('QUOTE', 'LOAN'), // use app ref
+          applicationReference: quote.quoteReference.replace('QUOTE', 'LOAN'),
           quoteReference: quote.quoteReference,
           productCode: payload.productCode,
           requestedAmount: payload.requestedAmount,
@@ -515,7 +544,6 @@ export class LoanService {
           loanPurpose: payload.loanPurpose,
         }).pipe(map((saved) => ({ saved, quote }))),
       ),
-      // Step 5: Submit application
       switchMap(({ saved, quote }) =>
         this.submitLoanApplicationDirect({
           applicationReference: saved.applicationReference,
@@ -538,6 +566,7 @@ export class LoanService {
       ),
     );
   }
+  ─────────────────────────────────────────────────────────────────────────── */
 
   // ─────────────────────────────────────────────────────────────────────────
   // UI utility methods
@@ -637,8 +666,6 @@ export class LoanService {
     };
     return map[code] ?? code;
   }
-
-
 
   /**
    * Custom loan enquiry flow (non-banking-MS, internal ticket system).
