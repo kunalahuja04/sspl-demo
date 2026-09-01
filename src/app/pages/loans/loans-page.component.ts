@@ -342,6 +342,11 @@ export class LoansPageComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
+    // Always reset to loading state on entry — service is singleton so isPageLoading
+    // stays false after first visit without this reset.
+    this.loanService.isPageLoading.set(true);
+    this.draftDialogDismissed = false;
+
     if (!this.profileService.profile()) {
       this.profileService.fetchProfile().subscribe();
     }
@@ -353,11 +358,9 @@ export class LoansPageComponent implements OnInit, OnDestroy {
     this.loanService.listLoanApplications().subscribe((apps) => {
       const drafts = apps.filter((a) => a.applicationStatus === 'DRAFT');
       if (drafts.length > 0 && !this.draftDialogDismissed) {
-        // Show the continue-dialog after a brief delay so the page renders first
-        setTimeout(() => {
-          this.activeDraft.set(drafts[0]);
-          this.showDraftDialog.set(true);
-        }, 1200);
+        // Show draft dialog immediately — the page skeleton covers the transition
+        this.activeDraft.set(drafts[0]);
+        this.showDraftDialog.set(true);
       }
     });
 

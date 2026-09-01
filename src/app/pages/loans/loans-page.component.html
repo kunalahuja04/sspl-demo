@@ -193,10 +193,135 @@
         </div>
       </div>
 
+      <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+      <!-- ── PAGE SKELETON LOADER (shown while loan data is fetching) ──────── -->
+      <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+      @if (isPageLoading()) {
+      <div class="space-y-6 animate-pulse">
+
+        <!-- Offer pill row skeleton -->
+        <div class="flex items-center gap-3 overflow-hidden">
+          @for (i of [1,2,3,4]; track i) {
+          <div class="h-20 rounded-2xl bg-bg-surface border border-border-default flex-1 min-w-[120px]">
+            <div class="p-4 space-y-2">
+              <div class="h-3 w-16 rounded bg-bg-muted"></div>
+              <div class="h-5 w-24 rounded bg-bg-muted"></div>
+              <div class="h-2.5 w-12 rounded bg-bg-muted"></div>
+            </div>
+          </div>
+          }
+        </div>
+
+        <!-- Main 2-col layout skeleton -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+          <!-- Left controls col -->
+          <div class="lg:col-span-7 space-y-5">
+
+            <!-- Amount slider card -->
+            <div class="p-6 rounded-3xl bg-bg-surface border border-border-default space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="space-y-2">
+                  <div class="h-3 w-28 rounded bg-bg-muted"></div>
+                  <div class="h-2.5 w-40 rounded bg-bg-muted"></div>
+                </div>
+                <div class="h-8 w-28 rounded-xl bg-bg-muted"></div>
+              </div>
+              <div class="h-3 w-full rounded-full bg-bg-muted"></div>
+              <div class="flex gap-2">
+                @for (i of [1,2,3,4]; track i) {
+                <div class="h-7 w-20 rounded-lg bg-bg-muted"></div>
+                }
+              </div>
+            </div>
+
+            <!-- Tenure chips card -->
+            <div class="p-6 rounded-3xl bg-bg-surface border border-border-default space-y-4">
+              <div class="h-3 w-36 rounded bg-bg-muted"></div>
+              <div class="grid grid-cols-5 gap-3">
+                @for (i of [1,2,3,4,5]; track i) {
+                <div class="h-16 rounded-2xl bg-bg-muted"></div>
+                }
+              </div>
+            </div>
+
+            <!-- Offer highlights card -->
+            <div class="p-6 rounded-3xl bg-bg-surface border border-border-default space-y-3">
+              <div class="h-3 w-32 rounded bg-bg-muted"></div>
+              @for (i of [1,2,3]; track i) {
+              <div class="flex items-center gap-3 py-2 border-b border-border-default/40">
+                <div class="w-8 h-8 rounded-full bg-bg-muted shrink-0"></div>
+                <div class="flex-1 space-y-1.5">
+                  <div class="h-3 w-36 rounded bg-bg-muted"></div>
+                  <div class="h-2.5 w-24 rounded bg-bg-muted"></div>
+                </div>
+                <div class="h-3 w-16 rounded bg-bg-muted"></div>
+              </div>
+              }
+            </div>
+          </div>
+
+          <!-- Right EMI panel col -->
+          <div class="lg:col-span-5 space-y-5">
+
+            <!-- EMI dark card skeleton -->
+            <div class="p-7 rounded-3xl bg-[#0B1E36] space-y-5">
+              <div class="space-y-2">
+                <div class="h-2.5 w-28 rounded bg-white/20"></div>
+                <div class="h-12 w-48 rounded-xl bg-white/20"></div>
+                <div class="h-2.5 w-36 rounded bg-white/15"></div>
+              </div>
+              <div class="p-4 rounded-2xl bg-white/10 space-y-3">
+                @for (i of [1,2,3]; track i) {
+                <div class="flex items-center justify-between">
+                  <div class="h-3 w-32 rounded bg-white/20"></div>
+                  <div class="h-3 w-20 rounded bg-white/20"></div>
+                </div>
+                }
+              </div>
+              <div class="h-3 w-40 rounded bg-white/15"></div>
+            </div>
+
+            <!-- 3-stat strip skeleton -->
+            <div class="grid grid-cols-3 gap-3">
+              @for (i of [1,2,3]; track i) {
+              <div class="p-4 rounded-2xl bg-bg-surface border border-border-default space-y-2">
+                <div class="h-2.5 w-16 rounded bg-bg-muted mx-auto"></div>
+                <div class="h-5 w-20 rounded bg-bg-muted mx-auto"></div>
+              </div>
+              }
+            </div>
+
+            <!-- Benefits card skeleton -->
+            <div class="p-5 rounded-3xl bg-bg-surface border border-border-default space-y-3">
+              @for (i of [1,2,3,4]; track i) {
+              <div class="flex items-center gap-3">
+                <div class="w-6 h-6 rounded-full bg-bg-muted shrink-0"></div>
+                <div class="h-3 flex-1 rounded bg-bg-muted"></div>
+              </div>
+              }
+            </div>
+
+            <!-- CTA button skeleton -->
+            <div class="h-14 w-full rounded-2xl bg-bg-muted"></div>
+          </div>
+        </div>
+
+        <!-- Loading status pill -->
+        <div class="flex items-center justify-center gap-2.5 py-2">
+          <span class="w-2 h-2 rounded-full bg-[#0B1E36]/40 animate-bounce [animation-delay:-0.3s]"></span>
+          <span class="w-2 h-2 rounded-full bg-[#0B1E36]/40 animate-bounce [animation-delay:-0.15s]"></span>
+          <span class="w-2 h-2 rounded-full bg-[#0B1E36]/40 animate-bounce"></span>
+          <span class="text-body-xs text-muted font-semibold ml-1">Fetching your loan offers &amp; applications…</span>
+        </div>
+      </div>
+      }
+
       <!-- ========================================================================================= -->
       <!-- ── SECTION A: PRE-APPROVED LOAN FLOW (Enterprise Web Experience) ── -->
       <!-- ========================================================================================= -->
-      @if (activeViewMode() === 'pre_approved') {
+      @if (!isPageLoading() && activeViewMode() === 'pre_approved') {
+
 
       <!-- Horizontal Stepper (Visible during active application wizard) -->
       @if (preApprovedStep() !== 'overview' && preApprovedStep() !== 'success') {
@@ -1209,7 +1334,7 @@
       <!-- ========================================================================================= -->
       <!-- ── SECTION B: ENQUIRE DIFFERENT LOAN FLOW (Enterprise Web Experience) ── -->
       <!-- ========================================================================================= -->
-      @if (activeViewMode() === 'custom_enquiry') {
+      @if (!isPageLoading() && activeViewMode() === 'custom_enquiry') {
 
       <!-- ────────────────── STEP 1: CONFIGURE LOAN REQUIREMENT ────────────────── -->
       @if (customStep() === 'configure') {
