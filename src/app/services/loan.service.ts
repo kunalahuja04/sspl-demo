@@ -317,8 +317,18 @@ export class LoanService {
     return this.http
       .post<ApiResponse<LoanQuoteResponseBody>>(API_ENDPOINTS.BANKING.LOAN_QUOTE, req)
       .pipe(
-        map((res) => res.body!.loanQuoteCalculationResponse),
-        catchError(() => of(mockQuote).pipe(delay(700))),
+        map((res) => {
+          if (res.header?.status === 'error' || !res.body?.loanQuoteCalculationResponse) {
+            throw new Error(res.header?.errorMessage || 'Failed to calculate quote');
+          }
+          return res.body.loanQuoteCalculationResponse;
+        }),
+        catchError((err) => {
+          if (environment.useMockApi) {
+            return of(mockQuote).pipe(delay(700));
+          }
+          return throwError(() => err);
+        }),
       );
   }
 
@@ -344,6 +354,11 @@ export class LoanService {
         this.isQuoteLoading.set(false);
         return quote;
       }),
+      catchError((err) => {
+        this.isQuoteLoading.set(false);
+        console.error('[LoanService] calculateLoanQuote failed:', err);
+        return throwError(() => err);
+      }),
     );
   }
 
@@ -360,9 +375,31 @@ export class LoanService {
     const req = this.reqBuilder.buildRequest<LoanRequirementSaveRequest>({
       loanRequirementSaveRequest: payload,
     });
+    const mockSaveState: LoanSectionSaveState = {
+      savedSection: 'LOAN_REQUIREMENT',
+      nextSection: 'REVIEW',
+      applicationReference: payload.applicationReference,
+      applicationStatus: 'DRAFT',
+      lastUpdatedChannel: 'WEB',
+      sourceChannel: 'WEB',
+      updatedAt: 1788167787872,
+    };
     return this.http
       .post<ApiResponse<LoanRequirementSaveResponseBody>>(API_ENDPOINTS.BANKING.SAVE_LOAN, req)
-      .pipe(map((res) => res.body!.loanSectionSaveResponse));
+      .pipe(
+        map((res) => {
+          if (res.header?.status === 'error' || !res.body?.loanSectionSaveResponse) {
+            throw new Error(res.header?.errorMessage || 'Failed to save loan requirement');
+          }
+          return res.body.loanSectionSaveResponse;
+        }),
+        catchError((err) => {
+          if (environment.useMockApi) {
+            return of(mockSaveState).pipe(delay(700));
+          }
+          return throwError(() => err);
+        }),
+      );
   }
 
   // ─────────────────────────────────────────────────────────────────────────

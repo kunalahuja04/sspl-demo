@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, takeUntil, switchMap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, takeUntil, switchMap, catchError } from 'rxjs/operators';
 import { SideNavComponent } from '../../components/side-nav/side-nav.component';
 import { DashboardHeaderComponent } from '../dashboard/components/dashboard-header/dashboard-header.component';
 import { LoanService } from '../../services/loan.service';
@@ -132,6 +132,7 @@ export class LoansPageComponent implements OnInit, OnDestroy {
   readonly appliedAmount = signal<number>(300000);
   readonly tenureMonths = signal<number | null>(null);
   readonly tenureValidationError = signal<boolean>(false);
+  readonly isSavingRequirement = signal<boolean>(false);
   readonly termsAgreed = signal<boolean>(false);
   readonly isDisbursing = signal<boolean>(false);
   readonly sanctionResponse = signal<LoanSanctionResponse | null>(null);
@@ -422,13 +423,25 @@ export class LoansPageComponent implements OnInit, OnDestroy {
         distinctUntilChanged((a, b) => a.amount === b.amount && a.tenure === b.tenure),
         switchMap(({ amount, tenure }) => {
           if (!tenure || tenure <= 0 || amount <= 0) return [];
+          const appRef = this.currentApplicationReference();
+          if (!appRef) {
+            console.warn('[LoansPage] No applicationReference available for calculate/loan/quote');
+            return [];
+          }
           const offer = this.selectedOffer();
-          return this.loanService.recalculateQuote(
-            'DRAFT-SESSION-REF',
-            offer.productCode as LoanProductCode,
-            amount,
-            tenure,
-          );
+          return this.loanService
+            .recalculateQuote(
+              appRef,
+              offer.productCode as LoanProductCode,
+              amount,
+              tenure,
+            )
+            .pipe(
+              catchError((err) => {
+                console.error('[LoansPage] calculateLoanQuote failed:', err);
+                return [];
+              }),
+            );
         }),
         takeUntil(this.destroy$),
       )
@@ -694,7 +707,8 @@ export class LoansPageComponent implements OnInit, OnDestroy {
     this.draftDialogDismissed = true;
 
     // Find and select the matching offer
-    const productCode = journey?.requestedProductCode || draft?.productCode || this.selectedOffer().productCode;
+    const productCode =
+      journey?.requestedProductCode || draft?.productCode || this.selectedOffer().productCode;
     const matchedOffer = this.allOffers().find((o) => o.productCode === productCode);
     if (matchedOffer) {
       this.selectedOffer.set(matchedOffer);
@@ -726,14 +740,17 @@ export class LoansPageComponent implements OnInit, OnDestroy {
 
     // Immediately trigger a quote recalculation for the restored values if in customise
     if (resumeStep === 'customise' && this.tenureMonths() && this.appliedAmount() > 0) {
-      this.loanService
-        .recalculateQuote(
-          appRef ?? 'DRAFT-SESSION-REF',
-          productCode as LoanProductCode,
-          this.appliedAmount(),
-          this.tenureMonths()!,
-        )
-        .subscribe();
+      const activeRef = this.currentApplicationReference() ?? appRef;
+      if (activeRef) {
+        this.loanService
+          .recalculateQuote(
+            activeRef,
+            productCode as LoanProductCode,
+            this.appliedAmount(),
+            this.tenureMonths()!,
+          )
+          .subscribe();
+      }
     }
   }
 
@@ -767,6 +784,11 @@ export class LoansPageComponent implements OnInit, OnDestroy {
     return map[section] ?? 'the beginning';
   }
 
+  /**
+   * On click of 'Verify documents' button:
+   * Calls /banking/save/loan/requirement with persisting applicationReference before advancing to 'verify_docs' step.
+   * Keeps existing flow intact (Verify Documents -> Terms & Consent -> Confirm & Disburse).
+   */
   goToVerifyDocs(): void {
     if (!this.tenureMonths() || this.tenureMonths()! <= 0) {
       this.tenureValidationError.set(true);
@@ -782,9 +804,55 @@ export class LoansPageComponent implements OnInit, OnDestroy {
       }
       return;
     }
-    this.tenureValidationError.set(false);
-    this.preApprovedStep.set('verify_docs');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    const appRef = this.currentApplicationReference();
+    if (!appRef) {
+      this.showToast('error', 'Loan application reference is missing. Please save personal details first.');
+      return;
+    }
+
+    const quoteRef =
+      this.loanService.liveQuote()?.quoteReference ||
+      `QUOTE-${new Date().getFullYear()}-${Math.floor(10000000 + Math.random() * 89999999)}`;
+
+    const purposeMap: Record<string, string> = {
+      PERSONAL_LOAN: 'Personal requirement',
+      HOME_LOAN: 'Home purchase / renovation requirement',
+      VEHICLE_LOAN: 'Vehicle purchase requirement',
+      BUSINESS_LOAN: 'Business expansion requirement',
+    };
+
+    const payload = {
+      applicationReference: appRef,
+      quoteReference: quoteRef,
+      productCode: this.selectedOffer().productCode as LoanProductCode,
+      requestedAmount: this.appliedAmount(),
+      requestedTenureMonths: this.tenureMonths()!,
+      loanPurpose: purposeMap[this.selectedOffer().productCode] || `${this.selectedOffer().title} requirement`,
+    };
+
+    this.isSavingRequirement.set(true);
+    this.loanService.saveLoanRequirement(payload).subscribe({
+      next: (res) => {
+        this.isSavingRequirement.set(false);
+        if (res?.applicationReference) {
+          this.currentApplicationReference.set(res.applicationReference);
+        }
+        this.showToast('success', 'Loan requirements saved successfully!');
+        this.tenureValidationError.set(false);
+        // Do not change next steps (Verify Document -> Terms & Consent -> Confirm)
+        this.preApprovedStep.set('verify_docs');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      },
+      error: (err) => {
+        this.isSavingRequirement.set(false);
+        const errMsg =
+          err?.error?.header?.errorMessage ||
+          err?.message ||
+          'Failed to save loan requirements. Please retry.';
+        this.showToast('error', errMsg);
+      },
+    });
   }
 
   goToTerms(): void {

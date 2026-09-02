@@ -1155,16 +1155,21 @@
               <span>Back to Personal Details</span>
             </button>
 
-            <button type="button" (click)="goToVerifyDocs()" [disabled]="!tenureMonths()"
+            <button type="button" (click)="goToVerifyDocs()" [disabled]="!tenureMonths() || isSavingRequirement()"
               class="px-8 py-3.5 rounded-2xl font-bold text-body-md shadow-md transition-all flex items-center gap-2"
-              [class.bg-[#0B1E36]]="!!tenureMonths()" [class.hover:bg-[#0B1E36]/90]="!!tenureMonths()"
-              [class.text-white]="!!tenureMonths()" [class.cursor-pointer]="!!tenureMonths()"
-              [class.bg-gray-300]="!tenureMonths()" [class.text-gray-500]="!tenureMonths()"
-              [class.cursor-not-allowed]="!tenureMonths()" [class.opacity-60]="!tenureMonths()">
+              [class.bg-[#0B1E36]]="!!tenureMonths() && !isSavingRequirement()" [class.hover:bg-[#0B1E36]/90]="!!tenureMonths() && !isSavingRequirement()"
+              [class.text-white]="!!tenureMonths()" [class.cursor-pointer]="!!tenureMonths() && !isSavingRequirement()"
+              [class.bg-gray-300]="!tenureMonths() || isSavingRequirement()" [class.text-gray-500]="!tenureMonths() || isSavingRequirement()"
+              [class.cursor-not-allowed]="!tenureMonths() || isSavingRequirement()" [class.opacity-60]="!tenureMonths() || isSavingRequirement()">
+              @if (isSavingRequirement()) {
+              <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+              <span>Saving Requirements…</span>
+              } @else {
               <span>Verify Documents</span>
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="m9 18 6-6-6-6" />
               </svg>
+              }
             </button>
           </div>
 
