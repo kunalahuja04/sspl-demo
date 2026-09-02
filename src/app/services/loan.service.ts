@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, delay, map, switchMap, catchError } from 'rxjs';
+import { Observable, of, delay, map, switchMap, catchError, throwError } from 'rxjs';
+import { environment } from '../../environments/environment';
 import { ApiRequestBuilderService } from '../core/services/api-request-builder.service';
 import { ApiResponse } from '../models/api-envelope.model';
 import {
@@ -246,28 +247,37 @@ export class LoanService {
   saveLoanPersonalDetails(
     details: LoanPersonalDetailsSaveRequest['loanPersonalDetailsSaveRequest'],
   ): Observable<LoanSectionSaveState> {
+    const payload: LoanPersonalDetailsSaveRequest['loanPersonalDetailsSaveRequest'] = {
+      ...details,
+      applicationReference: details.applicationReference ?? null,
+    };
     const req = this.reqBuilder.buildRequest<LoanPersonalDetailsSaveRequest>({
-      loanPersonalDetailsSaveRequest: details,
+      loanPersonalDetailsSaveRequest: payload,
     });
-    const appRef =
-      details.applicationReference ??
-      `LOAN-${new Date().getFullYear()}-${Math.floor(10000000 + Math.random() * 89999999)}`;
     const mockSaveState: LoanSectionSaveState = {
       savedSection: 'PERSONAL_DETAILS',
       nextSection: 'LOAN_REQUIREMENT',
-      applicationReference: appRef,
+      applicationReference: payload.applicationReference ?? 'LOAN-2026-00000182',
       applicationStatus: 'DRAFT',
       lastUpdatedChannel: 'WEB',
       sourceChannel: 'WEB',
-      updatedAt: Date.now(),
+      updatedAt: 1788167310214,
     };
     return this.http
-      .post<
-        ApiResponse<LoanPersonalDetailsSaveResponseBody>
-      >(API_ENDPOINTS.BANKING.SAVE_DETAILS, req)
+      .post<ApiResponse<LoanPersonalDetailsSaveResponseBody>>(API_ENDPOINTS.BANKING.SAVE_DETAILS, req)
       .pipe(
-        map((res) => res.body!.loanSectionSaveResponse),
-        catchError(() => of(mockSaveState).pipe(delay(700))),
+        map((res) => {
+          if (res.header?.status === 'error' || !res.body?.loanSectionSaveResponse) {
+            throw new Error(res.header?.errorMessage || 'Failed to save personal details');
+          }
+          return res.body.loanSectionSaveResponse;
+        }),
+        catchError((err) => {
+          if (environment.useMockApi) {
+            return of(mockSaveState).pipe(delay(700));
+          }
+          return throwError(() => err);
+        }),
       );
   }
 

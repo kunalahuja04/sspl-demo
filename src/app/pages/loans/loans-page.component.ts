@@ -396,6 +396,7 @@ export class LoansPageComponent implements OnInit, OnDestroy {
     // stays false after first visit without this reset.
     this.loanService.isPageLoading.set(true);
     this.draftDialogDismissed = false;
+    this.currentApplicationReference.set(null);
 
     if (!this.profileService.profile()) {
       this.profileService.fetchProfile().subscribe();
@@ -471,6 +472,7 @@ export class LoansPageComponent implements OnInit, OnDestroy {
   // ── Pre-Approved Flow Handlers ──────────────────────────────────
   selectPreApprovedOffer(offer: PreApprovedLoanOffer): void {
     this.selectedOffer.set(offer);
+    this.currentApplicationReference.set(null);
     const defAmt = Math.min(
       Math.max(offer.defaultAmount || offer.minAmount, offer.minAmount),
       offer.maxAmount,
@@ -630,7 +632,7 @@ export class LoansPageComponent implements OnInit, OnDestroy {
     this.isSavingPersonalDetails.set(true);
 
     const payload = {
-      applicationReference: this.currentApplicationReference(),
+      applicationReference: this.currentApplicationReference() ?? null,
       productCode: this.selectedOffer().productCode,
       fullName,
       mobileNumber: mobile,
@@ -647,13 +649,30 @@ export class LoansPageComponent implements OnInit, OnDestroy {
         if (res?.applicationReference) {
           this.currentApplicationReference.set(res.applicationReference);
         }
-        this.showToast('success', 'Personal details verified & saved successfully!');
-        this.preApprovedStep.set('customise');
+        this.showToast('success', 'Personal details saved successfully!');
+
+        // Route to customise loan when nextSection is LOAN_REQUIREMENT
+        if (res?.nextSection === 'LOAN_REQUIREMENT' || !res?.nextSection) {
+          this.preApprovedStep.set('customise');
+        } else {
+          this.preApprovedStep.set('customise');
+        }
         window.scrollTo({ top: 0, behavior: 'smooth' });
       },
-      error: () => {
+      error: (err) => {
         this.isSavingPersonalDetails.set(false);
-        this.showToast('error', 'Failed to save personal details. Please retry.');
+        const errMsg =
+          err?.error?.header?.errorMessage ||
+          err?.message ||
+          'Failed to save personal details. Please retry.';
+        if (
+          err?.error?.header?.errorCode === '5721' ||
+          errMsg.includes('not found') ||
+          errMsg.includes('5721')
+        ) {
+          this.currentApplicationReference.set(null);
+        }
+        this.showToast('error', errMsg);
       },
     });
   }
