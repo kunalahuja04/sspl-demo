@@ -21,6 +21,7 @@ import {
   LoanEnquiryResponse,
   LoanProductCode,
   LoanApplicationSummary,
+  LoanApplicationStatus,
   LoanJourneyState,
   LoanQuoteCalculation,
 } from '../../models';
@@ -97,6 +98,8 @@ export class LoansPageComponent implements OnInit, OnDestroy {
   readonly activeDraft = signal<LoanApplicationSummary | null>(null);
   /** Journey state returned by initLoanJourney (carries applicationAlreadyExists). */
   readonly journeyState = signal<LoanJourneyState | null>(null);
+  /** True while checking /loan/journey on button click. */
+  readonly isStartingJourney = signal<boolean>(false);
   /** Suppress the dialog for the current page session after user dismisses. */
   private draftDialogDismissed = false;
 
@@ -408,15 +411,8 @@ export class LoansPageComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Load existing loan applications to hydrate activeLoans + draftApplications signals
-    this.loanService.listLoanApplications().subscribe((apps) => {
-      const drafts = apps.filter((a) => a.applicationStatus === 'DRAFT');
-      if (drafts.length > 0 && !this.draftDialogDismissed) {
-        // Show draft dialog immediately — the page skeleton covers the transition
-        this.activeDraft.set(drafts[0]);
-        this.showDraftDialog.set(true);
-      }
-    });
+    // Load existing loan applications to hydrate activeLoans + draftApplications signals (no prompt on product list)
+    this.loanService.listLoanApplications().subscribe();
 
     // Wire debounced quote recalculation: slider/tenure changes → API call with 800ms debounce
     this.quoteParams$
@@ -515,19 +511,79 @@ export class LoansPageComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Triggered on clicking 'Customise & Apply Now'.
+   * Calls /loan/journey with the selected productCode.
+   * If applicationAlreadyExists is true -> prompts "Continue where you left off".
+   * If applicationAlreadyExists is false -> lands on Personal Details without customer submitted data and applicationReference: null.
+   */
   startPreApprovedFlow(): void {
-    this.tenureMonths.set(null); // Reset tenure to ensure user picks one
-    this.tenureValidationError.set(false);
-    this.personalFormErrors.set({});
-    this.personalFullName.set('');
-    this.personalMobileNumber.set('');
-    this.personalFatherName.set('');
-    this.personalEmailId.set('');
-    this.personalAddressLine.set('');
-    this.personalPostalCode.set('');
-    this.personalDateOfBirth.set('');
-    this.preApprovedStep.set('personal_details');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const productCode = this.selectedOffer().productCode as LoanProductCode;
+    this.isStartingJourney.set(true);
+
+    this.loanService.initLoanJourney(productCode).subscribe({
+      next: (journey) => {
+        this.isStartingJourney.set(false);
+        this.journeyState.set(journey);
+
+        if (journey.applicationAlreadyExists && journey.applicationReference) {
+          // applicationAlreadyExists is true -> prompt "Continue where you left off"
+          this.currentApplicationReference.set(journey.applicationReference);
+          const matchedOffer =
+            this.allOffers().find((o) => o.productCode === journey.requestedProductCode) ||
+            this.selectedOffer();
+          this.activeDraft.set({
+            applicationReference: journey.applicationReference,
+            productCode: journey.requestedProductCode,
+            productName: journey.applicationProductName || matchedOffer.title,
+            requestedAmount: matchedOffer.defaultAmount || matchedOffer.minAmount,
+            requestedTenureMonths: matchedOffer.minTenureMonths || 36,
+            estimatedEmi: 0,
+            applicationStatus: (journey.applicationStatus as LoanApplicationStatus) || 'DRAFT',
+            statusDisplayName: 'Draft',
+            currentSection: journey.currentSection || 'PERSONAL_DETAILS',
+            maskedCreditAccount: 'XXXXXXXX0002',
+            lastUpdatedChannel: journey.lastUpdatedChannel ?? 'WEB',
+            sourceChannel: journey.sourceChannel ?? 'WEB',
+            createdAt: Date.now(),
+            submittedAt: 0,
+            updatedAt: journey.updatedAt ?? Date.now(),
+          });
+          this.showDraftDialog.set(true);
+        } else {
+          // applicationAlreadyExists is false -> land on Personal Details without submitted data and applicationReference: null
+          this.currentApplicationReference.set(null);
+          this.personalFullName.set('');
+          this.personalMobileNumber.set('');
+          this.personalFatherName.set('');
+          this.personalEmailId.set('');
+          this.personalAddressLine.set('');
+          this.personalPostalCode.set('');
+          this.personalDateOfBirth.set('');
+          this.personalFormErrors.set({});
+          this.tenureMonths.set(null);
+          this.tenureValidationError.set(false);
+          this.preApprovedStep.set('personal_details');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      },
+      error: () => {
+        this.isStartingJourney.set(false);
+        this.currentApplicationReference.set(null);
+        this.personalFullName.set('');
+        this.personalMobileNumber.set('');
+        this.personalFatherName.set('');
+        this.personalEmailId.set('');
+        this.personalAddressLine.set('');
+        this.personalPostalCode.set('');
+        this.personalDateOfBirth.set('');
+        this.personalFormErrors.set({});
+        this.tenureMonths.set(null);
+        this.tenureValidationError.set(false);
+        this.preApprovedStep.set('personal_details');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      },
+    });
   }
 
   /** Saves primary applicant personal details via /save/loan/personaldetails API then advances to customise step. */
@@ -610,53 +666,75 @@ export class LoansPageComponent implements OnInit, OnDestroy {
    */
   resumeDraftApplication(): void {
     const draft = this.activeDraft();
-    if (!draft) return;
-
+    const journey = this.journeyState();
+    const appRef = journey?.applicationReference || draft?.applicationReference;
+    if (appRef) {
+      this.currentApplicationReference.set(appRef);
+    }
     this.showDraftDialog.set(false);
     this.draftDialogDismissed = true;
 
     // Find and select the matching offer
-    const matchedOffer = this.allOffers().find((o) => o.productCode === draft.productCode);
+    const productCode = journey?.requestedProductCode || draft?.productCode || this.selectedOffer().productCode;
+    const matchedOffer = this.allOffers().find((o) => o.productCode === productCode);
     if (matchedOffer) {
       this.selectedOffer.set(matchedOffer);
-      this.appliedAmount.set(draft.requestedAmount);
-      this.tenureMonths.set(draft.requestedTenureMonths);
-      this.loanService.liveQuote.set(null); // will be recalculated
+      if (draft && draft.requestedAmount > 0) {
+        this.appliedAmount.set(draft.requestedAmount);
+      }
+      if (draft && draft.requestedTenureMonths > 0) {
+        this.tenureMonths.set(draft.requestedTenureMonths);
+      }
+      this.loanService.liveQuote.set(null);
     }
 
     // Navigate to the correct wizard step based on currentSection
+    const currentSec = journey?.currentSection || draft?.currentSection || 'PERSONAL_DETAILS';
     const stepMap: Record<string, PreApprovedStep> = {
       PERSONAL_DETAILS: 'personal_details',
       LOAN_REQUIREMENT: 'customise',
-      REVIEW: 'terms',
+      REVIEW: 'verify_docs',
       SUBMITTED: 'confirm',
     };
-    const resumeStep: PreApprovedStep = stepMap[draft.currentSection] ?? 'customise';
+    const resumeStep: PreApprovedStep = stepMap[currentSec] ?? 'personal_details';
     this.preApprovedStep.set(resumeStep);
     this.activeViewMode.set('pre_approved');
     this.showToast(
       'info',
-      `Resuming your ${draft.productName} application from ${this.getDraftSectionLabel(draft.currentSection)}.`,
+      `Resuming application ${appRef} from ${this.getDraftSectionLabel(currentSec)}.`,
     );
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // Immediately trigger a quote recalculation for the restored values
-    if (draft.requestedTenureMonths > 0 && draft.requestedAmount > 0) {
+    // Immediately trigger a quote recalculation for the restored values if in customise
+    if (resumeStep === 'customise' && this.tenureMonths() && this.appliedAmount() > 0) {
       this.loanService
         .recalculateQuote(
-          draft.applicationReference,
-          draft.productCode,
-          draft.requestedAmount,
-          draft.requestedTenureMonths,
+          appRef ?? 'DRAFT-SESSION-REF',
+          productCode as LoanProductCode,
+          this.appliedAmount(),
+          this.tenureMonths()!,
         )
         .subscribe();
     }
   }
 
-  /** Dismisses the draft dialog without resuming and suppresses it for the session. */
+  /** Dismisses the draft dialog to start fresh with blank personal details and applicationReference: null. */
   dismissDraftDialog(): void {
     this.showDraftDialog.set(false);
     this.draftDialogDismissed = true;
+    this.currentApplicationReference.set(null);
+    this.personalFullName.set('');
+    this.personalMobileNumber.set('');
+    this.personalFatherName.set('');
+    this.personalEmailId.set('');
+    this.personalAddressLine.set('');
+    this.personalPostalCode.set('');
+    this.personalDateOfBirth.set('');
+    this.personalFormErrors.set({});
+    this.tenureMonths.set(null);
+    this.tenureValidationError.set(false);
+    this.preApprovedStep.set('personal_details');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   /** Converts a backend `currentSection` value to a human-readable step label. */

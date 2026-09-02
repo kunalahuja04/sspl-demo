@@ -89,21 +89,21 @@ export class LoanService {
   // ── Mock data: simulates what the backend returns for this demo customer ──
   private readonly MOCK_APPLICATIONS: LoanApplicationSummary[] = [
     {
-      applicationReference: this.MOCK_DRAFT_REF,
+      applicationReference: 'LOAN-2026-00000182',
       productCode: 'PERSONAL_LOAN',
       productName: 'Personal Loan',
       requestedAmount: 1400000,
       requestedTenureMonths: 36,
       estimatedEmi: 46166.41,
-      applicationStatus: 'DRAFT',
-      statusDisplayName: 'Draft',
-      currentSection: 'LOAN_REQUIREMENT',
+      applicationStatus: 'SUBMITTED',
+      statusDisplayName: 'Submitted',
+      currentSection: 'SUBMITTED',
       maskedCreditAccount: 'XXXXXXXX0002',
       lastUpdatedChannel: 'WEB',
       sourceChannel: 'WEB',
-      createdAt: Date.now() - 2 * 60 * 60 * 1000, // 2 hours ago
-      submittedAt: 0,
-      updatedAt: Date.now() - 45 * 60 * 1000, // 45 minutes ago
+      createdAt: Date.now() - 2 * 60 * 60 * 1000,
+      submittedAt: Date.now() - 1 * 60 * 60 * 1000,
+      updatedAt: Date.now() - 45 * 60 * 1000,
     },
     {
       applicationReference: 'LOAN-2026-00000161',
@@ -213,24 +213,19 @@ export class LoanService {
     const req = this.reqBuilder.buildRequest<LoanJourneyRequest>({
       loanJourneyRequest: { productCode },
     });
-    // Use mock when backend unavailable — check if a DRAFT exists for this productCode
-    const existingDraft = this.MOCK_APPLICATIONS.find(
-      (a) => a.productCode === productCode && a.applicationStatus === 'DRAFT',
-    );
     const mockJourney: LoanJourneyState = {
       requestedProductCode: productCode,
       productMismatch: false,
-      applicationAlreadyExists: !!existingDraft,
-      currentSection:
-        (existingDraft?.currentSection as LoanJourneyState['currentSection']) ?? 'PERSONAL_DETAILS',
-      applicationReference: existingDraft?.applicationReference ?? null,
-      applicationProductCode: existingDraft ? productCode : null,
-      applicationProductName: existingDraft?.productName ?? null,
-      applicationStatus: existingDraft ? 'DRAFT' : null,
-      lastCompletedSection: existingDraft ? 'PERSONAL_DETAILS' : null,
-      lastUpdatedChannel: existingDraft?.lastUpdatedChannel ?? null,
-      sourceChannel: existingDraft?.sourceChannel ?? null,
-      updatedAt: existingDraft?.updatedAt ?? null,
+      applicationAlreadyExists: false,
+      currentSection: 'PERSONAL_DETAILS',
+      applicationProductCode: null,
+      applicationProductName: null,
+      applicationStatus: null,
+      applicationReference: null,
+      lastCompletedSection: null,
+      lastUpdatedChannel: null,
+      sourceChannel: null,
+      updatedAt: null,
     };
     return this.http
       .post<ApiResponse<LoanJourneyResponseBody>>(API_ENDPOINTS.BANKING.LOAN_JOURNEY, req)

@@ -650,12 +650,17 @@
                 </div>
               </div>
 
-              <button type="button" (click)="startPreApprovedFlow()"
-                class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#F5BF45] to-[#EAB308] hover:from-[#EAB308] hover:to-[#D97706] text-[#0B1E36] font-bold text-body-md shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer">
+              <button type="button" (click)="startPreApprovedFlow()" [disabled]="isStartingJourney()"
+                class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#F5BF45] to-[#EAB308] hover:from-[#EAB308] hover:to-[#D97706] text-[#0B1E36] font-bold text-body-md shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+                @if (isStartingJourney()) {
+                <span class="w-5 h-5 border-2 border-[#0B1E36]/30 border-t-[#0B1E36] rounded-full animate-spin"></span>
+                <span>Checking Application…</span>
+                } @else {
                 <span>Customise &amp; Apply Now</span>
                 <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <path d="m9 18 6-6-6-6" />
                 </svg>
+                }
               </button>
             </div>
 
