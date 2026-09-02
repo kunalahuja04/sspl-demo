@@ -9,12 +9,15 @@ import {
   UserProfileData,
 } from '../models';
 
+import { AuthService } from './auth.service';
+
 @Injectable({
   providedIn: 'root',
 })
 export class ProfileService {
   private http = inject(HttpClient);
   private requestBuilder = inject(ApiRequestBuilderService);
+  private authService = inject(AuthService);
 
   private profileSignal = signal<UserProfileData | null>(null);
   private isLoadingSignal = signal<boolean>(false);
@@ -47,6 +50,9 @@ export class ProfileService {
       tap((data) => {
         if (data) {
           this.profileSignal.set(data);
+          if (data.fullName) {
+            this.authService.updateUserName(data.fullName);
+          }
         }
         this.isLoadingSignal.set(false);
       }),

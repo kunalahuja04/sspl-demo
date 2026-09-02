@@ -110,7 +110,7 @@
               <div class="relative">
                 <div
                   class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-brand-accent border-4 border-bg-surface shadow-xl flex items-center justify-center text-brand-primary font-bold text-heading-2xl font-display">
-                  {{ (profile()?.username || 'U').substring(0, 2).toUpperCase() }}
+                  {{ (profile()?.fullName || profile()?.username || 'U').substring(0, 2).toUpperCase() }}
                 </div>
                 <div
                   class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-status-success border-2 border-bg-surface flex items-center justify-center"
@@ -126,7 +126,7 @@
               <div class="mb-1">
                 <div class="flex items-center gap-2 flex-wrap">
                   <h2 class="font-display text-heading-xl sm:text-heading-2xl text-primary font-bold">{{
-                    profile()?.username || 'User Profile' }}</h2>
+                    profile()?.fullName || profile()?.username || 'User Profile' }}</h2>
                   <span
                     class="px-2.5 py-0.5 rounded-full bg-status-success-bg text-status-success-text border border-status-success/30 text-label-sm font-bold">
                     KYC Verified
@@ -184,15 +184,15 @@
               </div>
             </div>
 
-            <!-- Username -->
+            <!-- User Name (Full Name) -->
             <div class="flex flex-col">
-              <span class="font-body text-label-sm font-bold text-muted uppercase tracking-wider">Username</span>
+              <span class="font-body text-label-sm font-bold text-muted uppercase tracking-wider">User Name</span>
               <div class="flex items-center gap-1.5 mt-1">
-                <span class="font-body text-body-md font-bold text-primary">{{ profile()?.username || '—' }}</span>
-                <button type="button" (click)="copyToClipboard(profile()?.username || '', 'Username', 'username')"
+                <span class="font-body text-body-md font-bold text-primary">{{ profile()?.fullName || profile()?.username || '—' }}</span>
+                <button type="button" (click)="copyToClipboard(profile()?.fullName || profile()?.username || '', 'User Name', 'fullName')"
                   class="p-1 rounded-md text-muted hover:text-primary hover:bg-bg-surface transition-colors cursor-pointer"
-                  [title]="copiedKey() === 'username' ? 'Copied!' : 'Copy Username'">
-                  @if (copiedKey() === 'username') {
+                  [title]="copiedKey() === 'fullName' ? 'Copied!' : 'Copy User Name'">
+                  @if (copiedKey() === 'fullName') {
                   <svg class="w-3.5 h-3.5 text-status-success-text" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M20 6 9 17l-5-5" />

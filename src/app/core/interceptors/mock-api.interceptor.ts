@@ -449,34 +449,19 @@ export const mockApiInterceptor: HttpInterceptorFn = (
     const currentTxnId = deviceInfoService.generateTxnId();
     const balanceResponseBody = {
       balanceResponse: {
-        correlationId: reqNo,
+        correlationId: 'REQ126',
         accounts: [
           {
-            ledgerBalance: 72500.75,
+            ledgerBalance: 8765,
             accountType: 'SAVINGS',
             accountNumberMasked: 'XXXXXXXX0001',
             currency: 'INR',
-            availableBalance: 72000.75,
-          },
-          {
-            ledgerBalance: 127975,
-            accountType: 'CURRENT',
-            accountNumberMasked: 'XXXXXXXX0002',
-            currency: 'INR',
-            availableBalance: 324460,
-          },
-          {
-            ledgerBalance: 4850.0,
-            accountType: 'EEFC_SAVINGS',
-            accountNumberMasked: 'XXXXXXXX0003',
-            currency: 'USD',
-            availableBalance: 4850.0,
+            availableBalance: 56453,
           },
         ],
         transactionId: currentTxnId,
       },
     };
-
 
     return of(createEnvelopeResponse(balanceResponseBody)).pipe(delay(mockDelay));
   }
@@ -503,136 +488,6 @@ export const mockApiInterceptor: HttpInterceptorFn = (
     return of(
       createEnvelopeResponse({ message: 'Session terminated and tokens invalidated successfully' }),
     ).pipe(delay(mockDelay / 2));
-  }
-
-  // 6. Dashboard Summary Endpoint
-  if (url.includes(API_ENDPOINTS.DASHBOARD.SUMMARY)) {
-    const summary: DashboardSummaryData = {
-      totalBalanceFormatted: '₹3.96L',
-      totalBalanceSubtitle: 'Across all accounts',
-      todaysCredits: '+₹1,37,000',
-      todaysCreditsCount: '2 transactions',
-      todaysDebits: '-₹16,390',
-      todaysDebitsCount: '3 transactions',
-      activeAccountsCount: '2',
-      activeAccountsSubtitle: 'All accounts in good standing',
-    };
-
-    return of(createEnvelopeResponse(summary)).pipe(delay(mockDelay));
-  }
-
-  // 7. Dashboard Accounts Endpoint
-  if (url.includes(API_ENDPOINTS.DASHBOARD.ACCOUNTS)) {
-    const accounts: BankAccountData[] = [
-      {
-        id: 'acc_01',
-        type: 'Savings Account',
-        category: 'savings',
-        accountNumber: '•••• •••• 0001',
-        fullAccountNumber: '50100483920001',
-        ifsc: 'IFSC: JJBL0001042',
-        branch: 'Jalgaon Main Branch',
-        availableBalance: '₹72,000.75',
-        ledgerBalance: '₹72,500.75',
-        currency: 'INR',
-        status: 'Active',
-        unclearedFunds: '₹500.00 (Cheque in clearing)',
-        lienAmount: '₹0.00',
-        interestRate: '3.50% p.a.',
-        nomineeRegistered: true,
-      },
-      {
-        id: 'acc_02',
-        type: 'Current Account',
-        category: 'current',
-        accountNumber: '•••• •••• 0002',
-        fullAccountNumber: '50200891020002',
-        ifsc: 'IFSC: JJBL0000011',
-        branch: 'Pune Camp Branch',
-        availableBalance: '₹3,24,460.00',
-        ledgerBalance: '₹1,27,975.00',
-        currency: 'INR',
-        status: 'Active',
-        unclearedFunds: '₹0.00',
-        lienAmount: '₹0.00',
-        interestRate: 'N/A (Current Account)',
-        nomineeRegistered: true,
-      },
-    ];
-
-    return of(createEnvelopeResponse(accounts)).pipe(delay(mockDelay));
-  }
-
-  // 8. Dashboard Transactions Endpoint
-  if (url.includes(API_ENDPOINTS.DASHBOARD.TRANSACTIONS)) {
-    const transactions: TransactionData[] = [
-      {
-        id: 'txn_01',
-        title: 'NEFT Cr — Salary Credit',
-        date: '25 Aug · A/C •••• 0001',
-        account: 'A/C •••• 0001',
-        amount: '+₹72,000',
-        type: 'credit',
-        reference: 'NEFT26082593019',
-        status: 'Completed',
-      },
-      {
-        id: 'txn_02',
-        title: 'UPI — Swiggy Orders',
-        date: '24 Aug · A/C •••• 0001',
-        account: 'A/C •••• 0001',
-        amount: '-₹850',
-        type: 'debit',
-        reference: 'UPI26082418392',
-        status: 'Completed',
-      },
-      {
-        id: 'txn_03',
-        title: 'RTGS Cr — Business Payment',
-        date: '22 Aug · A/C •••• 0002',
-        account: 'A/C •••• 0002',
-        amount: '+₹65,000',
-        type: 'credit',
-        reference: 'RTGS26082299104',
-        status: 'Completed',
-      },
-    ];
-
-    return of(createEnvelopeResponse(transactions)).pipe(delay(mockDelay));
-  }
-
-  // 8. Balance Enquiry Endpoint
-  if (url.includes(API_ENDPOINTS.DASHBOARD.BALANCE_ENQUIRY)) {
-    const balanceResponseBody = {
-      balanceResponse: {
-        correlationId: reqNo,
-        accounts: [
-          {
-            ledgerBalance: 182400,
-            accountType: 'SAVINGS',
-            accountNumberMasked: 'XXXXXXXX4521',
-            currency: 'INR',
-            availableBalance: 182400,
-          },
-          {
-            ledgerBalance: 852000,
-            accountType: 'CURRENT',
-            accountNumberMasked: 'XXXXXXXX8832',
-            currency: 'INR',
-            availableBalance: 850000,
-          },
-          {
-            ledgerBalance: 45200,
-            accountType: 'NRE_SAVINGS',
-            accountNumberMasked: 'XXXXXXXX7310',
-            currency: 'USD',
-            availableBalance: 45200,
-          },
-        ],
-      },
-    };
-
-    return of(createEnvelopeResponse(balanceResponseBody)).pipe(delay(mockDelay));
   }
 
   // Pass through if not explicitly intercepted

@@ -158,7 +158,6 @@ export class AuthService {
       authHeader ||
       authData.accessToken ||
       'SSPL-AT-' + Math.random().toString(36).substring(2, 10).toUpperCase();
-    const accessToken = authToken;
     const refreshToken =
       authData.refreshToken ||
       'SSPL-RT-' + Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -166,18 +165,44 @@ export class AuthService {
 
     this.currentUserSignal.set(user);
     this.sessionTokenSignal.set(sessionToken);
-    this.accessTokenSignal.set(accessToken);
     this.refreshTokenSignal.set(refreshToken);
     this.activeTenant.set(user.tenant);
 
     try {
-      sessionStorage.setItem('sspl_auth_token', authToken);
-      sessionStorage.setItem('sspl_access_token', accessToken);
+      sessionStorage.setItem('sspl_access_token', authToken);
       sessionStorage.setItem('sspl_refresh_token', refreshToken);
       sessionStorage.setItem('sspl_session_token', sessionToken);
       sessionStorage.setItem('sspl_user', JSON.stringify(user));
     } catch {
       // Storage fallback
+    }
+  }
+
+  updateUserName(fullName: string): void {
+    const current = this.currentUserSignal();
+    if (fullName) {
+      const parts = fullName.trim().split(' ');
+      const initials =
+        parts.length >= 2
+          ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+          : fullName.substring(0, 2).toUpperCase();
+      const updated: User = current
+        ? { ...current, name: fullName, avatarInitials: initials }
+        : {
+            id: 'USER',
+            name: fullName,
+            username: fullName.toLowerCase().replace(/\s+/g, ''),
+            tenant: 'BANK0001',
+            lastLogin: 'Today',
+            avatarInitials: initials,
+            role: 'Personal Banking',
+          };
+      this.currentUserSignal.set(updated);
+      try {
+        sessionStorage.setItem('sspl_user', JSON.stringify(updated));
+      } catch {
+        // Storage fallback
+      }
     }
   }
 
@@ -230,4 +255,3 @@ export class AuthService {
     }
   }
 }
-
