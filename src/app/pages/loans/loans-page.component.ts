@@ -113,13 +113,13 @@ export class LoansPageComponent implements OnInit, OnDestroy {
   );
 
   // ── Personal Details Step State (Mandatory KYC Form) ──────────────
-  readonly personalFullName = signal<string>('Bhavesh Jadhav');
-  readonly personalMobileNumber = signal<string>('8104516158');
-  readonly personalFatherName = signal<string>('Pravin');
-  readonly personalEmailId = signal<string>('bhavesh@abc.com');
-  readonly personalAddressLine = signal<string>('Puranik-City,Thane');
-  readonly personalPostalCode = signal<string>('400615');
-  readonly personalDateOfBirth = signal<string>('2001-01-22');
+  readonly personalFullName = signal<string>('');
+  readonly personalMobileNumber = signal<string>('');
+  readonly personalFatherName = signal<string>('');
+  readonly personalEmailId = signal<string>('');
+  readonly personalAddressLine = signal<string>('');
+  readonly personalPostalCode = signal<string>('');
+  readonly personalDateOfBirth = signal<string>('');
 
   readonly isSavingPersonalDetails = signal<boolean>(false);
   readonly personalFormErrors = signal<Record<string, string>>({});
@@ -519,6 +519,13 @@ export class LoansPageComponent implements OnInit, OnDestroy {
     this.tenureMonths.set(null); // Reset tenure to ensure user picks one
     this.tenureValidationError.set(false);
     this.personalFormErrors.set({});
+    this.personalFullName.set('');
+    this.personalMobileNumber.set('');
+    this.personalFatherName.set('');
+    this.personalEmailId.set('');
+    this.personalAddressLine.set('');
+    this.personalPostalCode.set('');
+    this.personalDateOfBirth.set('');
     this.preApprovedStep.set('personal_details');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -707,20 +714,20 @@ export class LoansPageComponent implements OnInit, OnDestroy {
       productCode: offer.productCode as LoanProductCode,
       applicationReference: this.currentApplicationReference(),
       // Personal details section
-      fullName: this.personalFullName().trim() || this.customerFullName(),
-      mobileNumber: this.personalMobileNumber().trim() || profile?.mobileNumber || '8104516158',
-      fatherName: this.personalFatherName().trim() || 'Pravin',
-      emailId: this.personalEmailId().trim() || this.customerEmail(),
-      addressLine: this.personalAddressLine().trim() || 'Puranik-City,Thane',
-      postalCode: this.personalPostalCode().trim() || '400615',
-      dateOfBirth: this.personalDateOfBirth().trim() || '2001-01-22',
+      fullName: this.personalFullName().trim(),
+      mobileNumber: this.personalMobileNumber().trim(),
+      fatherName: this.personalFatherName().trim(),
+      emailId: this.personalEmailId().trim(),
+      addressLine: this.personalAddressLine().trim(),
+      postalCode: this.personalPostalCode().trim(),
+      dateOfBirth: this.personalDateOfBirth().trim(),
       // Loan requirement section
       requestedAmount: this.appliedAmount(),
       requestedTenureMonths: this.tenureMonths() ?? 36,
       loanPurpose: `${offer.title} requirement`,
       // Submission fields
       creditAccountReference: 'ACC-COSM-1002', // first eligible account; can be made dynamic
-      communicationEmail: this.personalEmailId().trim() || this.customerEmail(),
+      communicationEmail: this.personalEmailId().trim(),
       termsAccepted: true,
       termsVersion: 'LOAN_TERMS_V1',
     };
@@ -748,6 +755,13 @@ export class LoansPageComponent implements OnInit, OnDestroy {
     this.sanctionResponse.set(null);
     this.currentApplicationReference.set(null);
     this.personalFormErrors.set({});
+    this.personalFullName.set('');
+    this.personalMobileNumber.set('');
+    this.personalFatherName.set('');
+    this.personalEmailId.set('');
+    this.personalAddressLine.set('');
+    this.personalPostalCode.set('');
+    this.personalDateOfBirth.set('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 

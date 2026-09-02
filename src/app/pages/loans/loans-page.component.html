@@ -342,7 +342,8 @@
               }
             </div>
             <div class="hidden sm:block min-w-0">
-              <p class="text-label-xs font-bold uppercase" [class.text-primary]="preApprovedStep() === 'personal_details'"
+              <p class="text-label-xs font-bold uppercase"
+                [class.text-primary]="preApprovedStep() === 'personal_details'"
                 [class.text-muted]="preApprovedStep() !== 'personal_details'">Step 1</p>
               <p class="text-body-xs font-semibold text-primary truncate">Personal Details</p>
             </div>
@@ -398,8 +399,7 @@
           <div class="flex items-center gap-3">
             <div
               class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-body-xs shrink-0 transition-all"
-              [class.bg-amber-500]="preApprovedStep() === 'terms'"
-              [class.text-white]="preApprovedStep() === 'terms'"
+              [class.bg-amber-500]="preApprovedStep() === 'terms'" [class.text-white]="preApprovedStep() === 'terms'"
               [class.bg-emerald-600]="preApprovedStep() === 'confirm'"
               [class.text-white]="preApprovedStep() === 'confirm'"
               [class.bg-bg-muted]="['personal_details', 'customise', 'verify_docs'].includes(preApprovedStep())"
@@ -422,8 +422,7 @@
             <div
               class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-body-xs shrink-0 transition-all"
               [class.bg-amber-500]="preApprovedStep() === 'confirm'"
-              [class.text-white]="preApprovedStep() === 'confirm'"
-              [class.bg-bg-muted]="preApprovedStep() !== 'confirm'"
+              [class.text-white]="preApprovedStep() === 'confirm'" [class.bg-bg-muted]="preApprovedStep() !== 'confirm'"
               [class.text-muted]="preApprovedStep() !== 'confirm'">
               5
             </div>
@@ -598,7 +597,8 @@
               <div class="p-4.5 rounded-2xl bg-bg-surface border border-border-default shadow-xs space-y-1">
                 <span class="text-xl">📅</span>
                 <p class="text-label-xs text-secondary">Tenure Range</p>
-                <p class="text-body-md font-bold text-primary">{{ selectedOffer().minTenureMonths }} - {{ selectedOffer().maxTenureMonths }} M</p>
+                <p class="text-body-md font-bold text-primary">{{ selectedOffer().minTenureMonths }} - {{
+                  selectedOffer().maxTenureMonths }} M</p>
               </div>
 
               <div class="p-4.5 rounded-2xl bg-bg-surface border border-border-default shadow-xs space-y-1">
@@ -669,7 +669,8 @@
                   [class.bg-brand-primary/5]="selectedOffer().id === offer.id">
                   <div>
                     <p class="text-body-xs font-bold text-primary">{{ offer.title }}</p>
-                    <p class="text-[11px] text-secondary">{{ offer.interestRate }}% p.a. · {{ offer.minTenureMonths }}M - {{ offer.maxTenureMonths }}M</p>
+                    <p class="text-[11px] text-secondary">{{ offer.interestRate }}% p.a. · {{ offer.minTenureMonths }}M
+                      - {{ offer.maxTenureMonths }}M</p>
                   </div>
                   <span class="text-body-sm font-extrabold font-mono text-primary">{{ formatInr(offer.maxAmount)
                     }}</span>
@@ -759,7 +760,8 @@
           <!-- Header Card -->
           <div class="p-6 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-2">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-2xl bg-brand-primary/10 text-brand-primary flex items-center justify-center text-xl font-bold shrink-0">
+              <div
+                class="w-10 h-10 rounded-2xl bg-brand-primary/10 text-brand-primary flex items-center justify-center text-xl font-bold shrink-0">
                 👤
               </div>
               <div>
@@ -788,15 +790,11 @@
                 <label class="block text-label-xs font-bold uppercase text-secondary">
                   Full Name (as per Aadhaar / PAN) <span class="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  [ngModel]="personalFullName()"
-                  (ngModelChange)="personalFullName.set($event)"
-                  placeholder="e.g. Bhavesh Jadhav"
+                <input type="text" [ngModel]="personalFullName()" (ngModelChange)="personalFullName.set($event)"
+                  placeholder="Enter full name as per Aadhaar / PAN"
                   class="w-full px-4 py-3 rounded-xl border bg-bg-canvas text-body-sm font-semibold text-primary outline-none transition-all focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
                   [class.border-red-500]="personalFormErrors()['fullName']"
-                  [class.border-border-default]="!personalFormErrors()['fullName']"
-                />
+                  [class.border-border-default]="!personalFormErrors()['fullName']" />
                 @if (personalFormErrors()['fullName']) {
                 <p class="text-[11px] font-bold text-red-600">{{ personalFormErrors()['fullName'] }}</p>
                 }
@@ -809,16 +807,11 @@
                 </label>
                 <div class="relative flex items-center">
                   <span class="absolute left-3.5 font-bold text-secondary text-body-xs pointer-events-none">+91</span>
-                  <input
-                    type="tel"
-                    maxlength="10"
-                    [ngModel]="personalMobileNumber()"
-                    (ngModelChange)="personalMobileNumber.set($event)"
-                    placeholder="e.g. 8104516158"
+                  <input type="tel" maxlength="10" [ngModel]="personalMobileNumber()"
+                    (ngModelChange)="personalMobileNumber.set($event)" placeholder="Enter 10-digit mobile number"
                     class="w-full pl-12 pr-4 py-3 rounded-xl border bg-bg-canvas text-body-sm font-semibold text-primary outline-none transition-all focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 font-mono"
                     [class.border-red-500]="personalFormErrors()['mobileNumber']"
-                    [class.border-border-default]="!personalFormErrors()['mobileNumber']"
-                  />
+                    [class.border-border-default]="!personalFormErrors()['mobileNumber']" />
                 </div>
                 @if (personalFormErrors()['mobileNumber']) {
                 <p class="text-[11px] font-bold text-red-600">{{ personalFormErrors()['mobileNumber'] }}</p>
@@ -830,15 +823,11 @@
                 <label class="block text-label-xs font-bold uppercase text-secondary">
                   Father's / Guardian's Name <span class="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  [ngModel]="personalFatherName()"
-                  (ngModelChange)="personalFatherName.set($event)"
-                  placeholder="e.g. Pravin"
+                <input type="text" [ngModel]="personalFatherName()" (ngModelChange)="personalFatherName.set($event)"
+                  placeholder="Enter father's / guardian's name"
                   class="w-full px-4 py-3 rounded-xl border bg-bg-canvas text-body-sm font-semibold text-primary outline-none transition-all focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
                   [class.border-red-500]="personalFormErrors()['fatherName']"
-                  [class.border-border-default]="!personalFormErrors()['fatherName']"
-                />
+                  [class.border-border-default]="!personalFormErrors()['fatherName']" />
                 @if (personalFormErrors()['fatherName']) {
                 <p class="text-[11px] font-bold text-red-600">{{ personalFormErrors()['fatherName'] }}</p>
                 }
@@ -849,15 +838,11 @@
                 <label class="block text-label-xs font-bold uppercase text-secondary">
                   Email Address <span class="text-red-500">*</span>
                 </label>
-                <input
-                  type="email"
-                  [ngModel]="personalEmailId()"
-                  (ngModelChange)="personalEmailId.set($event)"
-                  placeholder="e.g. bhavesh@abc.com"
+                <input type="email" [ngModel]="personalEmailId()" (ngModelChange)="personalEmailId.set($event)"
+                  placeholder="Enter email address (e.g. name@domain.com)"
                   class="w-full px-4 py-3 rounded-xl border bg-bg-canvas text-body-sm font-semibold text-primary outline-none transition-all focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
                   [class.border-red-500]="personalFormErrors()['emailId']"
-                  [class.border-border-default]="!personalFormErrors()['emailId']"
-                />
+                  [class.border-border-default]="!personalFormErrors()['emailId']" />
                 @if (personalFormErrors()['emailId']) {
                 <p class="text-[11px] font-bold text-red-600">{{ personalFormErrors()['emailId'] }}</p>
                 }
@@ -868,14 +853,10 @@
                 <label class="block text-label-xs font-bold uppercase text-secondary">
                   Date of Birth <span class="text-red-500">*</span>
                 </label>
-                <input
-                  type="date"
-                  [ngModel]="personalDateOfBirth()"
-                  (ngModelChange)="personalDateOfBirth.set($event)"
+                <input type="date" [ngModel]="personalDateOfBirth()" (ngModelChange)="personalDateOfBirth.set($event)"
                   class="w-full px-4 py-3 rounded-xl border bg-bg-canvas text-body-sm font-semibold text-primary outline-none transition-all focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 font-mono"
                   [class.border-red-500]="personalFormErrors()['dateOfBirth']"
-                  [class.border-border-default]="!personalFormErrors()['dateOfBirth']"
-                />
+                  [class.border-border-default]="!personalFormErrors()['dateOfBirth']" />
                 @if (personalFormErrors()['dateOfBirth']) {
                 <p class="text-[11px] font-bold text-red-600">{{ personalFormErrors()['dateOfBirth'] }}</p>
                 }
@@ -886,15 +867,11 @@
                 <label class="block text-label-xs font-bold uppercase text-secondary">
                   Residential Address Line <span class="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  [ngModel]="personalAddressLine()"
-                  (ngModelChange)="personalAddressLine.set($event)"
-                  placeholder="e.g. Puranik-City,Thane"
+                <input type="text" [ngModel]="personalAddressLine()" (ngModelChange)="personalAddressLine.set($event)"
+                  placeholder="Enter flat/house no., street, locality, city"
                   class="w-full px-4 py-3 rounded-xl border bg-bg-canvas text-body-sm font-semibold text-primary outline-none transition-all focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
                   [class.border-red-500]="personalFormErrors()['addressLine']"
-                  [class.border-border-default]="!personalFormErrors()['addressLine']"
-                />
+                  [class.border-border-default]="!personalFormErrors()['addressLine']" />
                 @if (personalFormErrors()['addressLine']) {
                 <p class="text-[11px] font-bold text-red-600">{{ personalFormErrors()['addressLine'] }}</p>
                 }
@@ -905,16 +882,11 @@
                 <label class="block text-label-xs font-bold uppercase text-secondary">
                   Postal PIN Code <span class="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  maxlength="6"
-                  [ngModel]="personalPostalCode()"
-                  (ngModelChange)="personalPostalCode.set($event)"
-                  placeholder="e.g. 400615"
+                <input type="text" maxlength="6" [ngModel]="personalPostalCode()"
+                  (ngModelChange)="personalPostalCode.set($event)" placeholder="Enter 6-digit postal PIN"
                   class="w-full px-4 py-3 rounded-xl border bg-bg-canvas text-body-sm font-semibold text-primary outline-none transition-all focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 font-mono"
                   [class.border-red-500]="personalFormErrors()['postalCode']"
-                  [class.border-border-default]="!personalFormErrors()['postalCode']"
-                />
+                  [class.border-border-default]="!personalFormErrors()['postalCode']" />
                 @if (personalFormErrors()['postalCode']) {
                 <p class="text-[11px] font-bold text-red-600">{{ personalFormErrors()['postalCode'] }}</p>
                 }
@@ -925,7 +897,8 @@
                 <label class="block text-label-xs font-bold uppercase text-secondary">
                   Selected Facility Code
                 </label>
-                <div class="px-4 py-3 rounded-xl border border-border-default bg-bg-muted text-body-sm font-mono font-bold text-secondary">
+                <div
+                  class="px-4 py-3 rounded-xl border border-border-default bg-bg-muted text-body-sm font-mono font-bold text-secondary">
                   {{ selectedOffer().productCode }}
                 </div>
               </div>
@@ -933,7 +906,8 @@
             </div>
 
             <!-- Security Note -->
-            <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-900 flex items-center gap-2">
+            <div
+              class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-900 flex items-center gap-2">
               <span>🔒</span>
               <span>All information is encrypted and transmitted securely to /save/loan/personaldetails.</span>
             </div>
@@ -942,23 +916,16 @@
 
           <!-- Navigation Actions -->
           <div class="flex items-center justify-between gap-4 pt-2">
-            <button
-              type="button"
-              (click)="preApprovedStep.set('overview')"
-              class="px-6 py-3.5 rounded-2xl border border-border-default bg-bg-surface hover:bg-bg-muted text-secondary font-bold text-body-sm transition-all cursor-pointer flex items-center gap-2"
-            >
+            <button type="button" (click)="preApprovedStep.set('overview')"
+              class="px-6 py-3.5 rounded-2xl border border-border-default bg-bg-surface hover:bg-bg-muted text-secondary font-bold text-body-sm transition-all cursor-pointer flex items-center gap-2">
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="m15 18-6-6 6-6" />
               </svg>
               <span>Back to Offers</span>
             </button>
 
-            <button
-              type="button"
-              (click)="savePersonalDetailsAndProceed()"
-              [disabled]="isSavingPersonalDetails()"
-              class="px-8 py-3.5 rounded-2xl bg-[#0B1E36] hover:bg-[#0B1E36]/90 text-white font-bold text-body-sm shadow-md transition-all cursor-pointer flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
+            <button type="button" (click)="savePersonalDetailsAndProceed()" [disabled]="isSavingPersonalDetails()"
+              class="px-8 py-3.5 rounded-2xl bg-[#0B1E36] hover:bg-[#0B1E36]/90 text-white font-bold text-body-sm shadow-md transition-all cursor-pointer flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
               @if (isSavingPersonalDetails()) {
               <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
               <span>Saving Details…</span>
@@ -985,7 +952,8 @@
                 <span class="text-label-xs font-bold uppercase tracking-wider text-amber-400">Step 1 of 5</span>
                 <h4 class="text-heading-md font-bold text-white mt-0.5">{{ selectedOffer().title }}</h4>
               </div>
-              <span class="px-3 py-1 rounded-full text-label-xs font-bold bg-white/10 border border-white/15 text-white">
+              <span
+                class="px-3 py-1 rounded-full text-label-xs font-bold bg-white/10 border border-white/15 text-white">
                 Pre-Approved
               </span>
             </div>
@@ -993,7 +961,8 @@
             <div class="space-y-3 text-body-sm">
               <div class="flex items-center justify-between">
                 <span class="text-white/70">Sanction Limit</span>
-                <span class="font-extrabold font-mono text-white text-heading-sm">{{ formatInr(selectedOffer().maxAmount) }}</span>
+                <span class="font-extrabold font-mono text-white text-heading-sm">{{
+                  formatInr(selectedOffer().maxAmount) }}</span>
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-white/70">Indicative Rate</span>
@@ -1001,7 +970,8 @@
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-white/70">Tenure Range</span>
-                <span class="font-bold text-white">{{ selectedOffer().minTenureMonths }}M - {{ selectedOffer().maxTenureMonths }}M</span>
+                <span class="font-bold text-white">{{ selectedOffer().minTenureMonths }}M - {{
+                  selectedOffer().maxTenureMonths }}M</span>
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-white/70">Processing Fee</span>
@@ -1012,7 +982,8 @@
             <div class="p-4 rounded-2xl bg-white/10 border border-white/10 text-body-xs space-y-1.5">
               <p class="font-bold text-amber-300">Next Step: Customise Loan</p>
               <p class="text-white/80 leading-relaxed">
-                After saving your personal KYC details, you can adjust the loan amount slider and choose repayment tenure chips with instant live quote calculation.
+                After saving your personal KYC details, you can adjust the loan amount slider and choose repayment
+                tenure chips with instant live quote calculation.
               </p>
             </div>
           </div>
@@ -1054,7 +1025,9 @@
             <div class="space-y-0.5">
               <p class="font-extrabold text-body-md text-red-950">Action Required: Repayment Tenure Not Selected</p>
               <p class="text-body-xs font-medium text-red-900 leading-relaxed">
-                Please click and select any repayment tenure duration chip below (from <strong>{{ selectedOffer().minTenureMonths }}M</strong> up to <strong>{{ selectedOffer().maxTenureMonths }}M</strong>) to calculate your monthly EMI
+                Please click and select any repayment tenure duration chip below (from <strong>{{
+                  selectedOffer().minTenureMonths }}M</strong> up to <strong>{{ selectedOffer().maxTenureMonths
+                  }}M</strong>) to calculate your monthly EMI
                 and proceed to Document Verification.
               </p>
             </div>
@@ -1115,13 +1088,15 @@
               <div class="text-heading-md font-extrabold text-primary">
                 {{ tenureMonths() }} Months
                 @if (tenureMonths()! >= 12 && tenureMonths()! % 12 === 0) {
-                <span class="text-body-xs font-semibold text-secondary">({{ tenureMonths()! / 12 }} Yr{{ tenureMonths() === 12 ? '' : 's' }})</span>
+                <span class="text-body-xs font-semibold text-secondary">({{ tenureMonths()! / 12 }} Yr{{ tenureMonths()
+                  === 12 ? '' : 's' }})</span>
                 }
               </div>
               } @else {
               <span
                 class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-label-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">
-                <span>⚠️</span> Select Tenure ({{ selectedOffer().minTenureMonths }}M - {{ selectedOffer().maxTenureMonths }}M)
+                <span>⚠️</span> Select Tenure ({{ selectedOffer().minTenureMonths }}M - {{
+                selectedOffer().maxTenureMonths }}M)
               </span>
               }
             </div>
@@ -1137,7 +1112,8 @@
                 [class.hover:border-primary]="tenureMonths() !== tenure">
                 <div class="text-body-sm font-extrabold leading-tight">{{ tenure }}M</div>
                 @if (tenure >= 12 && tenure % 12 === 0) {
-                <div class="text-[10px] font-medium opacity-75">({{ tenure / 12 }} Yr{{ tenure === 12 ? '' : 's' }})</div>
+                <div class="text-[10px] font-medium opacity-75">({{ tenure / 12 }} Yr{{ tenure === 12 ? '' : 's' }})
+                </div>
                 } @else {
                 <div class="text-[10px] font-medium opacity-75">({{ tenure }} Mo)</div>
                 }
