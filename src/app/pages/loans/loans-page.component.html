@@ -1530,8 +1530,9 @@
                       [class.text-[#F5BF45]]="selectedCreditAccountRef() === acc.accountReference"
                       [class.bg-gray-100]="selectedCreditAccountRef() !== acc.accountReference"
                       [class.text-gray-500]="selectedCreditAccountRef() !== acc.accountReference">
-                      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 21h18M3 10h18M5 10v11M9 10v11M15 10v11M19 10v11M12 2 2 7h20L12 2z"/>
+                      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 21h18M3 10h18M5 10v11M9 10v11M15 10v11M19 10v11M12 2 2 7h20L12 2z" />
                       </svg>
                     </div>
 
@@ -1541,8 +1542,7 @@
                         <span class="font-mono font-bold text-sm sm:text-base text-primary tracking-wider">
                           {{ acc.maskedAccountNumber }}
                         </span>
-                        <span
-                          class="px-2 py-0.5 rounded-md text-[11px] font-semibold uppercase tracking-wider"
+                        <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold uppercase tracking-wider"
                           [class.bg-[#0B1E36]]="selectedCreditAccountRef() === acc.accountReference"
                           [class.text-white]="selectedCreditAccountRef() === acc.accountReference"
                           [class.bg-gray-100]="selectedCreditAccountRef() !== acc.accountReference"
@@ -1555,7 +1555,8 @@
                         </span>
                       </div>
                       <div class="flex items-center gap-2 text-xs text-secondary font-normal flex-wrap">
-                        <span>Account Ref: <strong class="font-mono font-semibold text-primary">{{ acc.accountReference }}</strong></span>
+                        <span>Account Ref: <strong class="font-mono font-semibold text-primary">{{ acc.accountReference
+                            }}</strong></span>
                         <span class="text-gray-300">·</span>
                         <span>Currency: <strong class="font-medium text-primary">{{ acc.currency }}</strong></span>
                       </div>
@@ -1563,7 +1564,8 @@
                   </div>
 
                   <!-- Right: Status Column with clean vertical spacing -->
-                  <div class="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-2 sm:pt-0 border-border-default/40 shrink-0 gap-1">
+                  <div
+                    class="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-2 sm:pt-0 border-border-default/40 shrink-0 gap-1">
                     <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
                       <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                       Verified &amp; Active
@@ -1599,7 +1601,8 @@
             <div class="space-y-1.5">
               <h3 class="font-sans text-base sm:text-lg font-bold text-white tracking-tight">Ready to Process</h3>
               <p class="font-sans text-xs text-white/80 leading-relaxed">
-                Review your sanction details and confirm to submit your application for digital verification and credit processing.
+                Review your sanction details and confirm to submit your application for digital verification and credit
+                processing.
               </p>
             </div>
 
@@ -1656,7 +1659,8 @@
         </div>
 
         <!-- Submission Details Card -->
-        <div class="p-6 rounded-2xl bg-bg-muted/70 border border-border-default/80 text-left space-y-3.5 text-body-sm font-sans">
+        <div
+          class="p-6 rounded-2xl bg-bg-muted/70 border border-border-default/80 text-left space-y-3.5 text-body-sm font-sans">
           <div class="flex items-center justify-between">
             <span class="text-secondary">Application Reference</span>
             <span class="font-mono text-xs sm:text-sm font-extrabold text-primary">
@@ -1665,7 +1669,8 @@
           </div>
           <div class="flex items-center justify-between">
             <span class="text-secondary">Application Status</span>
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+            <span
+              class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
               {{ submitResponse()?.applicationStatus || 'SUBMITTED' }}
             </span>
           </div>
@@ -1698,7 +1703,8 @@
           </div>
           <div class="flex items-center justify-between">
             <span class="text-secondary">Submission Channel</span>
-            <span class="font-bold text-primary">{{ submitResponse()?.submittedChannel || submitResponse()?.sourceChannel || 'WEB' }}</span>
+            <span class="font-bold text-primary">{{ submitResponse()?.submittedChannel ||
+              submitResponse()?.sourceChannel || 'WEB' }}</span>
           </div>
           <div class="flex items-center justify-between pt-2 border-t border-border-default/60">
             <span class="text-secondary">Submitted At</span>

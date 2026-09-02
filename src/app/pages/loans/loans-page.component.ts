@@ -594,67 +594,7 @@ export class LoansPageComponent implements OnInit, OnDestroy {
             this.selectedOffer.set(matchedOffer);
           }
 
-          // Directly display Step 5 ("Confirm and Disburse" / "Loan Sanction Summary")
-          // on /banking/loan/journey when currentSection is "REVIEW", skipping documents and consent steps.
-          if (journey.currentSection === 'REVIEW') {
-            this.activeViewMode.set('pre_approved');
-            this.showDraftDialog.set(false);
-            this.draftDialogDismissed = true;
-
-            this.loanService.getLoanApplication(journey.applicationReference).subscribe({
-              next: (detail) => {
-                if (detail?.loanRequirement) {
-                  if (detail.loanRequirement.requestedAmount > 0) {
-                    this.appliedAmount.set(detail.loanRequirement.requestedAmount);
-                  }
-                  if (detail.loanRequirement.requestedTenureMonths > 0) {
-                    this.tenureMonths.set(detail.loanRequirement.requestedTenureMonths);
-                  }
-                }
-                if (detail?.personalDetails) {
-                  if (detail.personalDetails.fullName)
-                    this.personalFullName.set(detail.personalDetails.fullName);
-                  if (detail.personalDetails.mobileNumber)
-                    this.personalMobileNumber.set(detail.personalDetails.mobileNumber);
-                  if (detail.personalDetails.fatherName)
-                    this.personalFatherName.set(detail.personalDetails.fatherName);
-                  if (detail.personalDetails.emailId)
-                    this.personalEmailId.set(detail.personalDetails.emailId);
-                  if (detail.personalDetails.addressLine)
-                    this.personalAddressLine.set(detail.personalDetails.addressLine);
-                  if (detail.personalDetails.postalCode)
-                    this.personalPostalCode.set(detail.personalDetails.postalCode);
-                  if (detail.personalDetails.dateOfBirth)
-                    this.personalDateOfBirth.set(detail.personalDetails.dateOfBirth);
-                }
-                if (!this.tenureMonths() || this.tenureMonths()! <= 0) {
-                  this.tenureMonths.set(matchedOffer.minTenureMonths || 36);
-                }
-                this.preApprovedStep.set('confirm');
-                this.loadEligibleCreditAccounts();
-                this.showToast(
-                  'info',
-                  `Displaying Loan Sanction Summary for application ${journey.applicationReference}.`,
-                );
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              },
-              error: () => {
-                if (!this.tenureMonths() || this.tenureMonths()! <= 0) {
-                  this.tenureMonths.set(matchedOffer.minTenureMonths || 36);
-                }
-                this.preApprovedStep.set('confirm');
-                this.loadEligibleCreditAccounts();
-                this.showToast(
-                  'info',
-                  `Displaying Loan Sanction Summary for application ${journey.applicationReference}.`,
-                );
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              },
-            });
-            return;
-          }
-
-          // Otherwise (for other sections like PERSONAL_DETAILS or LOAN_REQUIREMENT), prompt the resume dialog
+          // Prompt the user whether to continue existing application or start fresh
           this.activeDraft.set({
             applicationReference: journey.applicationReference,
             productCode: journey.requestedProductCode,
@@ -672,6 +612,25 @@ export class LoansPageComponent implements OnInit, OnDestroy {
             submittedAt: 0,
             updatedAt: journey.updatedAt ?? Date.now(),
           });
+
+          // Fetch latest draft details in background so the resume modal shows accurate amounts
+          this.loanService.getLoanApplication(journey.applicationReference).subscribe({
+            next: (detail) => {
+              if (detail?.loanRequirement && this.activeDraft()) {
+                const current = this.activeDraft()!;
+                this.activeDraft.set({
+                  ...current,
+                  requestedAmount:
+                    detail.loanRequirement.requestedAmount || current.requestedAmount,
+                  requestedTenureMonths:
+                    detail.loanRequirement.requestedTenureMonths || current.requestedTenureMonths,
+                  estimatedEmi:
+                    detail.loanQuote?.estimatedEmi || current.estimatedEmi,
+                });
+              }
+            },
+          });
+
           this.showDraftDialog.set(true);
         } else {
           // applicationAlreadyExists is false -> land on Personal Details without submitted data and applicationReference: null
@@ -846,8 +805,43 @@ export class LoansPageComponent implements OnInit, OnDestroy {
     );
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // Immediately trigger a quote recalculation for the restored values if in customise
-    if (resumeStep === 'customise' && this.tenureMonths() && this.appliedAmount() > 0) {
+    // Handle specific step preparations upon resume
+    if (resumeStep === 'confirm') {
+      this.loadEligibleCreditAccounts();
+      if (appRef) {
+        this.loanService.getLoanApplication(appRef).subscribe({
+          next: (detail) => {
+            if (detail?.loanRequirement) {
+              if (detail.loanRequirement.requestedAmount > 0) {
+                this.appliedAmount.set(detail.loanRequirement.requestedAmount);
+              }
+              if (detail.loanRequirement.requestedTenureMonths > 0) {
+                this.tenureMonths.set(detail.loanRequirement.requestedTenureMonths);
+              }
+            }
+            if (detail?.personalDetails) {
+              if (detail.personalDetails.fullName)
+                this.personalFullName.set(detail.personalDetails.fullName);
+              if (detail.personalDetails.mobileNumber)
+                this.personalMobileNumber.set(detail.personalDetails.mobileNumber);
+              if (detail.personalDetails.fatherName)
+                this.personalFatherName.set(detail.personalDetails.fatherName);
+              if (detail.personalDetails.emailId)
+                this.personalEmailId.set(detail.personalDetails.emailId);
+              if (detail.personalDetails.addressLine)
+                this.personalAddressLine.set(detail.personalDetails.addressLine);
+              if (detail.personalDetails.postalCode)
+                this.personalPostalCode.set(detail.personalDetails.postalCode);
+              if (detail.personalDetails.dateOfBirth)
+                this.personalDateOfBirth.set(detail.personalDetails.dateOfBirth);
+            }
+            if (!this.tenureMonths() || this.tenureMonths()! <= 0) {
+              this.tenureMonths.set(matchedOffer?.minTenureMonths || 36);
+            }
+          },
+        });
+      }
+    } else if (resumeStep === 'customise' && this.tenureMonths() && this.appliedAmount() > 0) {
       const activeRef = this.currentApplicationReference() ?? appRef;
       if (activeRef) {
         this.loanService
