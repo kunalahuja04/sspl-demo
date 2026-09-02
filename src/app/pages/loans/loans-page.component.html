@@ -326,26 +326,25 @@
       <!-- Horizontal Stepper (Visible during active application wizard) -->
       @if (preApprovedStep() !== 'overview' && preApprovedStep() !== 'success') {
       <div class="p-4 rounded-2xl bg-bg-surface border border-border-default shadow-xs">
-        <div class="grid grid-cols-4 gap-2">
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
           <!-- Step 1 Indicator -->
           <div class="flex items-center gap-3">
             <div
               class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-body-xs shrink-0 transition-all"
-              [class.bg-amber-500]="preApprovedStep() === 'customise'"
-              [class.text-white]="preApprovedStep() === 'customise'"
-              [class.bg-emerald-600]="preApprovedStep() === 'verify_docs' || preApprovedStep() === 'terms' || preApprovedStep() === 'confirm'"
-              [class.text-white]="preApprovedStep() === 'verify_docs' || preApprovedStep() === 'terms' || preApprovedStep() === 'confirm'">
-              @if (preApprovedStep() === 'verify_docs' || preApprovedStep() === 'terms' || preApprovedStep() ===
-              'confirm') {
+              [class.bg-amber-500]="preApprovedStep() === 'personal_details'"
+              [class.text-white]="preApprovedStep() === 'personal_details'"
+              [class.bg-emerald-600]="preApprovedStep() !== 'personal_details'"
+              [class.text-white]="preApprovedStep() !== 'personal_details'">
+              @if (preApprovedStep() !== 'personal_details') {
               ✓
               } @else {
               1
               }
             </div>
             <div class="hidden sm:block min-w-0">
-              <p class="text-label-xs font-bold uppercase" [class.text-primary]="preApprovedStep() === 'customise'"
-                [class.text-muted]="preApprovedStep() !== 'customise'">Step 1</p>
-              <p class="text-body-xs font-semibold text-primary truncate">Customise Loan</p>
+              <p class="text-label-xs font-bold uppercase" [class.text-primary]="preApprovedStep() === 'personal_details'"
+                [class.text-muted]="preApprovedStep() !== 'personal_details'">Step 1</p>
+              <p class="text-body-xs font-semibold text-primary truncate">Personal Details</p>
             </div>
           </div>
 
@@ -353,22 +352,22 @@
           <div class="flex items-center gap-3">
             <div
               class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-body-xs shrink-0 transition-all"
-              [class.bg-amber-500]="preApprovedStep() === 'verify_docs'"
-              [class.text-white]="preApprovedStep() === 'verify_docs'"
-              [class.bg-emerald-600]="preApprovedStep() === 'terms' || preApprovedStep() === 'confirm'"
-              [class.text-white]="preApprovedStep() === 'terms' || preApprovedStep() === 'confirm'"
-              [class.bg-bg-muted]="preApprovedStep() === 'customise'"
-              [class.text-muted]="preApprovedStep() === 'customise'">
-              @if (preApprovedStep() === 'terms' || preApprovedStep() === 'confirm') {
+              [class.bg-amber-500]="preApprovedStep() === 'customise'"
+              [class.text-white]="preApprovedStep() === 'customise'"
+              [class.bg-emerald-600]="['verify_docs', 'terms', 'confirm'].includes(preApprovedStep())"
+              [class.text-white]="['verify_docs', 'terms', 'confirm'].includes(preApprovedStep())"
+              [class.bg-bg-muted]="preApprovedStep() === 'personal_details'"
+              [class.text-muted]="preApprovedStep() === 'personal_details'">
+              @if (['verify_docs', 'terms', 'confirm'].includes(preApprovedStep())) {
               ✓
               } @else {
               2
               }
             </div>
             <div class="hidden sm:block min-w-0">
-              <p class="text-label-xs font-bold uppercase" [class.text-primary]="preApprovedStep() === 'verify_docs'"
-                [class.text-muted]="preApprovedStep() !== 'verify_docs'">Step 2</p>
-              <p class="text-body-xs font-semibold text-primary truncate">Verification</p>
+              <p class="text-label-xs font-bold uppercase" [class.text-primary]="preApprovedStep() === 'customise'"
+                [class.text-muted]="preApprovedStep() !== 'customise'">Step 2</p>
+              <p class="text-body-xs font-semibold text-primary truncate">Customise Loan</p>
             </div>
           </div>
 
@@ -376,21 +375,22 @@
           <div class="flex items-center gap-3">
             <div
               class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-body-xs shrink-0 transition-all"
-              [class.bg-amber-500]="preApprovedStep() === 'terms'" [class.text-white]="preApprovedStep() === 'terms'"
-              [class.bg-emerald-600]="preApprovedStep() === 'confirm'"
-              [class.text-white]="preApprovedStep() === 'confirm'"
-              [class.bg-bg-muted]="preApprovedStep() === 'customise' || preApprovedStep() === 'verify_docs'"
-              [class.text-muted]="preApprovedStep() === 'customise' || preApprovedStep() === 'verify_docs'">
-              @if (preApprovedStep() === 'confirm') {
+              [class.bg-amber-500]="preApprovedStep() === 'verify_docs'"
+              [class.text-white]="preApprovedStep() === 'verify_docs'"
+              [class.bg-emerald-600]="['terms', 'confirm'].includes(preApprovedStep())"
+              [class.text-white]="['terms', 'confirm'].includes(preApprovedStep())"
+              [class.bg-bg-muted]="['personal_details', 'customise'].includes(preApprovedStep())"
+              [class.text-muted]="['personal_details', 'customise'].includes(preApprovedStep())">
+              @if (['terms', 'confirm'].includes(preApprovedStep())) {
               ✓
               } @else {
               3
               }
             </div>
             <div class="hidden sm:block min-w-0">
-              <p class="text-label-xs font-bold uppercase" [class.text-primary]="preApprovedStep() === 'terms'"
-                [class.text-muted]="preApprovedStep() !== 'terms'">Step 3</p>
-              <p class="text-body-xs font-semibold text-primary truncate">Terms &amp; Consent</p>
+              <p class="text-label-xs font-bold uppercase" [class.text-primary]="preApprovedStep() === 'verify_docs'"
+                [class.text-muted]="preApprovedStep() !== 'verify_docs'">Step 3</p>
+              <p class="text-body-xs font-semibold text-primary truncate">Verification</p>
             </div>
           </div>
 
@@ -398,14 +398,38 @@
           <div class="flex items-center gap-3">
             <div
               class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-body-xs shrink-0 transition-all"
-              [class.bg-amber-500]="preApprovedStep() === 'confirm'"
-              [class.text-white]="preApprovedStep() === 'confirm'" [class.bg-bg-muted]="preApprovedStep() !== 'confirm'"
-              [class.text-muted]="preApprovedStep() !== 'confirm'">
+              [class.bg-amber-500]="preApprovedStep() === 'terms'"
+              [class.text-white]="preApprovedStep() === 'terms'"
+              [class.bg-emerald-600]="preApprovedStep() === 'confirm'"
+              [class.text-white]="preApprovedStep() === 'confirm'"
+              [class.bg-bg-muted]="['personal_details', 'customise', 'verify_docs'].includes(preApprovedStep())"
+              [class.text-muted]="['personal_details', 'customise', 'verify_docs'].includes(preApprovedStep())">
+              @if (preApprovedStep() === 'confirm') {
+              ✓
+              } @else {
               4
+              }
+            </div>
+            <div class="hidden sm:block min-w-0">
+              <p class="text-label-xs font-bold uppercase" [class.text-primary]="preApprovedStep() === 'terms'"
+                [class.text-muted]="preApprovedStep() !== 'terms'">Step 4</p>
+              <p class="text-body-xs font-semibold text-primary truncate">Terms &amp; Consent</p>
+            </div>
+          </div>
+
+          <!-- Step 5 Indicator -->
+          <div class="flex items-center gap-3">
+            <div
+              class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-body-xs shrink-0 transition-all"
+              [class.bg-amber-500]="preApprovedStep() === 'confirm'"
+              [class.text-white]="preApprovedStep() === 'confirm'"
+              [class.bg-bg-muted]="preApprovedStep() !== 'confirm'"
+              [class.text-muted]="preApprovedStep() !== 'confirm'">
+              5
             </div>
             <div class="hidden sm:block min-w-0">
               <p class="text-label-xs font-bold uppercase" [class.text-primary]="preApprovedStep() === 'confirm'"
-                [class.text-muted]="preApprovedStep() !== 'confirm'">Step 4</p>
+                [class.text-muted]="preApprovedStep() !== 'confirm'">Step 5</p>
               <p class="text-body-xs font-semibold text-primary truncate">Confirm &amp; Disburse</p>
             </div>
           </div>
@@ -725,7 +749,297 @@
       </div>
       }
 
-      <!-- ────────────────── STEP 1: CUSTOMISE YOUR LOAN ────────────────── -->
+      <!-- ────────────────── STEP 1: PERSONAL DETAILS (Mandatory KYC Form) ────────────────── -->
+      @if (preApprovedStep() === 'personal_details') {
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fade-in">
+
+        <!-- Left Form Column (7 of 12 cols) -->
+        <div class="lg:col-span-7 space-y-6">
+
+          <!-- Header Card -->
+          <div class="p-6 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-2">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-2xl bg-brand-primary/10 text-brand-primary flex items-center justify-center text-xl font-bold shrink-0">
+                👤
+              </div>
+              <div>
+                <h3 class="text-body-md font-bold text-primary">Primary Applicant Personal Details</h3>
+                <p class="text-body-xs text-secondary">
+                  Please verify your KYC identity details before customising your loan quote.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Form Fields Card -->
+          <div class="p-6 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-5">
+            <div class="flex items-center justify-between pb-3 border-b border-border-default/60">
+              <span class="text-label-xs font-bold uppercase text-muted">Mandatory KYC Parameters</span>
+              <span class="text-[11px] font-semibold text-status-success flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                Instant Digital Verification
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+              <!-- Full Name -->
+              <div class="space-y-1.5 sm:col-span-2">
+                <label class="block text-label-xs font-bold uppercase text-secondary">
+                  Full Name (as per Aadhaar / PAN) <span class="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  [ngModel]="personalFullName()"
+                  (ngModelChange)="personalFullName.set($event)"
+                  placeholder="e.g. Bhavesh Jadhav"
+                  class="w-full px-4 py-3 rounded-xl border bg-bg-canvas text-body-sm font-semibold text-primary outline-none transition-all focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                  [class.border-red-500]="personalFormErrors()['fullName']"
+                  [class.border-border-default]="!personalFormErrors()['fullName']"
+                />
+                @if (personalFormErrors()['fullName']) {
+                <p class="text-[11px] font-bold text-red-600">{{ personalFormErrors()['fullName'] }}</p>
+                }
+              </div>
+
+              <!-- Mobile Number -->
+              <div class="space-y-1.5">
+                <label class="block text-label-xs font-bold uppercase text-secondary">
+                  Mobile Number <span class="text-red-500">*</span>
+                </label>
+                <div class="relative flex items-center">
+                  <span class="absolute left-3.5 font-bold text-secondary text-body-xs pointer-events-none">+91</span>
+                  <input
+                    type="tel"
+                    maxlength="10"
+                    [ngModel]="personalMobileNumber()"
+                    (ngModelChange)="personalMobileNumber.set($event)"
+                    placeholder="e.g. 8104516158"
+                    class="w-full pl-12 pr-4 py-3 rounded-xl border bg-bg-canvas text-body-sm font-semibold text-primary outline-none transition-all focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 font-mono"
+                    [class.border-red-500]="personalFormErrors()['mobileNumber']"
+                    [class.border-border-default]="!personalFormErrors()['mobileNumber']"
+                  />
+                </div>
+                @if (personalFormErrors()['mobileNumber']) {
+                <p class="text-[11px] font-bold text-red-600">{{ personalFormErrors()['mobileNumber'] }}</p>
+                }
+              </div>
+
+              <!-- Father's Name -->
+              <div class="space-y-1.5">
+                <label class="block text-label-xs font-bold uppercase text-secondary">
+                  Father's / Guardian's Name <span class="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  [ngModel]="personalFatherName()"
+                  (ngModelChange)="personalFatherName.set($event)"
+                  placeholder="e.g. Pravin"
+                  class="w-full px-4 py-3 rounded-xl border bg-bg-canvas text-body-sm font-semibold text-primary outline-none transition-all focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                  [class.border-red-500]="personalFormErrors()['fatherName']"
+                  [class.border-border-default]="!personalFormErrors()['fatherName']"
+                />
+                @if (personalFormErrors()['fatherName']) {
+                <p class="text-[11px] font-bold text-red-600">{{ personalFormErrors()['fatherName'] }}</p>
+                }
+              </div>
+
+              <!-- Email ID -->
+              <div class="space-y-1.5">
+                <label class="block text-label-xs font-bold uppercase text-secondary">
+                  Email Address <span class="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  [ngModel]="personalEmailId()"
+                  (ngModelChange)="personalEmailId.set($event)"
+                  placeholder="e.g. bhavesh@abc.com"
+                  class="w-full px-4 py-3 rounded-xl border bg-bg-canvas text-body-sm font-semibold text-primary outline-none transition-all focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                  [class.border-red-500]="personalFormErrors()['emailId']"
+                  [class.border-border-default]="!personalFormErrors()['emailId']"
+                />
+                @if (personalFormErrors()['emailId']) {
+                <p class="text-[11px] font-bold text-red-600">{{ personalFormErrors()['emailId'] }}</p>
+                }
+              </div>
+
+              <!-- Date of Birth -->
+              <div class="space-y-1.5">
+                <label class="block text-label-xs font-bold uppercase text-secondary">
+                  Date of Birth <span class="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  [ngModel]="personalDateOfBirth()"
+                  (ngModelChange)="personalDateOfBirth.set($event)"
+                  class="w-full px-4 py-3 rounded-xl border bg-bg-canvas text-body-sm font-semibold text-primary outline-none transition-all focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 font-mono"
+                  [class.border-red-500]="personalFormErrors()['dateOfBirth']"
+                  [class.border-border-default]="!personalFormErrors()['dateOfBirth']"
+                />
+                @if (personalFormErrors()['dateOfBirth']) {
+                <p class="text-[11px] font-bold text-red-600">{{ personalFormErrors()['dateOfBirth'] }}</p>
+                }
+              </div>
+
+              <!-- Address Line -->
+              <div class="space-y-1.5 sm:col-span-2">
+                <label class="block text-label-xs font-bold uppercase text-secondary">
+                  Residential Address Line <span class="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  [ngModel]="personalAddressLine()"
+                  (ngModelChange)="personalAddressLine.set($event)"
+                  placeholder="e.g. Puranik-City,Thane"
+                  class="w-full px-4 py-3 rounded-xl border bg-bg-canvas text-body-sm font-semibold text-primary outline-none transition-all focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                  [class.border-red-500]="personalFormErrors()['addressLine']"
+                  [class.border-border-default]="!personalFormErrors()['addressLine']"
+                />
+                @if (personalFormErrors()['addressLine']) {
+                <p class="text-[11px] font-bold text-red-600">{{ personalFormErrors()['addressLine'] }}</p>
+                }
+              </div>
+
+              <!-- Postal PIN Code -->
+              <div class="space-y-1.5">
+                <label class="block text-label-xs font-bold uppercase text-secondary">
+                  Postal PIN Code <span class="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  maxlength="6"
+                  [ngModel]="personalPostalCode()"
+                  (ngModelChange)="personalPostalCode.set($event)"
+                  placeholder="e.g. 400615"
+                  class="w-full px-4 py-3 rounded-xl border bg-bg-canvas text-body-sm font-semibold text-primary outline-none transition-all focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 font-mono"
+                  [class.border-red-500]="personalFormErrors()['postalCode']"
+                  [class.border-border-default]="!personalFormErrors()['postalCode']"
+                />
+                @if (personalFormErrors()['postalCode']) {
+                <p class="text-[11px] font-bold text-red-600">{{ personalFormErrors()['postalCode'] }}</p>
+                }
+              </div>
+
+              <!-- Product Code Indicator -->
+              <div class="space-y-1.5">
+                <label class="block text-label-xs font-bold uppercase text-secondary">
+                  Selected Facility Code
+                </label>
+                <div class="px-4 py-3 rounded-xl border border-border-default bg-bg-muted text-body-sm font-mono font-bold text-secondary">
+                  {{ selectedOffer().productCode }}
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Security Note -->
+            <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-900 flex items-center gap-2">
+              <span>🔒</span>
+              <span>All information is encrypted and transmitted securely to /save/loan/personaldetails.</span>
+            </div>
+
+          </div>
+
+          <!-- Navigation Actions -->
+          <div class="flex items-center justify-between gap-4 pt-2">
+            <button
+              type="button"
+              (click)="preApprovedStep.set('overview')"
+              class="px-6 py-3.5 rounded-2xl border border-border-default bg-bg-surface hover:bg-bg-muted text-secondary font-bold text-body-sm transition-all cursor-pointer flex items-center gap-2"
+            >
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+              <span>Back to Offers</span>
+            </button>
+
+            <button
+              type="button"
+              (click)="savePersonalDetailsAndProceed()"
+              [disabled]="isSavingPersonalDetails()"
+              class="px-8 py-3.5 rounded-2xl bg-[#0B1E36] hover:bg-[#0B1E36]/90 text-white font-bold text-body-sm shadow-md transition-all cursor-pointer flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              @if (isSavingPersonalDetails()) {
+              <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+              <span>Saving Details…</span>
+              } @else {
+              <span>Save &amp; Customise Loan</span>
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="m9 18 6-6-6-6" />
+              </svg>
+              }
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Right Summary Column (5 of 12 cols) -->
+        <div class="lg:col-span-5 space-y-6">
+
+          <!-- Selected Product Card -->
+          <div class="p-6 rounded-3xl bg-[#0B1E36] text-white shadow-xl space-y-5 relative overflow-hidden">
+            <div class="absolute -right-6 -bottom-6 w-32 h-32 rounded-full bg-white/5 pointer-events-none"></div>
+
+            <div class="flex items-center justify-between border-b border-white/15 pb-4">
+              <div>
+                <span class="text-label-xs font-bold uppercase tracking-wider text-amber-400">Step 1 of 5</span>
+                <h4 class="text-heading-md font-bold text-white mt-0.5">{{ selectedOffer().title }}</h4>
+              </div>
+              <span class="px-3 py-1 rounded-full text-label-xs font-bold bg-white/10 border border-white/15 text-white">
+                Pre-Approved
+              </span>
+            </div>
+
+            <div class="space-y-3 text-body-sm">
+              <div class="flex items-center justify-between">
+                <span class="text-white/70">Sanction Limit</span>
+                <span class="font-extrabold font-mono text-white text-heading-sm">{{ formatInr(selectedOffer().maxAmount) }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-white/70">Indicative Rate</span>
+                <span class="font-bold font-mono text-emerald-400">{{ selectedOffer().interestRate }}% p.a.</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-white/70">Tenure Range</span>
+                <span class="font-bold text-white">{{ selectedOffer().minTenureMonths }}M - {{ selectedOffer().maxTenureMonths }}M</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-white/70">Processing Fee</span>
+                <span class="font-bold text-status-success">{{ selectedOffer().processingFee }}</span>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-white/10 border border-white/10 text-body-xs space-y-1.5">
+              <p class="font-bold text-amber-300">Next Step: Customise Loan</p>
+              <p class="text-white/80 leading-relaxed">
+                After saving your personal KYC details, you can adjust the loan amount slider and choose repayment tenure chips with instant live quote calculation.
+              </p>
+            </div>
+          </div>
+
+          <!-- Trust Badges -->
+          <div class="p-5 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-3 text-body-xs">
+            <h5 class="text-label-xs font-bold uppercase text-muted">Digital Lending Assurance</h5>
+            <div class="flex items-center gap-3 text-secondary">
+              <span class="text-lg">🛡️</span>
+              <span>100% Paperless &amp; Instant e-KYC Verification</span>
+            </div>
+            <div class="flex items-center gap-3 text-secondary">
+              <span class="text-lg">⚡</span>
+              <span>Immediate Digital Mandate &amp; Account Credit</span>
+            </div>
+            <div class="flex items-center gap-3 text-secondary">
+              <span class="text-lg">🔐</span>
+              <span>RBI Regulated Entity · Bank-Grade Privacy</span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+      }
+
+      <!-- ────────────────── STEP 2: CUSTOMISE YOUR LOAN ────────────────── -->
       @if (preApprovedStep() === 'customise') {
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fade-in">
 
@@ -852,12 +1166,12 @@
 
           <!-- Navigation Actions -->
           <div class="flex items-center justify-between gap-4 pt-2">
-            <button type="button" (click)="preApprovedStep.set('overview')"
+            <button type="button" (click)="preApprovedStep.set('personal_details')"
               class="px-6 py-3.5 rounded-2xl border border-border-default bg-bg-surface hover:bg-bg-muted text-secondary font-bold text-body-sm transition-all cursor-pointer flex items-center gap-2">
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="m15 18-6-6 6-6" />
               </svg>
-              <span>Back to Overview</span>
+              <span>Back to Personal Details</span>
             </button>
 
             <button type="button" (click)="goToVerifyDocs()" [disabled]="!tenureMonths()"

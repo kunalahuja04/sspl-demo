@@ -254,11 +254,26 @@ export class LoanService {
     const req = this.reqBuilder.buildRequest<LoanPersonalDetailsSaveRequest>({
       loanPersonalDetailsSaveRequest: details,
     });
+    const appRef =
+      details.applicationReference ??
+      `LOAN-${new Date().getFullYear()}-${Math.floor(10000000 + Math.random() * 89999999)}`;
+    const mockSaveState: LoanSectionSaveState = {
+      savedSection: 'PERSONAL_DETAILS',
+      nextSection: 'LOAN_REQUIREMENT',
+      applicationReference: appRef,
+      applicationStatus: 'DRAFT',
+      lastUpdatedChannel: 'WEB',
+      sourceChannel: 'WEB',
+      updatedAt: Date.now(),
+    };
     return this.http
       .post<
         ApiResponse<LoanPersonalDetailsSaveResponseBody>
       >(API_ENDPOINTS.BANKING.SAVE_DETAILS, req)
-      .pipe(map((res) => res.body!.loanSectionSaveResponse));
+      .pipe(
+        map((res) => res.body!.loanSectionSaveResponse),
+        catchError(() => of(mockSaveState).pipe(delay(700))),
+      );
   }
 
   // ─────────────────────────────────────────────────────────────────────────

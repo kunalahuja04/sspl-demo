@@ -27,6 +27,7 @@ import {
 
 export type PreApprovedStep =
   | 'overview'
+  | 'personal_details'
   | 'customise'
   | 'verify_docs'
   | 'terms'
@@ -110,6 +111,19 @@ export class LoansPageComponent implements OnInit, OnDestroy {
   readonly selectedOffer = signal<PreApprovedLoanOffer>(
     this.loanService.offers()[1] || this.loanService.offers()[0],
   );
+
+  // ── Personal Details Step State (Mandatory KYC Form) ──────────────
+  readonly personalFullName = signal<string>('Bhavesh Jadhav');
+  readonly personalMobileNumber = signal<string>('8104516158');
+  readonly personalFatherName = signal<string>('Pravin');
+  readonly personalEmailId = signal<string>('bhavesh@abc.com');
+  readonly personalAddressLine = signal<string>('Puranik-City,Thane');
+  readonly personalPostalCode = signal<string>('400615');
+  readonly personalDateOfBirth = signal<string>('2001-01-22');
+
+  readonly isSavingPersonalDetails = signal<boolean>(false);
+  readonly personalFormErrors = signal<Record<string, string>>({});
+  readonly currentApplicationReference = signal<string | null>(null);
 
   // Sliders & Customization
   readonly appliedAmount = signal<number>(300000);
@@ -504,8 +518,81 @@ export class LoansPageComponent implements OnInit, OnDestroy {
   startPreApprovedFlow(): void {
     this.tenureMonths.set(null); // Reset tenure to ensure user picks one
     this.tenureValidationError.set(false);
-    this.preApprovedStep.set('customise');
+    this.personalFormErrors.set({});
+    this.preApprovedStep.set('personal_details');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /** Saves primary applicant personal details via /save/loan/personaldetails API then advances to customise step. */
+  savePersonalDetailsAndProceed(): void {
+    const fullName = this.personalFullName().trim();
+    const mobile = this.personalMobileNumber().trim();
+    const fatherName = this.personalFatherName().trim();
+    const email = this.personalEmailId().trim();
+    const address = this.personalAddressLine().trim();
+    const postalCode = this.personalPostalCode().trim();
+    const dob = this.personalDateOfBirth().trim();
+
+    const errors: Record<string, string> = {};
+
+    if (!fullName) {
+      errors['fullName'] = 'Full Name is required.';
+    }
+    if (!mobile || !/^\d{10}$/.test(mobile.replace(/\D/g, ''))) {
+      errors['mobileNumber'] = 'A valid 10-digit mobile number is required.';
+    }
+    if (!fatherName) {
+      errors['fatherName'] = "Father's / Guardian's Name is required.";
+    }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors['emailId'] = 'A valid email address is required.';
+    }
+    if (!address) {
+      errors['addressLine'] = 'Residential address is required.';
+    }
+    if (!postalCode || !/^\d{6}$/.test(postalCode.replace(/\D/g, ''))) {
+      errors['postalCode'] = 'A valid 6-digit postal PIN code is required.';
+    }
+    if (!dob) {
+      errors['dateOfBirth'] = 'Date of birth is required (YYYY-MM-DD).';
+    }
+
+    this.personalFormErrors.set(errors);
+
+    if (Object.keys(errors).length > 0) {
+      this.showToast('error', 'Action Required: Please complete all mandatory personal details.');
+      return;
+    }
+
+    this.isSavingPersonalDetails.set(true);
+
+    const payload = {
+      applicationReference: this.currentApplicationReference(),
+      productCode: this.selectedOffer().productCode,
+      fullName,
+      mobileNumber: mobile,
+      fatherName,
+      emailId: email,
+      addressLine: address,
+      postalCode,
+      dateOfBirth: dob,
+    };
+
+    this.loanService.saveLoanPersonalDetails(payload).subscribe({
+      next: (res) => {
+        this.isSavingPersonalDetails.set(false);
+        if (res?.applicationReference) {
+          this.currentApplicationReference.set(res.applicationReference);
+        }
+        this.showToast('success', 'Personal details verified & saved successfully!');
+        this.preApprovedStep.set('customise');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      },
+      error: () => {
+        this.isSavingPersonalDetails.set(false);
+        this.showToast('error', 'Failed to save personal details. Please retry.');
+      },
+    });
   }
 
   // ─── Draft Resume Dialog Handlers ─────────────────────────────────────────
@@ -532,8 +619,8 @@ export class LoansPageComponent implements OnInit, OnDestroy {
 
     // Navigate to the correct wizard step based on currentSection
     const stepMap: Record<string, PreApprovedStep> = {
-      PERSONAL_DETAILS: 'customise',
-      LOAN_REQUIREMENT: 'verify_docs',
+      PERSONAL_DETAILS: 'personal_details',
+      LOAN_REQUIREMENT: 'customise',
       REVIEW: 'terms',
       SUBMITTED: 'confirm',
     };
@@ -568,10 +655,10 @@ export class LoansPageComponent implements OnInit, OnDestroy {
   /** Converts a backend `currentSection` value to a human-readable step label. */
   getDraftSectionLabel(section: string): string {
     const map: Record<string, string> = {
-      PERSONAL_DETAILS: 'Step 1 · Loan Configuration',
-      LOAN_REQUIREMENT: 'Step 2 · Document Verification',
-      REVIEW: 'Step 3 · Terms & Consent',
-      SUBMITTED: 'Step 4 · Confirm & Disburse',
+      PERSONAL_DETAILS: 'Step 1 · Personal Details',
+      LOAN_REQUIREMENT: 'Step 2 · Customise Loan',
+      REVIEW: 'Step 3 · Document Verification',
+      SUBMITTED: 'Step 4 · Terms & Disburse',
     };
     return map[section] ?? 'the beginning';
   }
@@ -618,22 +705,22 @@ export class LoansPageComponent implements OnInit, OnDestroy {
 
     const payload: LoanApplicationPayload = {
       productCode: offer.productCode as LoanProductCode,
-      applicationReference: null, // new application
+      applicationReference: this.currentApplicationReference(),
       // Personal details section
-      fullName: this.customerFullName(),
-      mobileNumber: profile?.mobileNumber ?? '9999999999',
-      fatherName: 'N/A', // not captured in UI; backend accepts any string
-      emailId: this.customerEmail(),
-      addressLine: 'Jalgaon, Maharashtra',
-      postalCode: '425001',
-      dateOfBirth: '1990-01-01', // placeholder — extend profile model to capture DOB if needed
+      fullName: this.personalFullName().trim() || this.customerFullName(),
+      mobileNumber: this.personalMobileNumber().trim() || profile?.mobileNumber || '8104516158',
+      fatherName: this.personalFatherName().trim() || 'Pravin',
+      emailId: this.personalEmailId().trim() || this.customerEmail(),
+      addressLine: this.personalAddressLine().trim() || 'Puranik-City,Thane',
+      postalCode: this.personalPostalCode().trim() || '400615',
+      dateOfBirth: this.personalDateOfBirth().trim() || '2001-01-22',
       // Loan requirement section
       requestedAmount: this.appliedAmount(),
       requestedTenureMonths: this.tenureMonths() ?? 36,
       loanPurpose: `${offer.title} requirement`,
       // Submission fields
       creditAccountReference: 'ACC-COSM-1002', // first eligible account; can be made dynamic
-      communicationEmail: this.customerEmail(),
+      communicationEmail: this.personalEmailId().trim() || this.customerEmail(),
       termsAccepted: true,
       termsVersion: 'LOAN_TERMS_V1',
     };
@@ -659,6 +746,8 @@ export class LoansPageComponent implements OnInit, OnDestroy {
     this.preApprovedStep.set('overview');
     this.termsAgreed.set(false);
     this.sanctionResponse.set(null);
+    this.currentApplicationReference.set(null);
+    this.personalFormErrors.set({});
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
