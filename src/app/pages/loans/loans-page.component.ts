@@ -1109,44 +1109,42 @@ export class LoansPageComponent implements OnInit, OnDestroy {
   confirmAndProcessLoan(): void {
     this.isDisbursing.set(true);
 
-    const offer = this.selectedOffer();
-    const profile = this.customerProfile();
+    const appRef = this.currentApplicationReference() || 'LOAN-2026-00000182';
+    const creditRef = this.selectedCreditAccountRef() || 'ACC-COSM-1002';
+    const email = this.personalEmailId().trim() || 'bhavesh@abc.com';
 
-    const payload: LoanApplicationPayload = {
-      productCode: offer.productCode as LoanProductCode,
-      applicationReference: this.currentApplicationReference(),
-      // Personal details section
-      fullName: this.personalFullName().trim(),
-      mobileNumber: this.personalMobileNumber().trim(),
-      fatherName: this.personalFatherName().trim(),
-      emailId: this.personalEmailId().trim(),
-      addressLine: this.personalAddressLine().trim(),
-      postalCode: this.personalPostalCode().trim(),
-      dateOfBirth: this.personalDateOfBirth().trim(),
-      // Loan requirement section
-      requestedAmount: this.appliedAmount(),
-      requestedTenureMonths: this.tenureMonths() ?? 36,
-      loanPurpose: `${offer.title} requirement`,
-      // Submission fields
-      creditAccountReference: 'ACC-COSM-1002', // first eligible account; can be made dynamic
-      communicationEmail: this.personalEmailId().trim(),
+    const submitRequest = {
+      applicationReference: appRef,
+      creditAccountReference: creditRef,
+      communicationEmail: email,
       termsAccepted: true,
       termsVersion: 'LOAN_TERMS_V1',
     };
 
-    this.loanService.submitLoanApplication(payload).subscribe({
-      next: (res: LoanSanctionResponse) => {
+    console.log('[LoansPage] Calling submitLoanApplicationDirect with:', submitRequest);
+
+    this.loanService.submitLoanApplicationDirect(submitRequest).subscribe({
+      next: (res: LoanApplicationSubmitState) => {
+        console.log('[LoansPage] submitLoanApplicationDirect success response:', res);
         this.isDisbursing.set(false);
-        this.sanctionResponse.set(res);
+        this.submitResponse.set(res);
         this.preApprovedStep.set('success');
         this.showToast('success', 'Loan application submitted successfully!');
         window.scrollTo({ top: 0, behavior: 'smooth' });
+
         // Refresh active loans list
-        this.loanService.listLoanApplications().subscribe();
+        this.loanService.listLoanApplications().subscribe({
+          error: (err) => console.warn('[LoansPage] Refresh active loans error:', err),
+        });
       },
-      error: () => {
+      error: (err) => {
+        console.error('[LoansPage] submitLoanApplicationDirect error:', err);
         this.isDisbursing.set(false);
-        this.showToast('error', 'Submission failed. Please retry.');
+        const errMsg =
+          err?.error?.header?.errorMessage ||
+          err?.message ||
+          'Submission failed. Please retry.';
+        this.showToast('error', errMsg);
       },
     });
   }

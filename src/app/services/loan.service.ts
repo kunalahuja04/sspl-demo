@@ -498,15 +498,32 @@ export class LoanService {
       applicationReference: payload.applicationReference,
       maskedCreditAccount: 'XXXXXXXX0002',
       creditAccountReference: payload.creditAccountReference,
-      submittedAt: Date.now(),
+      submittedAt: 1788168228988,
     };
+    console.log('[LoanService] Calling POST', API_ENDPOINTS.BANKING.SUBMIT_LOAN, req);
     return this.http
       .post<ApiResponse<SubmitLoanApplicationResponseBody>>(API_ENDPOINTS.BANKING.SUBMIT_LOAN, req)
       .pipe(
-        map((res) => res.body?.loanApplicationSubmitResponse ?? fallbackResponse),
+        map((res: any) => {
+          console.log('[LoanService] submitLoanApplicationDirect raw response:', res);
+          if (res?.header?.status === 'error') {
+            throw new Error(res?.header?.errorMessage || 'The loan application request is invalid');
+          }
+          const submitRes: LoanApplicationSubmitState | undefined =
+            res?.body?.loanApplicationSubmitResponse ??
+            res?.loanApplicationSubmitResponse;
+          if (!submitRes) {
+            if (environment.useMockApi) return fallbackResponse;
+            throw new Error('Invalid response structure from submit loan application');
+          }
+          return submitRes;
+        }),
         catchError((err) => {
-          console.warn('[LoanService] submitLoanApplicationDirect failed, using fallback:', err);
-          return of(fallbackResponse);
+          console.warn('[LoanService] submitLoanApplicationDirect failed:', err);
+          if (environment.useMockApi) {
+            return of(fallbackResponse).pipe(delay(700));
+          }
+          return throwError(() => err);
         }),
       );
   }
