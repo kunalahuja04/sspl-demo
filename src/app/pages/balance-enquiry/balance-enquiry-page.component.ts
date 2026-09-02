@@ -31,13 +31,6 @@ export class BalanceEnquiryPageComponent implements OnInit {
     return this.service.formatBalance(sum, 'INR');
   });
 
-  /** Total available balance across all USD accounts */
-  readonly totalAvailableUsd = computed(() => {
-    const usd = this.accounts().filter((a) => a.currency === 'USD');
-    const sum = usd.reduce((s, a) => s + a.availableBalance, 0);
-    return this.service.formatBalance(sum > 0 ? sum : 4850.0, 'USD');
-  });
-
   readonly totalAvailable = this.totalAvailableInr;
 
 

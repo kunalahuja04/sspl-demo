@@ -77,24 +77,13 @@
           <div class="relative z-10 space-y-4">
             <div>
               <div class="flex items-center justify-between mb-1.5">
-                <span class="text-white/75 text-label-xs font-bold uppercase tracking-wider">Total Available (INR)</span>
+                <span class="text-white/75 text-label-xs font-bold uppercase tracking-wider">Total Available Balance</span>
                 <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/15 text-white text-[11px] font-medium">
                   <span class="w-1.5 h-1.5 rounded-full bg-status-success animate-pulse"></span>
                   Live Core Balance
                 </span>
               </div>
               <div class="font-mono text-display-md font-extrabold tracking-tight text-white">{{ totalAvailableInr() }}</div>
-            </div>
-
-            <!-- Separate USD Available Balance Row -->
-            <div class="pt-3 border-t border-white/15 flex items-center justify-between flex-wrap gap-2">
-              <div class="flex items-center gap-2">
-                <span class="text-white/70 text-label-xs font-semibold uppercase tracking-wider">Total Available (USD):</span>
-                <span class="font-mono text-heading-md font-extrabold text-brand-accent tracking-tight">{{ totalAvailableUsd() }}</span>
-              </div>
-              <span class="text-[11px] font-mono text-white/60 bg-white/10 px-2 py-0.5 rounded-md font-medium">
-                USD Foreign Currency
-              </span>
             </div>
           </div>
         </div>
