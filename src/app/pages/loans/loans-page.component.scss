@@ -50,7 +50,7 @@ input[type='number'] {
   -moz-appearance: textfield;
 }
 
-/* Modern Animated Checkmark for Loan Submission */
+/* Modern Repeating Animated Checkmark for Loan Submission */
 .checkmark-container {
   width: 96px;
   height: 96px;
@@ -62,10 +62,10 @@ input[type='number'] {
 
   .checkmark-glow-pulse {
     position: absolute;
-    inset: -8px;
+    inset: -10px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, rgba(16, 185, 129, 0) 70%);
-    animation: glow-pulse 2.2s infinite ease-in-out;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.35) 0%, rgba(16, 185, 129, 0) 70%);
+    animation: glow-pulse 2.8s infinite ease-in-out;
   }
 
   .checkmark-svg {
@@ -78,8 +78,8 @@ input[type='number'] {
     stroke-miterlimit: 10;
     box-shadow: inset 0px 0px 0px #10b981;
     animation:
-      fill-emerald 0.4s ease-in-out 0.45s forwards,
-      scale-bounce 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.9s both;
+      checkmark-loop-fill 2.8s ease-in-out infinite,
+      checkmark-loop-bounce 2.8s ease-in-out infinite;
 
     .checkmark-circle {
       stroke-dasharray: 166;
@@ -88,7 +88,7 @@ input[type='number'] {
       stroke-miterlimit: 10;
       stroke: #10b981;
       fill: none;
-      animation: stroke-circle 0.65s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+      animation: checkmark-loop-circle 2.8s cubic-bezier(0.65, 0, 0.45, 1) infinite;
     }
 
     .checkmark-check {
@@ -99,49 +99,134 @@ input[type='number'] {
       stroke-width: 4.5;
       stroke-linecap: round;
       stroke-linejoin: round;
-      animation: stroke-check 0.4s cubic-bezier(0.65, 0, 0.45, 1) 0.65s forwards;
+      animation: checkmark-loop-check 2.8s cubic-bezier(0.65, 0, 0.45, 1) infinite;
     }
   }
 }
 
-@keyframes stroke-circle {
-  100% {
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes stroke-check {
-  100% {
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes fill-emerald {
-  100% {
-    box-shadow: inset 0px 0px 0px 48px #10b981;
-  }
-}
-
-@keyframes scale-bounce {
+@keyframes checkmark-loop-circle {
   0% {
-    transform: scale(0.9);
+    stroke-dashoffset: 166;
+    opacity: 1;
   }
-  50% {
+  25%,
+  80% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  88% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+  92% {
+    stroke-dashoffset: 166;
+    opacity: 0;
+  }
+  100% {
+    stroke-dashoffset: 166;
+    opacity: 1;
+  }
+}
+
+@keyframes checkmark-loop-fill {
+  0%,
+  14% {
+    box-shadow: inset 0px 0px 0px 0px #10b981;
+  }
+  32%,
+  80% {
+    box-shadow: inset 0px 0px 0px 48px #10b981;
+    opacity: 1;
+  }
+  88% {
+    box-shadow: inset 0px 0px 0px 48px #10b981;
+    opacity: 0;
+  }
+  92% {
+    box-shadow: inset 0px 0px 0px 0px #10b981;
+    opacity: 0;
+  }
+  100% {
+    box-shadow: inset 0px 0px 0px 0px #10b981;
+    opacity: 1;
+  }
+}
+
+@keyframes checkmark-loop-check {
+  0%,
+  24% {
+    stroke-dashoffset: 48;
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  44%,
+  80% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  88% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+  92% {
+    stroke-dashoffset: 48;
+    opacity: 0;
+  }
+  100% {
+    stroke-dashoffset: 48;
+    opacity: 0;
+  }
+}
+
+@keyframes checkmark-loop-bounce {
+  0%,
+  30% {
+    transform: scale(0.92);
+  }
+  44% {
     transform: scale(1.08);
   }
-  100% {
+  54%,
+  80% {
     transform: scale(1);
+    opacity: 1;
+  }
+  88% {
+    transform: scale(0.88);
+    opacity: 0;
+  }
+  92% {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(0.92);
+    opacity: 1;
   }
 }
 
 @keyframes glow-pulse {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.6;
+  0% {
+    transform: scale(0.95);
+    opacity: 0.3;
   }
-  50% {
-    transform: scale(1.15);
-    opacity: 1;
+  44% {
+    transform: scale(1.2);
+    opacity: 0.85;
+  }
+  75% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  88%,
+  95% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0.3;
   }
 }
