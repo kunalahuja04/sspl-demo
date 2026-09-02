@@ -1470,15 +1470,102 @@
               <div
                 class="p-3.5 rounded-2xl bg-bg-muted/50 border border-border-default/60 flex items-center justify-between">
                 <span class="text-secondary">Disbursement Account</span>
-                <span class="font-bold text-primary">SB •••• 4521</span>
+                <span class="font-bold font-mono text-primary">
+                  {{ selectedCreditAccount().maskedAccountNumber }} ({{ selectedCreditAccount().accountType }})
+                </span>
               </div>
             </div>
 
-            <!-- Notice Alert -->
-            <div
-              class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex items-start gap-3 text-body-xs">
-              <span class="text-lg shrink-0">ℹ</span>
-              <p>Funds will be credited directly to your primary savings account immediately upon confirmation.</p>
+            <!-- Designated Disbursement & Credit Account Selection Card -->
+            <div class="space-y-3 pt-2">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="text-body-sm font-bold text-primary">Disbursement Credit Account</h4>
+                  <p class="text-body-xs text-secondary">
+                    Select the eligible account where sanctioned loan funds will be credited
+                  </p>
+                </div>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  Direct Core Banking Credit
+                </span>
+              </div>
+
+              <!-- List of Eligible Credit Account Cards -->
+              <div class="space-y-2.5">
+                @for (acc of eligibleCreditAccounts(); track acc.accountReference) {
+                <div
+                  (click)="selectedCreditAccountRef.set(acc.accountReference)"
+                  class="p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between gap-4 select-none"
+                  [class.bg-brand-primary/5]="selectedCreditAccountRef() === acc.accountReference"
+                  [class.border-brand-primary]="selectedCreditAccountRef() === acc.accountReference"
+                  [class.shadow-sm]="selectedCreditAccountRef() === acc.accountReference"
+                  [class.bg-bg-muted/40]="selectedCreditAccountRef() !== acc.accountReference"
+                  [class.border-border-default/80]="selectedCreditAccountRef() !== acc.accountReference"
+                  [class.hover:border-border-default]="selectedCreditAccountRef() !== acc.accountReference">
+                  
+                  <div class="flex items-center gap-3.5">
+                    <!-- Radio Button Indicator -->
+                    <div
+                      class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0"
+                      [class.border-brand-primary]="selectedCreditAccountRef() === acc.accountReference"
+                      [class.bg-brand-primary]="selectedCreditAccountRef() === acc.accountReference"
+                      [class.border-border-default]="selectedCreditAccountRef() !== acc.accountReference"
+                      [class.bg-bg-surface]="selectedCreditAccountRef() !== acc.accountReference">
+                      @if (selectedCreditAccountRef() === acc.accountReference) {
+                      <div class="w-2 h-2 rounded-full bg-white"></div>
+                      }
+                    </div>
+
+                    <!-- Bank Account Icon -->
+                    <div
+                      class="w-11 h-11 rounded-2xl flex items-center justify-center font-bold text-lg shrink-0 shadow-xs"
+                      [class.bg-[#0B1E36]]="selectedCreditAccountRef() === acc.accountReference"
+                      [class.text-[#F5BF45]]="selectedCreditAccountRef() === acc.accountReference"
+                      [class.bg-bg-surface]="selectedCreditAccountRef() !== acc.accountReference"
+                      [class.text-secondary]="selectedCreditAccountRef() !== acc.accountReference"
+                      [class.border]="selectedCreditAccountRef() !== acc.accountReference"
+                      [class.border-border-default]="selectedCreditAccountRef() !== acc.accountReference">
+                      🏦
+                    </div>
+
+                    <!-- Account Details -->
+                    <div>
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-body-sm font-bold text-primary font-mono tracking-wide">
+                          {{ acc.maskedAccountNumber }}
+                        </span>
+                        <span
+                          class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
+                          [class.bg-[#0B1E36]]="selectedCreditAccountRef() === acc.accountReference"
+                          [class.text-white]="selectedCreditAccountRef() === acc.accountReference"
+                          [class.bg-bg-surface]="selectedCreditAccountRef() !== acc.accountReference"
+                          [class.text-secondary]="selectedCreditAccountRef() !== acc.accountReference"
+                          [class.border]="selectedCreditAccountRef() !== acc.accountReference"
+                          [class.border-border-default]="selectedCreditAccountRef() !== acc.accountReference">
+                          {{ acc.accountType }}
+                        </span>
+                        <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          Primary
+                        </span>
+                      </div>
+                      <p class="text-label-xs text-secondary mt-0.5">
+                        Account Ref: <span class="font-mono font-semibold">{{ acc.accountReference }}</span> · Currency: <strong class="text-primary">{{ acc.currency }}</strong>
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Right Tag -->
+                  <div class="hidden sm:block text-right shrink-0">
+                    <span class="text-[11px] font-bold text-status-success flex items-center gap-1 justify-end">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                      Verified &amp; Active
+                    </span>
+                    <span class="text-[10px] text-secondary">Instant Direct Credit</span>
+                  </div>
+
+                </div>
+                }
+              </div>
             </div>
           </div>
 
@@ -1507,14 +1594,14 @@
               </p>
             </div>
 
-            <button type="button" (click)="confirmAndDisburse()" [disabled]="isDisbursing()"
+            <button type="button" (click)="confirmAndProcessLoan()" [disabled]="isDisbursing()"
               class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#F5BF45] to-[#EAB308] hover:from-[#EAB308] hover:to-[#D97706] text-[#0B1E36] font-bold text-body-md shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70">
               @if (isDisbursing()) {
               <span
                 class="inline-block w-5 h-5 border-2 border-[#0B1E36] border-t-transparent rounded-full animate-spin"></span>
-              <span>Disbursing Funds...</span>
+              <span>Processing Application...</span>
               } @else {
-              <span>Confirm &amp; Disburse Now</span>
+              <span>Confirm and Process</span>
               }
             </button>
           </div>
@@ -1524,44 +1611,75 @@
       </div>
       }
 
-      <!-- ────────────────── STEP 5: SUCCESS STATE ────────────────── -->
+      <!-- ────────────────── STEP 5: LOAN SUBMITTED STATE ────────────────── -->
       @if (preApprovedStep() === 'success') {
       <div
         class="p-8 sm:p-12 rounded-3xl bg-bg-surface border border-border-default shadow-xl text-center space-y-6 animate-fade-in max-w-2xl mx-auto">
-        <div
-          class="w-20 h-20 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-4xl mx-auto shadow-inner">
-          ✓
+        
+        <!-- Animated Checkmark -->
+        <div class="checkmark-container">
+          <div class="checkmark-glow-pulse"></div>
+          <svg class="checkmark-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+            <circle class="checkmark-circle" cx="26" cy="26" r="24" fill="none" />
+            <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+          </svg>
         </div>
 
         <div class="space-y-2">
-          <h2 class="text-heading-xl font-bold text-primary">Loan Disbursed Successfully!</h2>
-          <p class="text-body-md text-secondary">
-            The sanctioned amount has been credited to your primary savings account.
+          <h2 class="text-heading-xl font-bold text-primary">Loan Application Submitted!</h2>
+          <p class="text-body-md text-secondary max-w-lg mx-auto">
+            Your application has been received successfully. Please wait while our underwriting team verifies your details and finalizes processing.
           </p>
         </div>
 
-        <!-- Sanction Details Card -->
-        <div class="p-6 rounded-2xl bg-bg-muted/70 border border-border-default/80 text-left space-y-3 text-body-sm">
+        <!-- Underwriting Status Banner -->
+        <div class="p-3.5 rounded-2xl bg-blue-50 border border-blue-200 text-blue-900 flex items-center justify-between text-body-xs font-medium">
+          <div class="flex items-center gap-2">
+            <span class="relative flex h-2.5 w-2.5">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-600"></span>
+            </span>
+            <span>Application Status: <strong>Under Verification &amp; Processing</strong></span>
+          </div>
+          <span class="text-[11px] font-mono opacity-80">Estimated decision: ~2–4 hours</span>
+        </div>
+
+        <!-- Submission Details Card -->
+        <div class="p-6 rounded-2xl bg-bg-muted/70 border border-border-default/80 text-left space-y-3.5 text-body-sm">
           <div class="flex items-center justify-between">
-            <span class="text-secondary">Amount Credited</span>
+            <span class="text-secondary">Application Reference</span>
+            <span class="font-mono text-xs sm:text-sm font-extrabold text-primary">
+              {{ submitResponse()?.applicationReference || currentApplicationReference() || 'LOAN-2026-00000182' }}
+            </span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-secondary">Requested Amount</span>
             <span class="font-extrabold font-mono text-primary text-heading-sm">{{ formatInr(appliedAmount()) }}</span>
           </div>
           <div class="flex items-center justify-between">
-            <span class="text-secondary">Credited Account</span>
-            <span class="font-bold text-primary">SB •••• 4521</span>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-secondary">Monthly EMI</span>
-            <span class="font-bold font-mono text-primary">{{ formatInr(emiCalculation().monthlyEmi) }}</span>
+            <span class="text-secondary">Designated Credit Account</span>
+            <span class="font-mono font-bold text-primary flex items-center gap-1.5">
+              <span>{{ submitResponse()?.maskedCreditAccount || selectedCreditAccount().maskedAccountNumber }}</span>
+              <span class="text-[10px] px-2 py-0.5 rounded bg-brand-primary/10 text-brand-primary font-bold uppercase">{{ selectedCreditAccount().accountType }}</span>
+            </span>
           </div>
           <div class="flex items-center justify-between">
             <span class="text-secondary">Repayment Tenure</span>
             <span class="font-bold text-primary">{{ tenureMonths() }} Months</span>
           </div>
+          <div class="flex items-center justify-between">
+            <span class="text-secondary">Estimated Monthly EMI</span>
+            <span class="font-bold font-mono text-primary">{{ formatInr(emiCalculation().monthlyEmi) }}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-secondary">Submission Channel</span>
+            <span class="font-bold text-primary">{{ submitResponse()?.submittedChannel || 'WEB' }}</span>
+          </div>
           <div class="flex items-center justify-between pt-2 border-t border-border-default/60">
-            <span class="text-secondary">Sanction Reference ID</span>
-            <span class="font-mono text-xs font-bold text-primary">{{ sanctionResponse()?.applicationReference ||
-              'SSPL-LN-2026-94821' }}</span>
+            <span class="text-secondary">Submitted At</span>
+            <span class="font-mono text-xs font-semibold text-secondary">
+              {{ formatTimestamp(submitResponse()?.submittedAt) }}
+            </span>
           </div>
         </div>
 

@@ -3,7 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, takeUntil, switchMap, catchError } from 'rxjs/operators';
+import {
+  debounceTime,
+  distinctUntilChanged,
+  takeUntil,
+  switchMap,
+  catchError,
+} from 'rxjs/operators';
 import { SideNavComponent } from '../../components/side-nav/side-nav.component';
 import { DashboardHeaderComponent } from '../dashboard/components/dashboard-header/dashboard-header.component';
 import { LoanService } from '../../services/loan.service';
@@ -24,6 +30,8 @@ import {
   LoanApplicationStatus,
   LoanJourneyState,
   LoanQuoteCalculation,
+  EligibleCreditAccount,
+  LoanApplicationSubmitState,
 } from '../../models';
 import { LoanApplicationsListComponent } from '../../components/loan-applications-list/loan-applications-list.component';
 
@@ -146,6 +154,26 @@ export class LoansPageComponent implements OnInit, OnDestroy {
   readonly termsAgreed = signal<boolean>(false);
   readonly isDisbursing = signal<boolean>(false);
   readonly sanctionResponse = signal<LoanSanctionResponse | null>(null);
+
+  // ── Eligible Credit Accounts & Submission State ──────────────────
+  readonly eligibleCreditAccounts = signal<EligibleCreditAccount[]>([]);
+  readonly selectedCreditAccountRef = signal<string>('ACC-COSM-1002');
+  readonly isLoadingCreditAccounts = signal<boolean>(false);
+  readonly submitResponse = signal<LoanApplicationSubmitState | null>(null);
+
+  readonly selectedCreditAccount = computed<EligibleCreditAccount>(() => {
+    const accounts = this.eligibleCreditAccounts();
+    const ref = this.selectedCreditAccountRef();
+    return (
+      accounts.find((a) => a.accountReference === ref) ||
+      accounts[0] || {
+        accountReference: 'ACC-COSM-1002',
+        accountType: 'CURRENT',
+        currency: 'INR',
+        maskedAccountNumber: 'XXXXXXXX0002',
+      }
+    );
+  });
 
   // Pre-approved Verified Documents List
   readonly verifiedDocs: VerifiedDocument[] = [
@@ -425,6 +453,7 @@ export class LoansPageComponent implements OnInit, OnDestroy {
 
     // Load existing loan applications to hydrate activeLoans + draftApplications signals (no prompt on product list)
     this.loanService.listLoanApplications().subscribe();
+    this.loadEligibleCreditAccounts();
 
     // Wire debounced quote recalculation: slider/tenure changes → API call with 800ms debounce
     this.quoteParams$
@@ -440,12 +469,7 @@ export class LoansPageComponent implements OnInit, OnDestroy {
           }
           const offer = this.selectedOffer();
           return this.loanService
-            .recalculateQuote(
-              appRef,
-              offer.productCode as LoanProductCode,
-              amount,
-              tenure,
-            )
+            .recalculateQuote(appRef, offer.productCode as LoanProductCode, amount, tenure)
             .pipe(
               catchError((err) => {
                 console.error('[LoansPage] calculateLoanQuote failed:', err);
@@ -588,18 +612,26 @@ export class LoansPageComponent implements OnInit, OnDestroy {
                   }
                 }
                 if (detail?.personalDetails) {
-                  if (detail.personalDetails.fullName) this.personalFullName.set(detail.personalDetails.fullName);
-                  if (detail.personalDetails.mobileNumber) this.personalMobileNumber.set(detail.personalDetails.mobileNumber);
-                  if (detail.personalDetails.fatherName) this.personalFatherName.set(detail.personalDetails.fatherName);
-                  if (detail.personalDetails.emailId) this.personalEmailId.set(detail.personalDetails.emailId);
-                  if (detail.personalDetails.addressLine) this.personalAddressLine.set(detail.personalDetails.addressLine);
-                  if (detail.personalDetails.postalCode) this.personalPostalCode.set(detail.personalDetails.postalCode);
-                  if (detail.personalDetails.dateOfBirth) this.personalDateOfBirth.set(detail.personalDetails.dateOfBirth);
+                  if (detail.personalDetails.fullName)
+                    this.personalFullName.set(detail.personalDetails.fullName);
+                  if (detail.personalDetails.mobileNumber)
+                    this.personalMobileNumber.set(detail.personalDetails.mobileNumber);
+                  if (detail.personalDetails.fatherName)
+                    this.personalFatherName.set(detail.personalDetails.fatherName);
+                  if (detail.personalDetails.emailId)
+                    this.personalEmailId.set(detail.personalDetails.emailId);
+                  if (detail.personalDetails.addressLine)
+                    this.personalAddressLine.set(detail.personalDetails.addressLine);
+                  if (detail.personalDetails.postalCode)
+                    this.personalPostalCode.set(detail.personalDetails.postalCode);
+                  if (detail.personalDetails.dateOfBirth)
+                    this.personalDateOfBirth.set(detail.personalDetails.dateOfBirth);
                 }
                 if (!this.tenureMonths() || this.tenureMonths()! <= 0) {
                   this.tenureMonths.set(matchedOffer.minTenureMonths || 36);
                 }
                 this.preApprovedStep.set('confirm');
+                this.loadEligibleCreditAccounts();
                 this.showToast(
                   'info',
                   `Displaying Loan Sanction Summary for application ${journey.applicationReference}.`,
@@ -611,6 +643,7 @@ export class LoansPageComponent implements OnInit, OnDestroy {
                   this.tenureMonths.set(matchedOffer.minTenureMonths || 36);
                 }
                 this.preApprovedStep.set('confirm');
+                this.loadEligibleCreditAccounts();
                 this.showToast(
                   'info',
                   `Displaying Loan Sanction Summary for application ${journey.applicationReference}.`,
@@ -863,6 +896,7 @@ export class LoansPageComponent implements OnInit, OnDestroy {
     this.activeViewMode.set('pre_approved');
 
     if (resumeStep === 'confirm') {
+      this.loadEligibleCreditAccounts();
       this.loanService.getLoanApplication(app.applicationReference).subscribe({
         next: (detail) => {
           if (detail?.loanRequirement) {
@@ -874,13 +908,20 @@ export class LoansPageComponent implements OnInit, OnDestroy {
             }
           }
           if (detail?.personalDetails) {
-            if (detail.personalDetails.fullName) this.personalFullName.set(detail.personalDetails.fullName);
-            if (detail.personalDetails.mobileNumber) this.personalMobileNumber.set(detail.personalDetails.mobileNumber);
-            if (detail.personalDetails.fatherName) this.personalFatherName.set(detail.personalDetails.fatherName);
-            if (detail.personalDetails.emailId) this.personalEmailId.set(detail.personalDetails.emailId);
-            if (detail.personalDetails.addressLine) this.personalAddressLine.set(detail.personalDetails.addressLine);
-            if (detail.personalDetails.postalCode) this.personalPostalCode.set(detail.personalDetails.postalCode);
-            if (detail.personalDetails.dateOfBirth) this.personalDateOfBirth.set(detail.personalDetails.dateOfBirth);
+            if (detail.personalDetails.fullName)
+              this.personalFullName.set(detail.personalDetails.fullName);
+            if (detail.personalDetails.mobileNumber)
+              this.personalMobileNumber.set(detail.personalDetails.mobileNumber);
+            if (detail.personalDetails.fatherName)
+              this.personalFatherName.set(detail.personalDetails.fatherName);
+            if (detail.personalDetails.emailId)
+              this.personalEmailId.set(detail.personalDetails.emailId);
+            if (detail.personalDetails.addressLine)
+              this.personalAddressLine.set(detail.personalDetails.addressLine);
+            if (detail.personalDetails.postalCode)
+              this.personalPostalCode.set(detail.personalDetails.postalCode);
+            if (detail.personalDetails.dateOfBirth)
+              this.personalDateOfBirth.set(detail.personalDetails.dateOfBirth);
           }
           if (!this.tenureMonths() || this.tenureMonths()! <= 0) {
             this.tenureMonths.set(matchedOffer.minTenureMonths || 36);
@@ -958,7 +999,10 @@ export class LoansPageComponent implements OnInit, OnDestroy {
 
     const appRef = this.currentApplicationReference();
     if (!appRef) {
-      this.showToast('error', 'Loan application reference is missing. Please save personal details first.');
+      this.showToast(
+        'error',
+        'Loan application reference is missing. Please save personal details first.',
+      );
       return;
     }
 
@@ -979,7 +1023,8 @@ export class LoansPageComponent implements OnInit, OnDestroy {
       productCode: this.selectedOffer().productCode as LoanProductCode,
       requestedAmount: this.appliedAmount(),
       requestedTenureMonths: this.tenureMonths()!,
-      loanPurpose: purposeMap[this.selectedOffer().productCode] || `${this.selectedOffer().title} requirement`,
+      loanPurpose:
+        purposeMap[this.selectedOffer().productCode] || `${this.selectedOffer().title} requirement`,
     };
 
     this.isSavingRequirement.set(true);
@@ -1017,10 +1062,51 @@ export class LoansPageComponent implements OnInit, OnDestroy {
       return;
     }
     this.preApprovedStep.set('confirm');
+    this.loadEligibleCreditAccounts();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  confirmAndDisburse(): void {
+  loadEligibleCreditAccounts(): void {
+    this.isLoadingCreditAccounts.set(true);
+    this.loanService.listEligibleCreditAccounts().subscribe({
+      next: (accounts) => {
+        this.isLoadingCreditAccounts.set(false);
+        if (accounts && accounts.length > 0) {
+          this.eligibleCreditAccounts.set(accounts);
+          if (!accounts.some((a) => a.accountReference === this.selectedCreditAccountRef())) {
+            this.selectedCreditAccountRef.set(accounts[0].accountReference);
+          }
+        } else {
+          const fallback: EligibleCreditAccount[] = [
+            {
+              accountReference: 'ACC-COSM-1002',
+              accountType: 'CURRENT',
+              currency: 'INR',
+              maskedAccountNumber: 'XXXXXXXX0002',
+            },
+          ];
+          this.eligibleCreditAccounts.set(fallback);
+          this.selectedCreditAccountRef.set('ACC-COSM-1002');
+        }
+      },
+      error: () => {
+        this.isLoadingCreditAccounts.set(false);
+      },
+    });
+  }
+
+  formatTimestamp(ts: number | null | undefined): string {
+    if (!ts) return 'Just now';
+    return new Date(ts).toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+
+  confirmAndProcessLoan(): void {
     this.isDisbursing.set(true);
 
     const offer = this.selectedOffer();

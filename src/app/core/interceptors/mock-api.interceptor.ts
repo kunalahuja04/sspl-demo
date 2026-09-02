@@ -539,6 +539,53 @@ export const mockApiInterceptor: HttpInterceptorFn = (
     return of(createEnvelopeResponse(appsResponseBody)).pipe(delay(mockDelay));
   }
 
+  // 7. Eligible Credit Accounts Endpoint (/banking/list/eligible/credit/accounts)
+  if (
+    url.includes(API_ENDPOINTS.BANKING.BANK_ACCOUNTS) ||
+    url.includes('/banking/list/eligible/credit/accounts') ||
+    url.includes('/list/eligible/credit/accounts')
+  ) {
+    const eligibleAccountsBody = {
+      eligibleCreditAccountListResponse: {
+        accounts: [
+          {
+            accountReference: 'ACC-COSM-1002',
+            accountType: 'CURRENT',
+            currency: 'INR',
+            maskedAccountNumber: 'XXXXXXXX0002',
+          },
+        ],
+      },
+    };
+
+    return of(createEnvelopeResponse(eligibleAccountsBody)).pipe(delay(mockDelay));
+  }
+
+  // 8. Submit Loan Application Endpoint (/banking/submit/loan/application)
+  if (
+    url.includes(API_ENDPOINTS.BANKING.SUBMIT_LOAN) ||
+    url.includes('/banking/submit/loan/application') ||
+    url.includes('/submit/loan/application')
+  ) {
+    const body = (req.body as any)?.body?.loanApplicationSubmitRequest;
+    const appRef = body?.applicationReference || 'LOAN-2026-00000182';
+    const creditRef = body?.creditAccountReference || 'ACC-COSM-1002';
+
+    const submitResponseBody = {
+      loanApplicationSubmitResponse: {
+        applicationStatus: 'SUBMITTED',
+        submittedChannel: 'WEB',
+        sourceChannel: 'WEB',
+        applicationReference: appRef,
+        maskedCreditAccount: 'XXXXXXXX0002',
+        creditAccountReference: creditRef,
+        submittedAt: Date.now(),
+      },
+    };
+
+    return of(createEnvelopeResponse(submitResponseBody)).pipe(delay(mockDelay));
+  }
+
   // Pass through if not explicitly intercepted
   return next(req);
 };
