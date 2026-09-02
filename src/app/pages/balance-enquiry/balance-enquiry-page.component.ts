@@ -23,6 +23,8 @@ export class BalanceEnquiryPageComponent implements OnInit {
   readonly error = this.service.error;
   readonly lastFetchedAt = this.service.lastFetchedAt;
   readonly correlationId = this.service.correlationId;
+  readonly copiedAccount = signal<string | null>(null);
+  readonly selectedStatementAccount = signal<BalanceEnquiryAccount | null>(null);
 
   /** Total available balance across all INR accounts */
   readonly totalAvailableInr = computed(() => {
@@ -31,8 +33,29 @@ export class BalanceEnquiryPageComponent implements OnInit {
     return this.service.formatBalance(sum, 'INR');
   });
 
-  readonly totalAvailable = this.totalAvailableInr;
+  /** Total ledger balance across all INR accounts */
+  readonly totalLedgerInr = computed(() => {
+    const inr = this.accounts().filter((a) => a.currency === 'INR');
+    const sum = inr.reduce((s, a) => s + a.ledgerBalance, 0);
+    return this.service.formatBalance(sum, 'INR');
+  });
 
+  /** Total variance across all INR accounts */
+  readonly totalVarianceInr = computed(() => {
+    const inr = this.accounts().filter((a) => a.currency === 'INR');
+    const avail = inr.reduce((s, a) => s + a.availableBalance, 0);
+    const ledger = inr.reduce((s, a) => s + a.ledgerBalance, 0);
+    const diff = avail - ledger;
+    if (diff === 0) return { text: '₹0.00 (Nil)', isZero: true, isPositive: true };
+    const formatted = this.service.formatBalance(Math.abs(diff), 'INR');
+    return {
+      text: (diff > 0 ? '+' : '-') + formatted,
+      isZero: false,
+      isPositive: diff > 0,
+    };
+  });
+
+  readonly totalAvailable = this.totalAvailableInr;
 
   ngOnInit(): void {
     this.service.fetchBalanceEnquiry().subscribe();
@@ -44,11 +67,33 @@ export class BalanceEnquiryPageComponent implements OnInit {
       this.router.navigate(['/dashboard']);
     } else if (navId === 'profile') {
       this.router.navigate(['/profile']);
+    } else if (navId === 'loans') {
+      this.router.navigate(['/loans']);
     }
   }
 
   refresh(): void {
     this.service.fetchBalanceEnquiry().subscribe();
+  }
+
+  copyAccount(accNum: string): void {
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(accNum);
+    }
+    this.copiedAccount.set(accNum);
+    setTimeout(() => {
+      if (this.copiedAccount() === accNum) {
+        this.copiedAccount.set(null);
+      }
+    }, 2000);
+  }
+
+  openMiniStatement(account: BalanceEnquiryAccount): void {
+    this.selectedStatementAccount.set(account);
+  }
+
+  closeMiniStatement(): void {
+    this.selectedStatementAccount.set(null);
   }
 
   formatBalance(amount: number, currency: string): string {

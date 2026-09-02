@@ -65,176 +65,324 @@
       </div>
       }
 
-      <!-- ── Summary Strip ── -->
+      <!-- ── Summary Strip (3 Balanced Metric Cards) ── -->
       @if (!isLoading() && accounts().length > 0) {
-      <div class="flex flex-col md:flex-row items-stretch gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 items-stretch">
 
-        <!-- Total Available Balance Card (Main Card) -->
+        <!-- Card 1: Total Available Balance (Navy Signature Hero Card) -->
         <div
-          class="flex-1 p-5.5 rounded-2xl bg-gradient-to-br from-brand-primary to-brand-primary-hover text-white shadow-lg relative overflow-hidden">
-          <div class="absolute inset-0 opacity-10"
-            style="background: radial-gradient(circle at 80% 20%, white 0%, transparent 60%)"></div>
-          <div class="relative z-10 space-y-4">
-            <div>
-              <div class="flex items-center justify-between mb-1.5">
-                <span class="text-white/75 text-label-xs font-bold uppercase tracking-wider">Total Available Balance</span>
-                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/15 text-white text-[11px] font-medium">
-                  <span class="w-1.5 h-1.5 rounded-full bg-status-success animate-pulse"></span>
-                  Live Core Balance
-                </span>
-              </div>
-              <div class="font-mono text-display-md font-extrabold tracking-tight text-white">{{ totalAvailableInr() }}</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Linked Accounts Card (Smaller / Compact) -->
-        <div
-          class="p-5 rounded-2xl bg-bg-surface border border-border-default shadow-sm flex md:flex-col justify-between items-start gap-3 md:w-56 shrink-0">
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl bg-brand-primary/10 text-brand-primary flex items-center justify-center shrink-0">
-              <svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect width="20" height="14" x="2" y="5" rx="2" />
-                <line x1="2" x2="22" y1="10" y2="10" />
-              </svg>
-            </div>
-            <span class="text-label-xs text-secondary uppercase tracking-wider font-bold">Linked Accounts</span>
-          </div>
-
+          class="rounded-3xl bg-[#0B1E36] text-white shadow-md border border-[#0B1E36] p-6 relative overflow-hidden flex flex-col justify-between transition-all hover:shadow-lg font-sans">
+          <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#F5BF45] via-[#EAB308] to-[#F5BF45]"></div>
           <div>
-            <div class="font-mono font-extrabold text-heading-xl text-primary">{{ accounts().length }}</div>
-            <span class="text-[11px] text-muted block mt-0.5">Active &amp; Verified</span>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-white/75 text-xs font-bold uppercase tracking-wider">Total Available Balance</span>
+              <span
+                class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[11px] font-semibold">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                Live Core Sync
+              </span>
+            </div>
+            <div class="font-mono text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              {{ totalAvailableInr() }}
+            </div>
+          </div>
+          <div class="pt-4 mt-3 border-t border-white/10 flex items-center justify-between text-xs text-white/70">
+            <span>Consolidated Liquidity</span>
+            <span class="text-emerald-300 font-medium">100% Instant Available</span>
+          </div>
+        </div>
+
+        <!-- Card 2: Total Ledger Balance -->
+        <div
+          class="rounded-3xl bg-bg-surface border border-border-default shadow-xs p-6 flex flex-col justify-between hover:shadow-sm transition-all font-sans">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-secondary text-xs font-bold uppercase tracking-wider">Total Ledger Balance</span>
+              <div class="w-8 h-8 rounded-xl bg-bg-muted border border-border-default/60 flex items-center justify-center text-primary">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+                  <path d="M6 6h10M6 10h10" />
+                </svg>
+              </div>
+            </div>
+            <div class="font-mono text-2xl sm:text-3xl font-extrabold text-primary tracking-tight">
+              {{ totalLedgerInr() }}
+            </div>
+          </div>
+          <div class="pt-4 mt-3 border-t border-border-default/60 flex items-center justify-between text-xs text-secondary">
+            <span>Central Book Balance</span>
+            <span class="font-mono font-semibold"
+              [class.text-rose-600]="!totalVarianceInr().isPositive"
+              [class.text-emerald-600]="totalVarianceInr().isPositive && !totalVarianceInr().isZero"
+              [class.text-secondary]="totalVarianceInr().isZero">
+              Variance: {{ totalVarianceInr().text }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Card 3: Linked Accounts Status -->
+        <div
+          class="rounded-3xl bg-bg-surface border border-border-default shadow-xs p-6 flex flex-col justify-between hover:shadow-sm transition-all sm:col-span-2 lg:col-span-1 font-sans">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-secondary text-xs font-bold uppercase tracking-wider">Linked Facilities</span>
+              <span
+                class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                Active &amp; Verified
+              </span>
+            </div>
+            <div class="font-mono text-2xl sm:text-3xl font-extrabold text-primary tracking-tight">
+              {{ accounts().length }} {{ accounts().length === 1 ? 'Account' : 'Accounts' }}
+            </div>
+          </div>
+          <div class="pt-4 mt-3 border-t border-border-default/60 flex items-center justify-between text-xs text-secondary">
+            <span>Primary Account</span>
+            <span class="font-mono font-bold text-primary truncate max-w-[160px]">
+              {{ accounts()[0]?.accountNumberMasked || 'Active' }}
+            </span>
           </div>
         </div>
 
       </div>
-      }
 
-      <!-- ── Loading Skeleton ── -->
-      @if (isLoading()) {
-      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-        @for (i of [1, 2, 3]; track i) {
-        <div class="rounded-2xl border border-border-default bg-bg-surface p-6 animate-pulse space-y-4">
-          <div class="flex items-center justify-between">
-            <div class="h-5 w-32 bg-bg-muted rounded-md"></div>
-            <div class="h-6 w-16 bg-bg-muted rounded-full"></div>
-          </div>
-          <div class="h-8 w-48 bg-bg-muted rounded-md"></div>
-          <div class="grid grid-cols-2 gap-3">
-            <div class="h-14 bg-bg-muted rounded-lg"></div>
-            <div class="h-14 bg-bg-muted rounded-lg"></div>
-          </div>
-          <div class="h-4 w-40 bg-bg-muted rounded-md"></div>
+      <!-- ── Section Header for Linked Accounts ── -->
+      <div class="flex items-center justify-between pt-2">
+        <div>
+          <h2 class="font-sans font-bold text-lg sm:text-xl text-primary tracking-tight">Linked Account Facilities</h2>
+          <p class="font-sans text-xs sm:text-body-sm text-secondary mt-0.5">
+            Real-time balance breakdown, ledger auditing, and statement downloads
+          </p>
         </div>
-        }
+        <span
+          class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-bg-muted border border-border-default text-secondary">
+          {{ accounts().length }} {{ accounts().length === 1 ? 'Facility' : 'Facilities' }} Active
+        </span>
       </div>
-      }
 
-      <!-- ── Account Balance Cards ── -->
-      @if (!isLoading() && accounts().length > 0) {
-      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+      <!-- ── Account Cards (Full-Width / Multi-Column Rhythm) ── -->
+      <div class="space-y-5">
         @for (account of accounts(); track account.accountNumberMasked) {
         <div
-          class="group relative rounded-2xl border border-border-default bg-bg-surface shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
+          class="rounded-3xl border border-border-default bg-bg-surface shadow-sm hover:shadow-md transition-all overflow-hidden font-sans">
+          
+          <!-- Top Accent Line -->
+          <div class="h-1.5 w-full bg-gradient-to-r from-[#0B1E36] via-[#1A365D] to-[#F5BF45]"></div>
 
-          <!-- Top accent stripe (brand colour) -->
-          <div class="h-1.5 w-full bg-brand-primary"></div>
-
-          <!-- Card Content -->
-          <div class="p-6">
-
-            <!-- Header Row -->
-            <div class="flex items-start justify-between gap-3 mb-4">
-              <div class="flex items-center gap-3">
-                <!-- Account Icon -->
-                <div class="w-11 h-11 rounded-xl bg-brand-primary/10 flex items-center justify-center shrink-0">
-                  @if (getAccountIcon(account.accountType) === 'savings') {
-                  <svg class="w-5 h-5 text-brand-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2">
-                    <path
-                      d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
-                    <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
-                  </svg>
-                  } @else if (getAccountIcon(account.accountType) === 'current') {
-                  <svg class="w-5 h-5 text-brand-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2">
-                    <rect width="20" height="14" x="2" y="5" rx="2" />
-                    <line x1="2" x2="22" y1="10" y2="10" />
-                  </svg>
-                  } @else {
-                  <svg class="w-5 h-5 text-brand-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M12 8v8" />
-                    <path d="M8 12h8" />
-                  </svg>
-                  }
+          <div class="p-6 sm:p-7 space-y-6">
+            <!-- Header Row: Account Icon + Title + Masked Number + Badges + Mini Statement Button -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="flex items-center gap-3.5 sm:gap-4 min-w-0">
+                <div
+                  class="w-12 h-12 rounded-2xl bg-[#0B1E36] text-[#F5BF45] flex items-center justify-center shrink-0 shadow-xs text-xl font-bold">
+                  🏦
                 </div>
-                <div>
-                  <p class="font-bold text-body-md text-primary leading-tight">{{
-                    getAccountTypeLabel(account.accountType) }}</p>
-                  <p class="font-mono text-label-sm text-muted mt-0.5">{{ account.accountNumberMasked }}</p>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2.5 flex-wrap">
+                    <h3 class="font-sans font-bold text-base sm:text-lg text-primary truncate">
+                      {{ getAccountTypeLabel(account.accountType) }}
+                    </h3>
+                    <span
+                      class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                      Live Core Status
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-2 mt-1">
+                    <span class="font-mono text-sm font-semibold text-secondary tracking-wider">
+                      {{ account.accountNumberMasked }}
+                    </span>
+                    <button type="button" (click)="copyAccount(account.accountNumberMasked)"
+                      class="px-2 py-0.5 rounded text-[11px] font-medium bg-bg-muted hover:bg-bg-muted/80 text-secondary border border-border-default/60 transition-colors cursor-pointer flex items-center gap-1"
+                      title="Copy Account Number">
+                      @if (copiedAccount() === account.accountNumberMasked) {
+                      <span class="text-emerald-600 font-bold">✓ Copied</span>
+                      } @else {
+                      <svg class="w-3 h-3 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                        <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                      </svg>
+                      <span>Copy</span>
+                      }
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <!-- Currency Badge -->
-              <div class="flex flex-col items-end gap-1.5 shrink-0">
+              <!-- Top Right: Currency & Mini Statement Action -->
+              <div class="flex items-center gap-2.5 self-start sm:self-center shrink-0">
                 <span
-                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-label-xs font-bold bg-status-success-bg text-status-success-text border border-status-success/30">
-                  <span class="w-1.5 h-1.5 rounded-full bg-status-success mr-1.5 animate-pulse"></span>
-                  Live
-                </span>
-                <span
-                  class="text-label-xs font-mono font-bold text-secondary uppercase bg-bg-muted px-2 py-0.5 rounded-md">
+                  class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-bg-muted border border-border-default text-primary">
                   {{ account.currency }}
                 </span>
+                <button type="button" (click)="openMiniStatement(account)"
+                  class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0B1E36] hover:bg-[#0B1E36]/90 text-white font-bold text-xs shadow-xs transition-all cursor-pointer">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  <span>Mini Statement</span>
+                </button>
               </div>
             </div>
 
-            <!-- Available Balance (Hero number) -->
-            <div class="mb-4 p-4 rounded-xl bg-bg-muted border border-border-default">
-              <span class="text-label-xs uppercase tracking-widest font-semibold text-secondary">Available
-                Balance</span>
-              <div class="font-mono text-display-sm font-extrabold text-primary mt-1 tracking-tight">
-                {{ formatBalance(account.availableBalance, account.currency) }}
+            <!-- 3 Balanced Stat Columns (Matching Top 3 Cards) -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+              
+              <!-- Column 1: Available Balance -->
+              <div class="p-4 sm:p-5 rounded-2xl bg-bg-muted/50 border border-border-default/80">
+                <span class="text-xs font-semibold uppercase tracking-wider text-secondary">Available Balance</span>
+                <div class="font-mono text-2xl sm:text-3xl font-extrabold text-primary mt-1 tracking-tight">
+                  {{ formatBalance(account.availableBalance, account.currency) }}
+                </div>
+                <p class="text-[11px] text-emerald-600 mt-1.5 flex items-center gap-1 font-medium">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  Instant liquid funds available
+                </p>
               </div>
-            </div>
 
-            <!-- Ledger vs Available Grid -->
-            <div class="grid grid-cols-2 gap-3 mb-4">
-              <div class="p-3 rounded-lg border border-border-default bg-bg-surface">
-                <span class="text-label-xs text-muted block mb-1">Ledger Balance</span>
-                <span class="font-mono font-bold text-body-sm text-primary">
+              <!-- Column 2: Ledger Balance -->
+              <div class="p-4 sm:p-5 rounded-2xl bg-bg-muted/50 border border-border-default/80">
+                <span class="text-xs font-semibold uppercase tracking-wider text-secondary">Ledger Balance</span>
+                <div class="font-mono text-2xl sm:text-3xl font-extrabold text-primary mt-1 tracking-tight">
                   {{ formatBalance(account.ledgerBalance, account.currency) }}
-                </span>
+                </div>
+                <p class="text-[11px] text-secondary mt-1.5 font-normal">
+                  Recorded in central core banking ledger
+                </p>
               </div>
-              <div class="p-3 rounded-lg border border-border-default bg-bg-surface">
-                <span class="text-label-xs text-muted block mb-1">Variance</span>
+
+              <!-- Column 3: Transit Variance -->
+              <div class="p-4 sm:p-5 rounded-2xl bg-bg-muted/50 border border-border-default/80">
+                <span class="text-xs font-semibold uppercase tracking-wider text-secondary">Transit Variance</span>
                 @if (getVarianceBadge(account); as badge) {
-                <span class="font-mono font-bold text-body-sm" [class.text-status-success-text]="badge.positive"
-                  [class.text-status-error]="!badge.positive">
+                <div class="font-mono text-2xl sm:text-3xl font-extrabold mt-1 tracking-tight"
+                  [class.text-emerald-600]="badge.positive"
+                  [class.text-rose-600]="!badge.positive">
                   {{ badge.text }}
-                </span>
+                </div>
+                <p class="text-[11px] text-secondary mt-1.5 font-normal">
+                  Uncleared cheques / pending processing
+                </p>
                 } @else {
-                <span class="font-mono font-semibold text-body-sm text-secondary">Nil</span>
+                <div class="font-mono text-2xl sm:text-3xl font-extrabold text-primary mt-1 tracking-tight">
+                  ₹0.00
+                </div>
+                <p class="text-[11px] text-secondary mt-1.5 font-normal">
+                  No uncleared holds or transactions
+                </p>
                 }
               </div>
+
             </div>
 
-            <!-- Footer Row -->
-            <div class="flex items-center justify-between pt-3 border-t border-border-default">
-              <span class="text-label-xs text-muted">
-                Account Type: <strong class="text-secondary">{{ account.accountType }}</strong>
-              </span>
-              <button type="button"
-                class="text-label-xs font-semibold text-brand-primary hover:text-brand-primary-hover transition-colors cursor-pointer underline underline-offset-2">
-                Mini Statement
-              </button>
+            <!-- Card Footer -->
+            <div
+              class="pt-3 border-t border-border-default/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-secondary">
+              <div class="flex items-center gap-2">
+                <span>Account Category: <strong class="text-primary font-semibold">{{ account.accountType }}</strong></span>
+                <span class="text-gray-300">·</span>
+                <span>Branch: <strong class="text-primary font-semibold">Core Banking Central</strong></span>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-emerald-600 font-semibold">● Nominee Registered</span>
+                <span class="text-gray-300">·</span>
+                <span class="font-mono text-[11px] text-muted">IFSC: SSPL0001001</span>
+              </div>
             </div>
 
           </div>
         </div>
         }
+      </div>
+      }
+
+      <!-- ── Mini Statement Modal ── -->
+      @if (selectedStatementAccount(); as acc) {
+      <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div
+          class="bg-bg-surface rounded-3xl shadow-2xl border border-border-default w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200 font-sans">
+          
+          <!-- Modal Header -->
+          <div class="bg-[#0B1E36] p-6 text-white flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 rounded-xl bg-[#F5BF45] text-[#0B1E36] flex items-center justify-center font-extrabold text-lg">
+                ₹
+              </div>
+              <div>
+                <h3 class="font-sans font-bold text-lg text-white">Mini Statement</h3>
+                <p class="text-xs text-white/70 font-mono">{{ getAccountTypeLabel(acc.accountType) }} · {{ acc.accountNumberMasked }}</p>
+              </div>
+            </div>
+            <button type="button" (click)="closeMiniStatement()"
+              class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer text-sm font-bold">
+              ✕
+            </button>
+          </div>
+
+          <!-- Modal Body -->
+          <div class="p-6 space-y-4">
+            <div
+              class="p-4 rounded-2xl bg-bg-muted/70 border border-border-default/80 flex items-center justify-between">
+              <div>
+                <span class="text-xs font-semibold uppercase tracking-wider text-secondary">Available Balance</span>
+                <div class="font-mono text-2xl font-extrabold text-primary mt-0.5">
+                  {{ formatBalance(acc.availableBalance, acc.currency) }}
+                </div>
+              </div>
+              <span
+                class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-xs">
+                ● Live Core Status
+              </span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 text-xs">
+              <div class="p-3.5 rounded-xl border border-border-default bg-bg-surface">
+                <span class="text-secondary block mb-1">Ledger Balance</span>
+                <p class="font-mono font-bold text-primary text-sm">{{ formatBalance(acc.ledgerBalance, acc.currency) }}</p>
+              </div>
+              <div class="p-3.5 rounded-xl border border-border-default bg-bg-surface">
+                <span class="text-secondary block mb-1">Uncleared Cheques / Variance</span>
+                @if (getVarianceBadge(acc); as badge) {
+                <p class="font-mono font-bold text-sm" [class.text-rose-600]="!badge.positive"
+                  [class.text-emerald-600]="badge.positive">{{ badge.text }}</p>
+                } @else {
+                <p class="font-mono font-bold text-secondary text-sm">₹0.00 (Nil)</p>
+                }
+              </div>
+              <div class="p-3.5 rounded-xl border border-border-default bg-bg-surface">
+                <span class="text-secondary block mb-1">Currency</span>
+                <p class="font-mono font-bold text-primary text-sm">{{ acc.currency }}</p>
+              </div>
+              <div class="p-3.5 rounded-xl border border-border-default bg-bg-surface">
+                <span class="text-secondary block mb-1">Nominee Status</span>
+                <p class="font-semibold text-emerald-600 text-sm">Registered</p>
+              </div>
+            </div>
+
+            <div
+              class="text-xs text-secondary bg-blue-50/60 border border-blue-200/60 p-3.5 rounded-xl space-y-1 text-blue-900">
+              <p><strong class="font-semibold">Home Branch:</strong> Core Central Mumbai</p>
+              <p><strong class="font-semibold">IFSC Code:</strong> SSPL0001001 · MICR: 400012093</p>
+            </div>
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="bg-bg-muted/50 px-6 py-4 border-t border-border-default flex items-center justify-between">
+            <button type="button" (click)="closeMiniStatement()"
+              class="px-5 py-2.5 rounded-xl border border-border-default bg-bg-surface hover:bg-bg-muted text-secondary font-semibold text-xs transition-colors cursor-pointer">
+              Close
+            </button>
+            <button type="button" (click)="closeMiniStatement()"
+              class="px-6 py-2.5 rounded-xl bg-[#0B1E36] hover:bg-[#0B1E36]/90 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs">
+              Done
+            </button>
+          </div>
+
+        </div>
       </div>
       }
 
