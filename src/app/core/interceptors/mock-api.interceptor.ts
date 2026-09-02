@@ -490,6 +490,55 @@ export const mockApiInterceptor: HttpInterceptorFn = (
     ).pipe(delay(mockDelay / 2));
   }
 
+  // 6. Loan Applications List Endpoint (/banking/list/loan/applications)
+  if (
+    url.includes(API_ENDPOINTS.BANKING.LOAN_APP_LIST) ||
+    url.includes('/banking/list/loan/applications')
+  ) {
+    const appsResponseBody = {
+      loanApplicationListResponse: {
+        applications: [
+          {
+            lastUpdatedChannel: 'WEB',
+            requestedTenureMonths: 24,
+            sourceChannel: 'WEB',
+            currentSection: 'REVIEW',
+            applicationReference: 'LOAN-2026-00000261',
+            maskedCreditAccount: null,
+            productName: 'Personal Loan',
+            createdAt: 1788386995024,
+            estimatedEmi: 14052.09,
+            applicationStatus: 'DRAFT',
+            productCode: 'PERSONAL_LOAN',
+            statusDisplayName: 'Draft',
+            requestedAmount: 300000,
+            submittedAt: null,
+            updatedAt: 1788388419210,
+          },
+          {
+            lastUpdatedChannel: 'WEB',
+            requestedTenureMonths: 36,
+            sourceChannel: 'WEB',
+            currentSection: 'SUBMITTED',
+            applicationReference: 'LOAN-2026-00000182',
+            maskedCreditAccount: 'XXXXXXXX0001',
+            productName: 'Home Loan',
+            createdAt: 1788167310214,
+            estimatedEmi: 46166.41,
+            applicationStatus: 'SUBMITTED',
+            productCode: 'HOME_LOAN',
+            statusDisplayName: 'Submitted',
+            requestedAmount: 1400000,
+            submittedAt: 1788168000000,
+            updatedAt: 1788168000000,
+          },
+        ],
+      },
+    };
+
+    return of(createEnvelopeResponse(appsResponseBody)).pipe(delay(mockDelay));
+  }
+
   // Pass through if not explicitly intercepted
   return next(req);
 };

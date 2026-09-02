@@ -25,6 +25,7 @@ import {
   LoanJourneyState,
   LoanQuoteCalculation,
 } from '../../models';
+import { LoanApplicationsListComponent } from '../../components/loan-applications-list/loan-applications-list.component';
 
 export type PreApprovedStep =
   | 'overview'
@@ -59,7 +60,14 @@ export interface CustomCategoryInfo {
 @Component({
   selector: 'sspl-loans-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, SideNavComponent, DashboardHeaderComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    SideNavComponent,
+    DashboardHeaderComponent,
+    LoanApplicationsListComponent,
+  ],
   templateUrl: './loans-page.component.html',
   styleUrl: './loans-page.component.scss',
 })
@@ -80,6 +88,8 @@ export class LoansPageComponent implements OnInit, OnDestroy {
   readonly customerProfile = this.profileService.profile;
   readonly bankingMetrics = this.loanService.bankingHealthMetrics;
   readonly activeLoans = this.loanService.activeLoans;
+  // All loan applications (draft, submitted, ongoing) from list/loan/applications
+  readonly loanApplications = this.loanService.loanApplications;
   // Draft applications from list/loan/applications
   readonly draftApplications = this.loanService.draftApplications;
   // Loading states
@@ -474,6 +484,16 @@ export class LoansPageComponent implements OnInit, OnDestroy {
           this.selectPreApprovedOffer(personalOffer);
         }
       }
+
+      const ref = params['ref'] as string | undefined;
+      if (ref) {
+        this.loanService.listLoanApplications().subscribe((apps) => {
+          const found = apps.find((a) => a.applicationReference === ref);
+          if (found) {
+            this.resumeSpecificApplication(found);
+          }
+        });
+      }
     });
   }
 
@@ -807,6 +827,82 @@ export class LoansPageComponent implements OnInit, OnDestroy {
           .subscribe();
       }
     }
+  }
+
+  /**
+   * Resumes a specific application (e.g. from the ongoing/draft cards list).
+   */
+  resumeSpecificApplication(app: LoanApplicationSummary): void {
+    if (!app) return;
+    this.currentApplicationReference.set(app.applicationReference);
+    this.showDraftDialog.set(false);
+    this.draftDialogDismissed = true;
+
+    // Find and select the matching offer
+    const matchedOffer =
+      this.allOffers().find((o) => o.productCode === app.productCode) || this.selectedOffer();
+    this.selectedOffer.set(matchedOffer);
+
+    if (app.requestedAmount > 0) {
+      this.appliedAmount.set(app.requestedAmount);
+    }
+    if (app.requestedTenureMonths > 0) {
+      this.tenureMonths.set(app.requestedTenureMonths);
+    }
+    this.loanService.liveQuote.set(null);
+
+    // Map section to wizard step
+    const stepMap: Record<string, PreApprovedStep> = {
+      PERSONAL_DETAILS: 'personal_details',
+      LOAN_REQUIREMENT: 'customise',
+      REVIEW: 'confirm',
+      SUBMITTED: 'confirm',
+    };
+    const resumeStep: PreApprovedStep = stepMap[app.currentSection] ?? 'personal_details';
+    this.preApprovedStep.set(resumeStep);
+    this.activeViewMode.set('pre_approved');
+
+    if (resumeStep === 'confirm') {
+      this.loanService.getLoanApplication(app.applicationReference).subscribe({
+        next: (detail) => {
+          if (detail?.loanRequirement) {
+            if (detail.loanRequirement.requestedAmount > 0) {
+              this.appliedAmount.set(detail.loanRequirement.requestedAmount);
+            }
+            if (detail.loanRequirement.requestedTenureMonths > 0) {
+              this.tenureMonths.set(detail.loanRequirement.requestedTenureMonths);
+            }
+          }
+          if (detail?.personalDetails) {
+            if (detail.personalDetails.fullName) this.personalFullName.set(detail.personalDetails.fullName);
+            if (detail.personalDetails.mobileNumber) this.personalMobileNumber.set(detail.personalDetails.mobileNumber);
+            if (detail.personalDetails.fatherName) this.personalFatherName.set(detail.personalDetails.fatherName);
+            if (detail.personalDetails.emailId) this.personalEmailId.set(detail.personalDetails.emailId);
+            if (detail.personalDetails.addressLine) this.personalAddressLine.set(detail.personalDetails.addressLine);
+            if (detail.personalDetails.postalCode) this.personalPostalCode.set(detail.personalDetails.postalCode);
+            if (detail.personalDetails.dateOfBirth) this.personalDateOfBirth.set(detail.personalDetails.dateOfBirth);
+          }
+          if (!this.tenureMonths() || this.tenureMonths()! <= 0) {
+            this.tenureMonths.set(matchedOffer.minTenureMonths || 36);
+          }
+        },
+      });
+    } else if (resumeStep === 'customise' && this.tenureMonths() && this.appliedAmount() > 0) {
+      this.loanService
+        .recalculateQuote(
+          app.applicationReference,
+          app.productCode as LoanProductCode,
+          this.appliedAmount(),
+          this.tenureMonths()!,
+        )
+        .subscribe();
+    }
+
+    this.showToast(
+      'info',
+      `Resuming application ${app.applicationReference} from ${this.getDraftSectionLabel(app.currentSection)}.`,
+    );
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   /** Dismisses the draft dialog to start fresh with blank personal details and applicationReference: null. */

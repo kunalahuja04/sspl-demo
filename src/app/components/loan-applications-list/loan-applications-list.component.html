@@ -1,0 +1,351 @@
+@if (applications.length > 0) {
+<div class="p-5 sm:p-6 rounded-3xl bg-bg-surface border border-border-default shadow-xs space-y-5 animate-fade-in">
+  
+  <!-- Section Header -->
+  <div class="flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-border-default/70">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-2xl bg-brand-primary text-white flex items-center justify-center font-extrabold text-base shadow-xs">
+        ₹
+      </div>
+      <div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <h3 class="text-heading-sm font-bold text-primary">{{ title() }}</h3>
+          <span class="px-2.5 py-0.5 rounded-full text-label-xs font-bold bg-brand-primary/10 text-brand-primary border border-brand-primary/20">
+            {{ applications.length }} Application{{ applications.length > 1 ? 's' : '' }}
+          </span>
+        </div>
+        <p class="text-body-xs text-secondary mt-0.5">
+          {{ subtitle() }}
+        </p>
+      </div>
+    </div>
+
+    @if (showManageHubLink()) {
+    <button type="button" (click)="navigateToLoansHub()"
+      class="px-4 py-2 rounded-xl bg-bg-muted hover:bg-bg-canvas border border-border-default text-primary font-bold text-label-sm transition-all cursor-pointer flex items-center gap-1.5 shadow-xs">
+      <span>Explore All Loan Offers</span>
+      <svg class="w-4 h-4 text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="m9 18 6-6-6-6" />
+      </svg>
+    </button>
+    }
+  </div>
+
+  <!-- Applications Cards Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4.5">
+    @for (app of applications; track app.applicationReference) {
+    <div class="p-5 rounded-2xl bg-bg-muted/30 hover:bg-bg-muted/50 border border-border-default/80 hover:border-brand-primary/40 transition-all duration-200 space-y-4 flex flex-col justify-between group shadow-xs">
+      
+      <!-- Top Row: Icon, Title, Ref, and Status Badge -->
+      <div>
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shadow-xs"
+              [class.bg-amber-100]="app.applicationStatus === 'DRAFT'"
+              [class.text-amber-800]="app.applicationStatus === 'DRAFT'"
+              [class.bg-blue-100]="app.applicationStatus === 'SUBMITTED'"
+              [class.text-blue-800]="app.applicationStatus === 'SUBMITTED'"
+              [class.bg-emerald-100]="app.applicationStatus === 'APPROVED' || app.applicationStatus === 'DISBURSED' || app.applicationStatus === 'ONGOING'"
+              [class.text-emerald-800]="app.applicationStatus === 'APPROVED' || app.applicationStatus === 'DISBURSED' || app.applicationStatus === 'ONGOING'">
+              @if (app.productCode === 'HOME_LOAN') {
+                🏠
+              } @else if (app.productCode === 'VEHICLE_LOAN') {
+                🚗
+              } @else if (app.productCode === 'BUSINESS_LOAN') {
+                🏢
+              } @else {
+                💼
+              }
+            </div>
+            <div>
+              <h4 class="text-body-sm font-bold text-primary group-hover:text-brand-primary transition-colors">
+                {{ app.productName || 'Personal Loan' }}
+              </h4>
+              <div class="flex items-center gap-1.5 mt-0.5">
+                <span class="text-[11px] font-mono font-medium text-secondary">
+                  {{ app.applicationReference }}
+                </span>
+                <button type="button" (click)="copyReference(app.applicationReference, $event)"
+                  class="p-0.5 text-muted hover:text-primary transition-colors cursor-pointer rounded"
+                  [title]="copiedRef() === app.applicationReference ? 'Copied!' : 'Copy Reference'">
+                  @if (copiedRef() === app.applicationReference) {
+                    <svg class="w-3 h-3 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  } @else {
+                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                    </svg>
+                  }
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Status Badge -->
+          <div>
+            @if (app.applicationStatus === 'DRAFT') {
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-xs font-bold bg-amber-50 text-amber-800 border border-amber-300 shadow-2xs">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+              <span>Draft</span>
+            </span>
+            } @else if (app.applicationStatus === 'SUBMITTED') {
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-xs font-bold bg-blue-50 text-blue-800 border border-blue-300 shadow-2xs">
+              <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+              <span>Submitted</span>
+            </span>
+            } @else if (app.applicationStatus === 'APPROVED' || app.applicationStatus === 'DISBURSED' || app.applicationStatus === 'ONGOING') {
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-2xs">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              <span>Active Facility</span>
+            </span>
+            } @else {
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-xs font-bold bg-rose-50 text-rose-800 border border-rose-300 shadow-2xs">
+              <span>{{ app.statusDisplayName || app.applicationStatus }}</span>
+            </span>
+            }
+          </div>
+        </div>
+
+        <!-- 3 Metrics Columns -->
+        <div class="grid grid-cols-3 gap-2.5 mt-3.5">
+          <!-- Metric 1: Amount -->
+          <div class="p-2.5 rounded-xl bg-bg-surface border border-border-default/70">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-muted">
+              {{ app.applicationStatus === 'APPROVED' || app.applicationStatus === 'DISBURSED' ? 'Sanctioned' : 'Requested' }}
+            </span>
+            <p class="text-body-sm font-extrabold font-mono text-primary mt-0.5">
+              {{ formatInr(app.requestedAmount) }}
+            </p>
+          </div>
+
+          <!-- Metric 2: Tenure -->
+          <div class="p-2.5 rounded-xl bg-bg-surface border border-border-default/70">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-muted">Tenure</span>
+            <p class="text-body-sm font-extrabold font-mono text-primary mt-0.5">
+              {{ app.requestedTenureMonths }} Months
+            </p>
+          </div>
+
+          <!-- Metric 3: Est EMI -->
+          <div class="p-2.5 rounded-xl bg-bg-surface border border-border-default/70">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-muted">Estimated EMI</span>
+            <p class="text-body-sm font-extrabold font-mono text-emerald-700 mt-0.5">
+              {{ formatInr(app.estimatedEmi) }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Current State Alert Banner -->
+        <div class="mt-3 p-3 rounded-xl border flex items-start gap-2.5 text-body-xs"
+          [class.bg-amber-500/10]="app.applicationStatus === 'DRAFT'"
+          [class.border-amber-500/30]="app.applicationStatus === 'DRAFT'"
+          [class.text-amber-900]="app.applicationStatus === 'DRAFT'"
+          [class.bg-blue-500/10]="app.applicationStatus === 'SUBMITTED'"
+          [class.border-blue-500/30]="app.applicationStatus === 'SUBMITTED'"
+          [class.text-blue-900]="app.applicationStatus === 'SUBMITTED'"
+          [class.bg-emerald-500/10]="app.applicationStatus === 'APPROVED' || app.applicationStatus === 'DISBURSED' || app.applicationStatus === 'ONGOING'"
+          [class.border-emerald-500/30]="app.applicationStatus === 'APPROVED' || app.applicationStatus === 'DISBURSED' || app.applicationStatus === 'ONGOING'"
+          [class.text-emerald-900]="app.applicationStatus === 'APPROVED' || app.applicationStatus === 'DISBURSED' || app.applicationStatus === 'ONGOING'">
+          
+          <!-- State Icon -->
+          <div class="shrink-0 mt-0.5">
+            @if (app.applicationStatus === 'DRAFT') {
+              <svg class="w-4 h-4 text-amber-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            } @else if (app.applicationStatus === 'SUBMITTED') {
+              <svg class="w-4 h-4 text-blue-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="16" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12.01" y2="8" />
+              </svg>
+            } @else {
+              <svg class="w-4 h-4 text-emerald-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+            }
+          </div>
+
+          <div class="flex-1">
+            <p class="font-bold leading-tight">{{ getStateTitle(app) }}</p>
+            <p class="text-[11px] opacity-85 mt-0.5 leading-relaxed">{{ getStateDescription(app) }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Action Footer Row -->
+      <div class="flex items-center justify-between gap-3 pt-1 border-t border-border-default/50">
+        <div class="text-[11px] text-muted truncate">
+          <span>Updated: {{ formatDate(app.updatedAt || app.createdAt) }}</span>
+          @if (app.sourceChannel) {
+            <span class="ml-1.5 font-mono px-1.5 py-0.5 rounded bg-bg-surface border border-border-default/50">{{ app.sourceChannel }}</span>
+          }
+        </div>
+
+        <!-- Dynamic Action Button based on status & currentSection -->
+        <button type="button" (click)="onActionClick(app)"
+          class="px-4 py-2 rounded-xl text-label-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 shadow-xs"
+          [class.bg-emerald-600]="app.applicationStatus === 'DRAFT' && app.currentSection === 'REVIEW'"
+          [class.hover:bg-emerald-700]="app.applicationStatus === 'DRAFT' && app.currentSection === 'REVIEW'"
+          [class.text-white]="app.applicationStatus === 'DRAFT' && app.currentSection === 'REVIEW'"
+          [class.bg-brand-primary]="app.applicationStatus === 'DRAFT' && app.currentSection !== 'REVIEW'"
+          [class.hover:bg-brand-primary/90]="app.applicationStatus === 'DRAFT' && app.currentSection !== 'REVIEW'"
+          [class.text-white]="app.applicationStatus === 'DRAFT' && app.currentSection !== 'REVIEW'"
+          [class.bg-[#0B1E36]]="app.applicationStatus === 'APPROVED' || app.applicationStatus === 'DISBURSED' || app.applicationStatus === 'ONGOING'"
+          [class.hover:bg-[#0B1E36]/90]="app.applicationStatus === 'APPROVED' || app.applicationStatus === 'DISBURSED' || app.applicationStatus === 'ONGOING'"
+          [class.text-white]="app.applicationStatus === 'APPROVED' || app.applicationStatus === 'DISBURSED' || app.applicationStatus === 'ONGOING'"
+          [class.bg-bg-surface]="app.applicationStatus === 'SUBMITTED'"
+          [class.hover:bg-bg-canvas]="app.applicationStatus === 'SUBMITTED'"
+          [class.text-primary]="app.applicationStatus === 'SUBMITTED'"
+          [class.border]="app.applicationStatus === 'SUBMITTED'"
+          [class.border-border-default]="app.applicationStatus === 'SUBMITTED'">
+          <span>{{ getActionLabel(app) }}</span>
+          @if (app.applicationStatus === 'DRAFT') {
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          } @else if (app.applicationStatus === 'SUBMITTED') {
+            <svg class="w-3.5 h-3.5 text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 14 14" />
+            </svg>
+          }
+        </button>
+      </div>
+
+    </div>
+    }
+  </div>
+
+</div>
+}
+
+<!-- Track Status Interactive Modal -->
+@if (trackingApplication()) {
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+  <div class="bg-bg-surface border border-border-default rounded-3xl shadow-2xl max-w-lg w-full p-6 space-y-5 animate-in zoom-in-95 duration-200">
+    
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between pb-3 border-b border-border-default">
+      <div>
+        <h3 class="text-heading-sm font-bold text-primary">Application Tracking</h3>
+        <p class="text-body-xs text-secondary font-mono mt-0.5">
+          {{ trackingApplication()?.applicationReference }} · {{ trackingApplication()?.productName }}
+        </p>
+      </div>
+      <button type="button" (click)="closeTrackingModal()"
+        class="w-8 h-8 rounded-full bg-bg-muted hover:bg-bg-canvas text-secondary hover:text-primary flex items-center justify-center cursor-pointer transition-colors font-bold">
+        ✕
+      </button>
+    </div>
+
+    <!-- Application Key Metrics Bar -->
+    <div class="grid grid-cols-3 gap-3 p-3.5 rounded-2xl bg-bg-muted/50 border border-border-default text-center">
+      <div>
+        <span class="text-[10px] font-bold text-muted uppercase">Amount</span>
+        <p class="text-body-sm font-extrabold font-mono text-primary">{{ formatInr(trackingApplication()?.requestedAmount) }}</p>
+      </div>
+      <div>
+        <span class="text-[10px] font-bold text-muted uppercase">Tenure</span>
+        <p class="text-body-sm font-extrabold font-mono text-primary">{{ trackingApplication()?.requestedTenureMonths }}M</p>
+      </div>
+      <div>
+        <span class="text-[10px] font-bold text-muted uppercase">Est. EMI</span>
+        <p class="text-body-sm font-extrabold font-mono text-emerald-700">{{ formatInr(trackingApplication()?.estimatedEmi) }}</p>
+      </div>
+    </div>
+
+    <!-- Timeline Steps -->
+    <div class="space-y-4 py-2">
+      <!-- Step 1 -->
+      <div class="flex items-start gap-3.5">
+        <div class="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center font-extrabold text-xs shrink-0 shadow-2xs">
+          ✓
+        </div>
+        <div>
+          <h5 class="text-body-sm font-bold text-primary">Application Submitted Digitally</h5>
+          <p class="text-body-xs text-secondary mt-0.5">
+            Personal details, credit enquiry consent, and requirements received via {{ trackingApplication()?.sourceChannel || 'WEB' }}.
+          </p>
+          <span class="text-[10px] text-muted">{{ formatDate(trackingApplication()?.submittedAt || trackingApplication()?.createdAt) }}</span>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="flex items-start gap-3.5">
+        <div class="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center font-extrabold text-xs shrink-0 shadow-2xs">
+          ✓
+        </div>
+        <div>
+          <h5 class="text-body-sm font-bold text-primary">Instant CIBIL &amp; Identity Verification</h5>
+          <p class="text-body-xs text-secondary mt-0.5">
+            Credit bureau pull completed successfully. CIBIL score verified in excellent standing.
+          </p>
+          <span class="text-[10px] text-emerald-700 font-bold">Passed · High Eligibility</span>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="flex items-start gap-3.5">
+        <div class="w-7 h-7 rounded-full bg-blue-500 text-white flex items-center justify-center font-extrabold text-xs shrink-0 animate-pulse shadow-2xs">
+          ●
+        </div>
+        <div>
+          <h5 class="text-body-sm font-bold text-blue-900 dark:text-blue-300">Underwriting &amp; Sanction Appraisal</h5>
+          <p class="text-body-xs text-secondary mt-0.5">
+            Credit committee reviewing automated sanction limits and tenure preferences.
+          </p>
+          <span class="text-[10px] text-blue-700 font-bold">In Progress · Expected within 2 hours</span>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="flex items-start gap-3.5 opacity-60">
+        <div class="w-7 h-7 rounded-full bg-border-default text-muted flex items-center justify-center font-bold text-xs shrink-0">
+          4
+        </div>
+        <div>
+          <h5 class="text-body-sm font-bold text-primary">Sanction Letter &amp; e-Sign</h5>
+          <p class="text-body-xs text-secondary mt-0.5">
+            Digital signing of loan sanction terms and automated e-NACH mandate registration.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="flex items-start gap-3.5 opacity-60">
+        <div class="w-7 h-7 rounded-full bg-border-default text-muted flex items-center justify-center font-bold text-xs shrink-0">
+          5
+        </div>
+        <div>
+          <h5 class="text-body-sm font-bold text-primary">Direct Account Disbursal</h5>
+          <p class="text-body-xs text-secondary mt-0.5">
+            Net disbursement credited directly to linked account.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="pt-3 border-t border-border-default flex justify-end">
+      <button type="button" (click)="closeTrackingModal()"
+        class="px-5 py-2 rounded-xl bg-brand-primary hover:bg-brand-primary/90 text-white font-bold text-body-sm transition-colors cursor-pointer">
+        Close Tracker
+      </button>
+    </div>
+
+  </div>
+</div>
+}
+
+<!-- Toast Feedback -->
+@if (toast()) {
+<div class="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl bg-[#0B1E36] text-white text-body-sm font-bold shadow-xl border border-white/10 animate-fade-in flex items-center gap-2">
+  <span>ℹ️</span>
+  <span>{{ toast() }}</span>
+</div>
+}

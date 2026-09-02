@@ -7,6 +7,7 @@ import { KpiCardsComponent } from './components/kpi-cards/kpi-cards.component';
 import { AccountListComponent } from './components/account-list/account-list.component';
 import { RecentTransactionsComponent } from './components/recent-transactions/recent-transactions.component';
 import { ExportModalComponent } from './components/export-modal/export-modal.component';
+import { LoanApplicationsListComponent } from '../../components/loan-applications-list/loan-applications-list.component';
 import { DashboardService, BankAccount } from '../../services/dashboard.service';
 import { LoanService } from '../../services/loan.service';
 
@@ -21,6 +22,7 @@ import { LoanService } from '../../services/loan.service';
     AccountListComponent,
     RecentTransactionsComponent,
     ExportModalComponent,
+    LoanApplicationsListComponent,
   ],
   templateUrl: './dashboard-page.component.html',
   styleUrl: './dashboard-page.component.scss',
@@ -38,8 +40,9 @@ export class DashboardPageComponent implements OnInit {
   readonly isExportModalOpen = signal<boolean>(false);
   readonly toastMessage = signal<{ type: 'success' | 'info' | 'error'; text: string } | null>(null);
 
-  // Active loans signal
+  // Active loans and applications signals
   readonly activeLoans = this.loanService.activeLoans;
+  readonly loanApplications = this.loanService.loanApplications;
 
   formatInr(amount: number): string {
     return new Intl.NumberFormat('en-IN', {
@@ -53,9 +56,9 @@ export class DashboardPageComponent implements OnInit {
     this.router.navigate(['/loans']);
   }
 
-
   ngOnInit(): void {
     this.dashboardService.fetchDashboardData().subscribe();
+    this.loanService.listLoanApplications().subscribe();
   }
 
   onNavChange(navId: string): void {

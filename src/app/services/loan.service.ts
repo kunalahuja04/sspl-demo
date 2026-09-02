@@ -69,6 +69,9 @@ export class LoanService {
   readonly offers = signal<PreApprovedLoanOffer[]>(this.buildInitialOffers());
   readonly selectedOffer = signal<PreApprovedLoanOffer>(this.buildInitialOffers()[1]);
 
+  /** All loan applications (DRAFT, SUBMITTED, ONGOING) hydrated from listLoanApplications(). */
+  readonly loanApplications = signal<LoanApplicationSummary[]>([]);
+
   /** Active ongoing loans — hydrated from `listLoanApplications()`. */
   readonly activeLoans = signal<ActiveLoanItem[]>([]);
 
@@ -85,60 +88,43 @@ export class LoanService {
   readonly liveQuote = signal<LoanQuoteCalculation | null>(null);
 
   /** Mock application reference for a pre-existing DRAFT — drives the continue-dialog. */
-  private readonly MOCK_DRAFT_REF = 'LOAN-2026-00000182';
+  private readonly MOCK_DRAFT_REF = 'LOAN-2026-00000261';
 
   // ── Mock data: simulates what the backend returns for this demo customer ──
   private readonly MOCK_APPLICATIONS: LoanApplicationSummary[] = [
     {
-      applicationReference: 'LOAN-2026-00000182',
-      productCode: 'PERSONAL_LOAN',
+      lastUpdatedChannel: 'WEB',
+      requestedTenureMonths: 24,
+      sourceChannel: 'WEB',
+      currentSection: 'REVIEW',
+      applicationReference: 'LOAN-2026-00000261',
+      maskedCreditAccount: null,
       productName: 'Personal Loan',
-      requestedAmount: 1400000,
+      createdAt: 1788386995024,
+      estimatedEmi: 14052.09,
+      applicationStatus: 'DRAFT',
+      productCode: 'PERSONAL_LOAN',
+      statusDisplayName: 'Draft',
+      requestedAmount: 300000,
+      submittedAt: null,
+      updatedAt: 1788388419210,
+    },
+    {
+      lastUpdatedChannel: 'WEB',
       requestedTenureMonths: 36,
+      sourceChannel: 'WEB',
+      currentSection: 'SUBMITTED',
+      applicationReference: 'LOAN-2026-00000182',
+      maskedCreditAccount: 'XXXXXXXX0001',
+      productName: 'Home Loan',
+      createdAt: 1788167310214,
       estimatedEmi: 46166.41,
       applicationStatus: 'SUBMITTED',
-      statusDisplayName: 'Submitted',
-      currentSection: 'SUBMITTED',
-      maskedCreditAccount: 'XXXXXXXX0002',
-      lastUpdatedChannel: 'WEB',
-      sourceChannel: 'WEB',
-      createdAt: Date.now() - 2 * 60 * 60 * 1000,
-      submittedAt: Date.now() - 1 * 60 * 60 * 1000,
-      updatedAt: Date.now() - 45 * 60 * 1000,
-    },
-    {
-      applicationReference: 'LOAN-2026-00000161',
       productCode: 'HOME_LOAN',
-      productName: 'Home Loan',
-      requestedAmount: 35000000,
-      requestedTenureMonths: 84,
-      estimatedEmi: 554276.99,
-      applicationStatus: 'SUBMITTED',
       statusDisplayName: 'Submitted',
-      currentSection: 'SUBMITTED',
-      maskedCreditAccount: 'XXXXXXXX0002',
-      lastUpdatedChannel: 'MOBILE',
-      sourceChannel: 'MOBILE',
-      createdAt: Date.now() - 8 * 60 * 60 * 1000,
-      submittedAt: Date.now() - 7 * 60 * 60 * 1000,
-      updatedAt: Date.now() - 7 * 60 * 60 * 1000,
-    },
-    {
-      applicationReference: 'LOAN-2026-00000141',
-      productCode: 'BUSINESS_LOAN',
-      productName: 'Business Loan',
-      requestedAmount: 1500000,
-      requestedTenureMonths: 36,
-      estimatedEmi: 49821.46,
-      applicationStatus: 'SUBMITTED',
-      statusDisplayName: 'Submitted',
-      currentSection: 'SUBMITTED',
-      maskedCreditAccount: 'XXXXXXXX0002',
-      lastUpdatedChannel: 'WEB',
-      sourceChannel: 'WEB',
-      createdAt: Date.now() - 5 * 24 * 60 * 60 * 1000,
-      submittedAt: Date.now() - 5 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000,
-      updatedAt: Date.now() - 5 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000,
+      requestedAmount: 1400000,
+      submittedAt: 1788168000000,
+      updatedAt: 1788168000000,
     },
   ];
 
@@ -545,11 +531,12 @@ export class LoanService {
   listLoanApplications(): Observable<LoanApplicationSummary[]> {
     const req = this.reqBuilder.buildRequest<ListLoanApplicationsRequest>({});
     const mockResponse = of(this.MOCK_APPLICATIONS).pipe(
-      delay(900),
+      delay(400),
       map((apps) => {
+        this.loanApplications.set(apps);
         this.draftApplications.set(apps.filter((a) => a.applicationStatus === 'DRAFT'));
         const activeItems: ActiveLoanItem[] = apps
-          .filter((a) => a.applicationStatus === 'SUBMITTED')
+          .filter((a) => a.applicationStatus === 'SUBMITTED' || a.applicationStatus === 'APPROVED' || a.applicationStatus === 'ONGOING')
           .map((a) => this.applicationSummaryToActiveLoan(a));
         this.activeLoans.set(activeItems);
         this.isPageLoading.set(false);
@@ -561,9 +548,10 @@ export class LoanService {
       .pipe(
         map((res) => {
           const apps = res.body?.loanApplicationListResponse?.applications ?? [];
+          this.loanApplications.set(apps);
           this.draftApplications.set(apps.filter((a) => a.applicationStatus === 'DRAFT'));
           const activeItems: ActiveLoanItem[] = apps
-            .filter((a) => a.applicationStatus === 'SUBMITTED')
+            .filter((a) => a.applicationStatus === 'SUBMITTED' || a.applicationStatus === 'APPROVED' || a.applicationStatus === 'ONGOING')
             .map((a) => this.applicationSummaryToActiveLoan(a));
           this.activeLoans.set(activeItems);
           this.isPageLoading.set(false);
@@ -1066,7 +1054,7 @@ export class LoanService {
         month: 'short',
         year: 'numeric',
       }),
-      disbursalAccount: app.maskedCreditAccount,
+      disbursalAccount: app.maskedCreditAccount || 'Linked Account',
       status: 'ACTIVE',
       progressPercentage: progress,
     };

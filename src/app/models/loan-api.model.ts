@@ -13,7 +13,7 @@ export type LoanProductCode = 'PERSONAL_LOAN' | 'HOME_LOAN' | 'VEHICLE_LOAN' | '
 export type LoanJourneySection = 'PERSONAL_DETAILS' | 'LOAN_REQUIREMENT' | 'REVIEW' | 'SUBMITTED';
 
 /** Possible application lifecycle statuses. */
-export type LoanApplicationStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
+export type LoanApplicationStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'DISBURSED' | 'ONGOING';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. GET /banking/loan/product/list
@@ -322,14 +322,14 @@ export interface LoanApplicationSummary {
   requestedAmount: number;
   requestedTenureMonths: number;
   estimatedEmi: number;
-  applicationStatus: LoanApplicationStatus;
+  applicationStatus: LoanApplicationStatus | string;
   statusDisplayName: string;
-  currentSection: LoanJourneySection | 'SUBMITTED';
-  maskedCreditAccount: string;
+  currentSection: LoanJourneySection | string;
+  maskedCreditAccount: string | null;
   lastUpdatedChannel: string;
   sourceChannel: string;
   createdAt: number;
-  submittedAt: number;
+  submittedAt: number | null;
   updatedAt: number;
 }
 
