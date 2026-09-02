@@ -406,18 +406,59 @@ export class LoanService {
   // 6. POST /banking/get/loan/application
   // ─────────────────────────────────────────────────────────────────────────
 
-  /**
-   * Fetches the full loan application detail by application reference.
-   */
   getLoanApplication(applicationReference: string): Observable<LoanApplicationDetail> {
     const req = this.reqBuilder.buildRequest<GetLoanApplicationRequest>({
       loanApplicationRequest: { applicationReference },
     });
     return this.http
-      .post<
-        ApiResponse<GetLoanApplicationResponseBody>
-      >(API_ENDPOINTS.BANKING.GET_LOAN_APPLICATION, req)
-      .pipe(map((res) => res.body!.loanApplicationResponse));
+      .post<ApiResponse<GetLoanApplicationResponseBody>>(API_ENDPOINTS.BANKING.GET_LOAN_APPLICATION, req)
+      .pipe(
+        map((res) => {
+          if (res.header?.status === 'error' || !res.body?.loanApplicationResponse) {
+            throw new Error(res.header?.errorMessage || 'Failed to get loan application');
+          }
+          return res.body.loanApplicationResponse;
+        }),
+        catchError((err) => {
+          if (environment.useMockApi) {
+            const fallback: LoanApplicationDetail = {
+              applicationReference,
+              applicationStatus: 'DRAFT',
+              currentSection: 'REVIEW',
+              lastCompletedSection: 'LOAN_REQUIREMENT',
+              lastUpdatedChannel: 'WEB',
+              sourceChannel: 'WEB',
+              personalDetails: {
+                fullName: '',
+                mobileNumber: '',
+                fatherName: '',
+                emailId: '',
+                addressLine: '',
+                postalCode: '',
+                dateOfBirth: '',
+              },
+              loanRequirement: {
+                productCode: 'PERSONAL_LOAN',
+                requestedAmount: 1400000,
+                requestedTenureMonths: 36,
+                loanPurpose: 'Personal requirement',
+              },
+              loanQuote: {
+                quoteReference: `QUOTE-${Date.now()}`,
+                finalFacilityAmount: 1386000,
+                processingFee: 14000,
+                indicativeInterestRate: 11.5,
+                estimatedEmi: 46182,
+                quoteValidUntil: Date.now() + 1800000,
+              },
+              createdAt: Date.now() - 3600000,
+              updatedAt: Date.now(),
+            };
+            return of(fallback).pipe(delay(500));
+          }
+          return throwError(() => err);
+        }),
+      );
   }
 
   // ─────────────────────────────────────────────────────────────────────────

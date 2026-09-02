@@ -542,11 +542,66 @@ export class LoansPageComponent implements OnInit, OnDestroy {
         this.journeyState.set(journey);
 
         if (journey.applicationAlreadyExists && journey.applicationReference) {
-          // applicationAlreadyExists is true -> prompt "Continue where you left off"
           this.currentApplicationReference.set(journey.applicationReference);
           const matchedOffer =
             this.allOffers().find((o) => o.productCode === journey.requestedProductCode) ||
             this.selectedOffer();
+          if (matchedOffer) {
+            this.selectedOffer.set(matchedOffer);
+          }
+
+          // Directly display Step 5 ("Confirm and Disburse" / "Loan Sanction Summary")
+          // on /banking/loan/journey when currentSection is "REVIEW", skipping documents and consent steps.
+          if (journey.currentSection === 'REVIEW') {
+            this.activeViewMode.set('pre_approved');
+            this.showDraftDialog.set(false);
+            this.draftDialogDismissed = true;
+
+            this.loanService.getLoanApplication(journey.applicationReference).subscribe({
+              next: (detail) => {
+                if (detail?.loanRequirement) {
+                  if (detail.loanRequirement.requestedAmount > 0) {
+                    this.appliedAmount.set(detail.loanRequirement.requestedAmount);
+                  }
+                  if (detail.loanRequirement.requestedTenureMonths > 0) {
+                    this.tenureMonths.set(detail.loanRequirement.requestedTenureMonths);
+                  }
+                }
+                if (detail?.personalDetails) {
+                  if (detail.personalDetails.fullName) this.personalFullName.set(detail.personalDetails.fullName);
+                  if (detail.personalDetails.mobileNumber) this.personalMobileNumber.set(detail.personalDetails.mobileNumber);
+                  if (detail.personalDetails.fatherName) this.personalFatherName.set(detail.personalDetails.fatherName);
+                  if (detail.personalDetails.emailId) this.personalEmailId.set(detail.personalDetails.emailId);
+                  if (detail.personalDetails.addressLine) this.personalAddressLine.set(detail.personalDetails.addressLine);
+                  if (detail.personalDetails.postalCode) this.personalPostalCode.set(detail.personalDetails.postalCode);
+                  if (detail.personalDetails.dateOfBirth) this.personalDateOfBirth.set(detail.personalDetails.dateOfBirth);
+                }
+                if (!this.tenureMonths() || this.tenureMonths()! <= 0) {
+                  this.tenureMonths.set(matchedOffer.minTenureMonths || 36);
+                }
+                this.preApprovedStep.set('confirm');
+                this.showToast(
+                  'info',
+                  `Displaying Loan Sanction Summary for application ${journey.applicationReference}.`,
+                );
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              },
+              error: () => {
+                if (!this.tenureMonths() || this.tenureMonths()! <= 0) {
+                  this.tenureMonths.set(matchedOffer.minTenureMonths || 36);
+                }
+                this.preApprovedStep.set('confirm');
+                this.showToast(
+                  'info',
+                  `Displaying Loan Sanction Summary for application ${journey.applicationReference}.`,
+                );
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              },
+            });
+            return;
+          }
+
+          // Otherwise (for other sections like PERSONAL_DETAILS or LOAN_REQUIREMENT), prompt the resume dialog
           this.activeDraft.set({
             applicationReference: journey.applicationReference,
             productCode: journey.requestedProductCode,
@@ -726,7 +781,7 @@ export class LoansPageComponent implements OnInit, OnDestroy {
     const stepMap: Record<string, PreApprovedStep> = {
       PERSONAL_DETAILS: 'personal_details',
       LOAN_REQUIREMENT: 'customise',
-      REVIEW: 'verify_docs',
+      REVIEW: 'confirm',
       SUBMITTED: 'confirm',
     };
     const resumeStep: PreApprovedStep = stepMap[currentSec] ?? 'personal_details';
@@ -778,8 +833,8 @@ export class LoansPageComponent implements OnInit, OnDestroy {
     const map: Record<string, string> = {
       PERSONAL_DETAILS: 'Step 1 · Personal Details',
       LOAN_REQUIREMENT: 'Step 2 · Customise Loan',
-      REVIEW: 'Step 3 · Document Verification',
-      SUBMITTED: 'Step 4 · Terms & Disburse',
+      REVIEW: 'Step 5 · Confirm & Disburse',
+      SUBMITTED: 'Step 5 · Confirm & Disburse',
     };
     return map[section] ?? 'the beginning';
   }
