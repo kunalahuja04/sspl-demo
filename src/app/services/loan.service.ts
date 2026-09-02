@@ -45,9 +45,10 @@ import {
   CustomLoanEnquiryPayload,
   LoanEnquiryResponse,
 } from '../models';
+import { API_ENDPOINTS } from '../core/config/api-endpoints';
 
 /** Base URL for the Loan Microservice gateway. Change in environment files for prod. */
-const LOAN_API_BASE = 'http://localhost:8080/TestBedGateway/API';
+// const LOAN_API_BASE = 'http://localhost:8080/TestBedGateway/API';
 
 @Injectable({
   providedIn: 'root',
@@ -167,18 +168,35 @@ export class LoanService {
   fetchLoanProducts(): Observable<LoanProduct[]> {
     const req = this.reqBuilder.buildRequest<LoanProductListRequest>({});
     return this.http
-      .post<
-        ApiResponse<LoanProductListResponseBody>
-      >(`${LOAN_API_BASE}/banking/loan/product/list`, req)
+      .post<ApiResponse<LoanProductListResponseBody>>(API_ENDPOINTS.BANKING.LOAN_PRODUCTS, req)
       .pipe(
         map((res) => {
           const prods = res.body?.loanProductListResponse?.products ?? [];
-          this.products.set(prods);
-          this.offers.set(this.enrichProductsToOffers(prods));
-          if (this.offers().length > 0) {
-            this.selectedOffer.set(this.offers()[0]);
+          if (prods.length > 0) {
+            this.products.set(prods);
+            this.offers.set(this.enrichProductsToOffers(prods));
+            if (this.offers().length > 0) {
+              this.selectedOffer.set(this.offers()[0]);
+            }
           }
           return prods;
+        }),
+        catchError(() => {
+          const initialOffers = this.buildInitialOffers();
+          const fallbackProds: LoanProduct[] = initialOffers.map((o) => ({
+            productCode: o.productCode,
+            productName: o.title,
+            productDescription: o.tagline,
+            lobCode: 'RETAIL' as const,
+            minimumAmount: o.minAmount,
+            maximumAmount: o.maxAmount,
+            indicativeInterestRate: o.interestRate,
+            minimumTenureMonths: o.minTenureMonths,
+            maximumTenureMonths: o.maxTenureMonths,
+          }));
+          this.products.set(fallbackProds);
+          this.offers.set(initialOffers);
+          return of(fallbackProds);
         }),
       );
   }
@@ -215,7 +233,7 @@ export class LoanService {
       updatedAt: existingDraft?.updatedAt ?? null,
     };
     return this.http
-      .post<ApiResponse<LoanJourneyResponseBody>>(`${LOAN_API_BASE}/banking/loan/journey`, req)
+      .post<ApiResponse<LoanJourneyResponseBody>>(API_ENDPOINTS.BANKING.LOAN_JOURNEY, req)
       .pipe(
         map((res) => res.body!.loanJourneyResponse),
         catchError(() => of(mockJourney).pipe(delay(600))),
@@ -239,7 +257,7 @@ export class LoanService {
     return this.http
       .post<
         ApiResponse<LoanPersonalDetailsSaveResponseBody>
-      >(`${LOAN_API_BASE}/banking/save/loan/personaldetails`, req)
+      >(API_ENDPOINTS.BANKING.SAVE_DETAILS, req)
       .pipe(map((res) => res.body!.loanSectionSaveResponse));
   }
 
@@ -277,9 +295,7 @@ export class LoanService {
       quoteValidUntil: Date.now() + 30 * 60 * 1000,
     };
     return this.http
-      .post<
-        ApiResponse<LoanQuoteResponseBody>
-      >(`${LOAN_API_BASE}/banking/calculate/loan/quote`, req)
+      .post<ApiResponse<LoanQuoteResponseBody>>(API_ENDPOINTS.BANKING.LOAN_QUOTE, req)
       .pipe(
         map((res) => res.body!.loanQuoteCalculationResponse),
         catchError(() => of(mockQuote).pipe(delay(700))),
@@ -325,9 +341,7 @@ export class LoanService {
       loanRequirementSaveRequest: payload,
     });
     return this.http
-      .post<
-        ApiResponse<LoanRequirementSaveResponseBody>
-      >(`${LOAN_API_BASE}/banking/save/loan/requirement`, req)
+      .post<ApiResponse<LoanRequirementSaveResponseBody>>(API_ENDPOINTS.BANKING.SAVE_LOAN, req)
       .pipe(map((res) => res.body!.loanSectionSaveResponse));
   }
 
@@ -345,7 +359,7 @@ export class LoanService {
     return this.http
       .post<
         ApiResponse<GetLoanApplicationResponseBody>
-      >(`${LOAN_API_BASE}/banking/get/loan/application`, req)
+      >(API_ENDPOINTS.BANKING.GET_LOAN_APPLICATION, req)
       .pipe(map((res) => res.body!.loanApplicationResponse));
   }
 
@@ -361,7 +375,7 @@ export class LoanService {
     return this.http
       .post<
         ApiResponse<EligibleCreditAccountsResponseBody>
-      >(`${LOAN_API_BASE}/banking/list/eligible/credit/accounts`, req)
+      >(API_ENDPOINTS.BANKING.BANK_ACCOUNTS, req)
       .pipe(map((res) => res.body?.eligibleCreditAccountListResponse?.accounts ?? []));
   }
 
@@ -379,9 +393,7 @@ export class LoanService {
       loanApplicationSubmitRequest: payload,
     });
     return this.http
-      .post<
-        ApiResponse<SubmitLoanApplicationResponseBody>
-      >(`${LOAN_API_BASE}/banking/submit/loan/application`, req)
+      .post<ApiResponse<SubmitLoanApplicationResponseBody>>(API_ENDPOINTS.BANKING.SUBMIT_LOAN, req)
       .pipe(
         map((res) => {
           const s = res.body!.loanApplicationSubmitResponse;
@@ -420,7 +432,7 @@ export class LoanService {
     return this.http
       .post<
         ApiResponse<GetLoanApplicationStatusResponseBody>
-      >(`${LOAN_API_BASE}/banking/get/loan/application/status`, req)
+      >(API_ENDPOINTS.BANKING.LOAN_APP_STATUS, req)
       .pipe(map((res) => res.body!.loanApplicationStatusResponse));
   }
 
@@ -447,9 +459,7 @@ export class LoanService {
       }),
     );
     return this.http
-      .post<
-        ApiResponse<ListLoanApplicationsResponseBody>
-      >(`${LOAN_API_BASE}/banking/list/loan/applications`, req)
+      .post<ApiResponse<ListLoanApplicationsResponseBody>>(API_ENDPOINTS.BANKING.LOAN_APP_LIST, req)
       .pipe(
         map((res) => {
           const apps = res.body?.loanApplicationListResponse?.applications ?? [];
@@ -725,6 +735,13 @@ export class LoanService {
   private productToOffer(p: LoanProduct): PreApprovedLoanOffer {
     const type = this.productCodeToType(p.productCode);
     const uiMeta = this.getOfferUiMeta(p.productCode);
+    const tenureOptions = this.buildTenureOptions(
+      p.minimumTenureMonths,
+      p.maximumTenureMonths,
+      p.productCode,
+    );
+    const defaultTenure =
+      tenureOptions[Math.floor(tenureOptions.length / 2)] || p.minimumTenureMonths;
     return {
       id: `offer-${p.productCode.toLowerCase()}`,
       type,
@@ -736,12 +753,15 @@ export class LoanService {
       badgeColor: uiMeta.badgeColor,
       maxAmount: p.maximumAmount,
       minAmount: p.minimumAmount,
-      defaultAmount: Math.min(Math.round(p.maximumAmount * 0.4), p.maximumAmount),
+      defaultAmount: Math.min(
+        Math.max(Math.round(p.maximumAmount * 0.4), p.minimumAmount),
+        p.maximumAmount,
+      ),
       interestRate: p.indicativeInterestRate,
       minTenureMonths: p.minimumTenureMonths,
       maxTenureMonths: p.maximumTenureMonths,
-      defaultTenureMonths: Math.round((p.minimumTenureMonths + p.maximumTenureMonths) / 2),
-      tenureOptions: this.buildTenureOptions(p.minimumTenureMonths, p.maximumTenureMonths),
+      defaultTenureMonths: defaultTenure,
+      tenureOptions,
       processingFee: uiMeta.processingFee,
       disbursalSpeed: uiMeta.disbursalSpeed,
       creditScoreRequired: uiMeta.creditScoreRequired,
@@ -763,9 +783,58 @@ export class LoanService {
     return map[code] ?? 'personal';
   }
 
-  private buildTenureOptions(min: number, max: number): number[] {
-    const steps = [6, 12, 24, 36, 48, 60, 84, 120, 180, 240, 360];
-    return steps.filter((s) => s >= min && s <= max);
+  /**
+   * Generates dynamic tenure chip options (in months) based on minimumTenureMonths
+   * and maximumTenureMonths for a given productCode.
+   *
+   * Examples:
+   * - PERSONAL_LOAN (6 to 60): [6, 12, 24, 36, 48, 60]
+   * - HOME_LOAN (60 to 360): [60, 120, 180, 240, 300, 360] (5Y, 10Y, 15Y, 20Y, 25Y, 30Y)
+   * - VEHICLE_LOAN (12 to 84): [12, 24, 36, 48, 60, 72, 84] (1Y to 7Y)
+   * - BUSINESS_LOAN (12 to 120): [12, 24, 36, 48, 60, 84, 120] (1Y to 10Y)
+   */
+  buildTenureOptions(min: number, max: number, productCode?: LoanProductCode): number[] {
+    if (!min || !max || min > max) {
+      return [12, 24, 36, 48, 60];
+    }
+
+    if (productCode === 'HOME_LOAN') {
+      // Home loan: standard 5-year slabs (60, 120, 180, 240, 300, 360 months)
+      const homeSteps = [60, 120, 180, 240, 300, 360];
+      const filtered = homeSteps.filter((m) => m >= min && m <= max);
+      const set = new Set([min, ...filtered, max]);
+      return Array.from(set).sort((a, b) => a - b);
+    }
+
+    if (productCode === 'PERSONAL_LOAN') {
+      // Personal loan: 6, 12, 24, 36, 48, 60 months
+      const personalSteps = [6, 12, 24, 36, 48, 60];
+      const filtered = personalSteps.filter((m) => m >= min && m <= max);
+      const set = new Set([min, ...filtered, max]);
+      return Array.from(set).sort((a, b) => a - b);
+    }
+
+    if (productCode === 'VEHICLE_LOAN') {
+      // Vehicle loan: yearly options (12, 24, 36, 48, 60, 72, 84 months)
+      const autoSteps = [12, 24, 36, 48, 60, 72, 84];
+      const filtered = autoSteps.filter((m) => m >= min && m <= max);
+      const set = new Set([min, ...filtered, max]);
+      return Array.from(set).sort((a, b) => a - b);
+    }
+
+    if (productCode === 'BUSINESS_LOAN') {
+      // Business loan: 12, 24, 36, 48, 60, 84, 120 months
+      const bizSteps = [12, 24, 36, 48, 60, 84, 120];
+      const filtered = bizSteps.filter((m) => m >= min && m <= max);
+      const set = new Set([min, ...filtered, max]);
+      return Array.from(set).sort((a, b) => a - b);
+    }
+
+    // Generic fallback for any other product:
+    const candidateSteps = [6, 12, 18, 24, 36, 48, 60, 72, 84, 96, 120, 180, 240, 300, 360];
+    const filtered = candidateSteps.filter((m) => m >= min && m <= max);
+    const set = new Set([min, ...filtered, max]);
+    return Array.from(set).sort((a, b) => a - b);
   }
 
   private getOfferUiMeta(code: LoanProductCode): {
@@ -957,7 +1026,7 @@ export class LoanService {
         lobCode: 'RETAIL',
         minimumAmount: 100000,
         maximumAmount: 10000000,
-        indicativeInterestRate: 12.0,
+        indicativeInterestRate: 12,
         minimumTenureMonths: 12,
         maximumTenureMonths: 120,
       },

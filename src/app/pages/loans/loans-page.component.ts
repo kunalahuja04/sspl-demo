@@ -229,6 +229,39 @@ export class LoansPageComponent implements OnInit, OnDestroy {
     return q ? q.finalFacilityAmount : this.appliedAmount();
   });
 
+  // Dynamically generated tenure chips for the currently selected offer
+  readonly tenureChips = computed<number[]>(() => {
+    const offer = this.selectedOffer();
+    if (!offer) return [12, 24, 36, 48, 60];
+    if (offer.tenureOptions && offer.tenureOptions.length > 0) {
+      return offer.tenureOptions;
+    }
+    return this.loanService.buildTenureOptions(
+      offer.minTenureMonths || 6,
+      offer.maxTenureMonths || 60,
+      offer.productCode,
+    );
+  });
+
+  // Dynamic quick-select amount presets based on product min & max limits
+  readonly amountPresets = computed<number[]>(() => {
+    const offer = this.selectedOffer();
+    if (!offer) return [100000, 200000, 300000, 500000];
+    const min = offer.minAmount;
+    const max = offer.maxAmount;
+    if (offer.productCode === 'HOME_LOAN') {
+      return [1000000, 2500000, 5000000, 10000000].filter((a) => a >= min && a <= max);
+    }
+    if (offer.productCode === 'BUSINESS_LOAN') {
+      return [500000, 1000000, 2500000, 5000000].filter((a) => a >= min && a <= max);
+    }
+    if (offer.productCode === 'VEHICLE_LOAN') {
+      return [300000, 500000, 1000000, 2000000].filter((a) => a >= min && a <= max);
+    }
+    const candidates = [50000, 100000, 200000, 300000, 500000, 1000000];
+    return candidates.filter((a) => a >= min && a <= max).slice(0, 4);
+  });
+
   // ── Custom Enquiry State ─────────────────────────────────────────
   readonly customStep = signal<CustomEnquiryStep>('configure');
 
@@ -352,7 +385,14 @@ export class LoansPageComponent implements OnInit, OnDestroy {
     }
 
     // Fetch real loan products from API (refreshes offers catalog)
-    this.loanService.fetchLoanProducts().subscribe();
+    this.loanService.fetchLoanProducts().subscribe(() => {
+      const currentCode = this.selectedOffer()?.productCode;
+      const updatedOffers = this.allOffers();
+      const matched = updatedOffers.find((o) => o.productCode === currentCode) || updatedOffers[0];
+      if (matched) {
+        this.selectedOffer.set(matched);
+      }
+    });
 
     // Load existing loan applications to hydrate activeLoans + draftApplications signals
     this.loanService.listLoanApplications().subscribe((apps) => {
@@ -421,9 +461,13 @@ export class LoansPageComponent implements OnInit, OnDestroy {
   // ── Pre-Approved Flow Handlers ──────────────────────────────────
   selectPreApprovedOffer(offer: PreApprovedLoanOffer): void {
     this.selectedOffer.set(offer);
-    const defAmt = Math.min(offer.defaultAmount || 300000, offer.maxAmount);
+    const defAmt = Math.min(
+      Math.max(offer.defaultAmount || offer.minAmount, offer.minAmount),
+      offer.maxAmount,
+    );
     this.appliedAmount.set(defAmt);
     this.tenureMonths.set(null);
+    this.tenureValidationError.set(false);
     this.termsAgreed.set(false);
     this.loanService.liveQuote.set(null); // reset live quote when offer changes
   }
@@ -535,9 +579,11 @@ export class LoansPageComponent implements OnInit, OnDestroy {
   goToVerifyDocs(): void {
     if (!this.tenureMonths() || this.tenureMonths()! <= 0) {
       this.tenureValidationError.set(true);
+      const min = this.selectedOffer()?.minTenureMonths ?? 6;
+      const max = this.selectedOffer()?.maxTenureMonths ?? 60;
       this.showToast(
         'error',
-        'Action Required: Please select a repayment tenure duration chip (12M, 24M, 36M, 48M, or 60M) to proceed.',
+        `Action Required: Please select a repayment tenure duration chip (${min}M - ${max}M) to proceed.`,
       );
       const el = document.getElementById('tenure-selection-card');
       if (el) {

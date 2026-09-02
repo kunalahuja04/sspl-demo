@@ -573,8 +573,8 @@
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div class="p-4.5 rounded-2xl bg-bg-surface border border-border-default shadow-xs space-y-1">
                 <span class="text-xl">📅</span>
-                <p class="text-label-xs text-secondary">Max Tenure</p>
-                <p class="text-body-md font-bold text-primary">{{ selectedOffer().maxTenureMonths }} Months</p>
+                <p class="text-label-xs text-secondary">Tenure Range</p>
+                <p class="text-body-md font-bold text-primary">{{ selectedOffer().minTenureMonths }} - {{ selectedOffer().maxTenureMonths }} M</p>
               </div>
 
               <div class="p-4.5 rounded-2xl bg-bg-surface border border-border-default shadow-xs space-y-1">
@@ -645,8 +645,7 @@
                   [class.bg-brand-primary/5]="selectedOffer().id === offer.id">
                   <div>
                     <p class="text-body-xs font-bold text-primary">{{ offer.title }}</p>
-                    <p class="text-[11px] text-secondary">{{ offer.interestRate }}% p.a. · Up to {{
-                      offer.maxTenureMonths }}M</p>
+                    <p class="text-[11px] text-secondary">{{ offer.interestRate }}% p.a. · {{ offer.minTenureMonths }}M - {{ offer.maxTenureMonths }}M</p>
                   </div>
                   <span class="text-body-sm font-extrabold font-mono text-primary">{{ formatInr(offer.maxAmount)
                     }}</span>
@@ -741,8 +740,7 @@
             <div class="space-y-0.5">
               <p class="font-extrabold text-body-md text-red-950">Action Required: Repayment Tenure Not Selected</p>
               <p class="text-body-xs font-medium text-red-900 leading-relaxed">
-                Please click and select any repayment tenure duration chip (<strong>12M</strong>, <strong>24M</strong>,
-                <strong>36M</strong>, <strong>48M</strong>, or <strong>60M</strong>) below to calculate your monthly EMI
+                Please click and select any repayment tenure duration chip below (from <strong>{{ selectedOffer().minTenureMonths }}M</strong> up to <strong>{{ selectedOffer().maxTenureMonths }}M</strong>) to calculate your monthly EMI
                 and proceed to Document Verification.
               </p>
             </div>
@@ -773,13 +771,12 @@
             <!-- Quick Presets -->
             <div class="flex items-center gap-2 pt-1 flex-wrap">
               <span class="text-label-xs text-muted uppercase font-bold">Quick Select:</span>
-              @for (preset of [100000, 200000, 300000, 500000]; track preset) {
-              @if (preset <= selectedOffer().maxAmount) { <button type="button" (click)="setAmountPreset(preset)"
+              @for (preset of amountPresets(); track preset) {
+              <button type="button" (click)="setAmountPreset(preset)"
                 class="px-3 py-1 rounded-lg text-label-xs font-semibold border border-border-default bg-bg-muted hover:bg-bg-surface transition-colors cursor-pointer">
                 {{ formatInr(preset) }}
-                </button>
-                }
-                }
+              </button>
+              }
             </div>
 
           </div>
@@ -793,33 +790,43 @@
             [class.ring-2]="!tenureMonths() && !tenureValidationError()"
             [class.ring-amber-400/20]="!tenureMonths() && !tenureValidationError()"
             [class.border-border-default]="!!tenureMonths()">
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between flex-wrap gap-2">
               <div>
                 <h3 class="text-body-md font-bold text-primary">Repayment Tenure</h3>
-                <p class="text-body-xs text-secondary">Select comfortable duration for repayment</p>
+                <p class="text-body-xs text-secondary">
+                  Eligible Range: {{ selectedOffer().minTenureMonths }}M to {{ selectedOffer().maxTenureMonths }}M
+                </p>
               </div>
               @if (tenureMonths()) {
               <div class="text-heading-md font-extrabold text-primary">
                 {{ tenureMonths() }} Months
+                @if (tenureMonths()! >= 12 && tenureMonths()! % 12 === 0) {
+                <span class="text-body-xs font-semibold text-secondary">({{ tenureMonths()! / 12 }} Yr{{ tenureMonths() === 12 ? '' : 's' }})</span>
+                }
               </div>
               } @else {
               <span
                 class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-label-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">
-                <span>⚠️</span> Select Tenure Chip
+                <span>⚠️</span> Select Tenure ({{ selectedOffer().minTenureMonths }}M - {{ selectedOffer().maxTenureMonths }}M)
               </span>
               }
             </div>
 
-            <div class="grid grid-cols-5 gap-2.5">
-              @for (tenure of [12, 24, 36, 48, 60]; track tenure) {
+            <div class="flex flex-wrap gap-2 sm:gap-2.5">
+              @for (tenure of tenureChips(); track tenure) {
               <button type="button" (click)="selectTenure(tenure)"
-                class="py-3 rounded-2xl text-body-sm font-bold border transition-all cursor-pointer text-center"
+                class="flex-1 min-w-[72px] sm:min-w-[82px] py-2.5 sm:py-3 px-2 rounded-2xl border transition-all cursor-pointer text-center"
                 [class.bg-[#0B1E36]]="tenureMonths() === tenure" [class.text-white]="tenureMonths() === tenure"
                 [class.border-[#0B1E36]]="tenureMonths() === tenure" [class.shadow-md]="tenureMonths() === tenure"
                 [class.bg-bg-muted]="tenureMonths() !== tenure" [class.text-secondary]="tenureMonths() !== tenure"
                 [class.border-border-default]="tenureMonths() !== tenure"
                 [class.hover:border-primary]="tenureMonths() !== tenure">
-                {{ tenure }}M
+                <div class="text-body-sm font-extrabold leading-tight">{{ tenure }}M</div>
+                @if (tenure >= 12 && tenure % 12 === 0) {
+                <div class="text-[10px] font-medium opacity-75">({{ tenure / 12 }} Yr{{ tenure === 12 ? '' : 's' }})</div>
+                } @else {
+                <div class="text-[10px] font-medium opacity-75">({{ tenure }} Mo)</div>
+                }
               </button>
               }
             </div>
