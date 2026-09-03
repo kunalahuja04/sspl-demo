@@ -6,4 +6,3 @@ export const environment = {
   apiVersion: 'v1',
   appVersion: '1.0.0',
 };
-

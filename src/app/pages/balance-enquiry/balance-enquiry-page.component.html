@@ -72,7 +72,8 @@
         <!-- Card 1: Total Available Balance (Navy Signature Hero Card) -->
         <div
           class="rounded-3xl bg-[#0B1E36] text-white shadow-md border border-[#0B1E36] p-6 relative overflow-hidden flex flex-col justify-between transition-all hover:shadow-lg font-sans">
-          <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#F5BF45] via-[#EAB308] to-[#F5BF45]"></div>
+          <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#F5BF45] via-[#EAB308] to-[#F5BF45]">
+          </div>
           <div>
             <div class="flex items-center justify-between mb-3">
               <span class="text-white/75 text-xs font-bold uppercase tracking-wider">Total Available Balance</span>
@@ -98,7 +99,8 @@
           <div>
             <div class="flex items-center justify-between mb-3">
               <span class="text-secondary text-xs font-bold uppercase tracking-wider">Total Ledger Balance</span>
-              <div class="w-8 h-8 rounded-xl bg-bg-muted border border-border-default/60 flex items-center justify-center text-primary">
+              <div
+                class="w-8 h-8 rounded-xl bg-bg-muted border border-border-default/60 flex items-center justify-center text-primary">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
                   <path d="M6 6h10M6 10h10" />
@@ -109,10 +111,10 @@
               {{ totalLedgerInr() }}
             </div>
           </div>
-          <div class="pt-4 mt-3 border-t border-border-default/60 flex items-center justify-between text-xs text-secondary">
+          <div
+            class="pt-4 mt-3 border-t border-border-default/60 flex items-center justify-between text-xs text-secondary">
             <span>Central Book Balance</span>
-            <span class="font-mono font-semibold"
-              [class.text-rose-600]="!totalVarianceInr().isPositive"
+            <span class="font-mono font-semibold" [class.text-rose-600]="!totalVarianceInr().isPositive"
               [class.text-emerald-600]="totalVarianceInr().isPositive && !totalVarianceInr().isZero"
               [class.text-secondary]="totalVarianceInr().isZero">
               Variance: {{ totalVarianceInr().text }}
@@ -136,7 +138,8 @@
               {{ accounts().length }} {{ accounts().length === 1 ? 'Account' : 'Accounts' }}
             </div>
           </div>
-          <div class="pt-4 mt-3 border-t border-border-default/60 flex items-center justify-between text-xs text-secondary">
+          <div
+            class="pt-4 mt-3 border-t border-border-default/60 flex items-center justify-between text-xs text-secondary">
             <span>Primary Account</span>
             <span class="font-mono font-bold text-primary truncate max-w-[160px]">
               {{ accounts()[0]?.accountNumberMasked || 'Active' }}
@@ -165,7 +168,7 @@
         @for (account of accounts(); track account.accountNumberMasked) {
         <div
           class="rounded-3xl border border-border-default bg-bg-surface shadow-sm hover:shadow-md transition-all overflow-hidden font-sans">
-          
+
           <!-- Top Accent Line -->
           <div class="h-1.5 w-full bg-gradient-to-r from-[#0B1E36] via-[#1A365D] to-[#F5BF45]"></div>
 
@@ -230,7 +233,7 @@
 
             <!-- 3 Balanced Stat Columns (Matching Top 3 Cards) -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
-              
+
               <!-- Column 1: Available Balance -->
               <div class="p-4 sm:p-5 rounded-2xl bg-bg-muted/50 border border-border-default/80">
                 <span class="text-xs font-semibold uppercase tracking-wider text-secondary">Available Balance</span>
@@ -259,8 +262,7 @@
                 <span class="text-xs font-semibold uppercase tracking-wider text-secondary">Transit Variance</span>
                 @if (getVarianceBadge(account); as badge) {
                 <div class="font-mono text-2xl sm:text-3xl font-extrabold mt-1 tracking-tight"
-                  [class.text-emerald-600]="badge.positive"
-                  [class.text-rose-600]="!badge.positive">
+                  [class.text-emerald-600]="badge.positive" [class.text-rose-600]="!badge.positive">
                   {{ badge.text }}
                 </div>
                 <p class="text-[11px] text-secondary mt-1.5 font-normal">
@@ -282,7 +284,8 @@
             <div
               class="pt-3 border-t border-border-default/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-secondary">
               <div class="flex items-center gap-2">
-                <span>Account Category: <strong class="text-primary font-semibold">{{ account.accountType }}</strong></span>
+                <span>Account Category: <strong class="text-primary font-semibold">{{ account.accountType
+                    }}</strong></span>
                 <span class="text-gray-300">·</span>
                 <span>Branch: <strong class="text-primary font-semibold">Core Banking Central</strong></span>
               </div>
@@ -304,7 +307,7 @@
       <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
         <div
           class="bg-bg-surface rounded-3xl shadow-2xl border border-border-default w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200 font-sans">
-          
+
           <!-- Modal Header -->
           <div class="bg-[#0B1E36] p-6 text-white flex items-center justify-between">
             <div class="flex items-center gap-3">
@@ -314,7 +317,8 @@
               </div>
               <div>
                 <h3 class="font-sans font-bold text-lg text-white">Mini Statement</h3>
-                <p class="text-xs text-white/70 font-mono">{{ getAccountTypeLabel(acc.accountType) }} · {{ acc.accountNumberMasked }}</p>
+                <p class="text-xs text-white/70 font-mono">{{ getAccountTypeLabel(acc.accountType) }} · {{
+                  acc.accountNumberMasked }}</p>
               </div>
             </div>
             <button type="button" (click)="closeMiniStatement()"
@@ -342,7 +346,8 @@
             <div class="grid grid-cols-2 gap-3 text-xs">
               <div class="p-3.5 rounded-xl border border-border-default bg-bg-surface">
                 <span class="text-secondary block mb-1">Ledger Balance</span>
-                <p class="font-mono font-bold text-primary text-sm">{{ formatBalance(acc.ledgerBalance, acc.currency) }}</p>
+                <p class="font-mono font-bold text-primary text-sm">{{ formatBalance(acc.ledgerBalance, acc.currency) }}
+                </p>
               </div>
               <div class="p-3.5 rounded-xl border border-border-default bg-bg-surface">
                 <span class="text-secondary block mb-1">Uncleared Cheques / Variance</span>
